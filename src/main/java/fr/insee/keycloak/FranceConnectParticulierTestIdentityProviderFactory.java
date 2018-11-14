@@ -6,24 +6,25 @@ import org.keycloak.broker.social.SocialIdentityProviderFactory;
 import org.keycloak.models.IdentityProviderModel;
 import org.keycloak.models.KeycloakSession;
 
-public class FranceConnectParticulierIdentityProviderFactory
+public class FranceConnectParticulierTestIdentityProviderFactory
     extends AbstractIdentityProviderFactory<FranceConnectIdentityProvider>
     implements SocialIdentityProviderFactory<FranceConnectIdentityProvider> {
 
   @Override
   public String getName() {
-    return "France Connect Particuliers";
+    return "France Connect Particuliers (Test)";
   }
 
   @Override
-  public FranceConnectParticulierIdentityProvider create(KeycloakSession session,
+  public FranceConnectParticulierTestIdentityProvider create(KeycloakSession session,
       IdentityProviderModel model) {
-    return new FranceConnectParticulierIdentityProvider(session, new OIDCIdentityProviderConfig(model));
+    return new FranceConnectParticulierTestIdentityProvider(session,
+        new OIDCIdentityProviderConfig(model));
   }
 
   @Override
   public String getId() {
-    return "franceconnect-particulier";
+    return "franceconnect-particulier-test";
   }
 
 }

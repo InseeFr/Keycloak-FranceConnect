@@ -17,10 +17,20 @@ import org.keycloak.services.resources.RealmsResource;
 public class FranceConnectIdentityProvider extends OIDCIdentityProvider
     implements SocialIdentityProvider<OIDCIdentityProviderConfig> {
 
+  protected String authorizationUrl;
+  protected String tokenUrl;
+  protected String userInfoUrl;
+  protected String logoutUrl;
 
 
   public FranceConnectIdentityProvider(KeycloakSession session, OIDCIdentityProviderConfig config) {
     super(session, config);
+    config.setAuthorizationUrl(authorizationUrl);
+    config.setTokenUrl(tokenUrl);
+    config.setUserInfoUrl(userInfoUrl);
+    config.setLogoutUrl(logoutUrl);
+    config.setValidateSignature(true);
+    config.setBackchannelSupported(false);
 
   }
 
