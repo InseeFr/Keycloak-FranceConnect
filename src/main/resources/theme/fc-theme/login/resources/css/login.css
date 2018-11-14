@@ -1,6 +1,6 @@
 .login-pf body {
-    background: url("../img/logo-insee-fond.png") no-repeat center center fixed;
-    background-color: #0f417a;
+    background-image: none;
+    background-color: #01579b;
     background-size: cover;
 }
 
@@ -103,7 +103,7 @@ div.kc-logo-text span {
 }
 
 #kc-header-wrapper {
-	background-image: url(../img/logo-insee.png);
+	background-image: url(../img/logo-marianne.png);
     background-repeat: no-repeat;
     background-position: 10px 10px;
     font-size: 29px;
@@ -112,9 +112,9 @@ div.kc-logo-text span {
     line-height: 1.2em;
     padding: 10px 10px 20px;
     white-space: normal;
-    background-color: rgb(243,243,243);
+    background-color: white;
     height: 90px;
-    color: #72767b;
+    color:  grey;
     
     
 }
@@ -448,19 +448,23 @@ a.zocial  {
     margin-top: 0;
 }
 
-a.zocial.franceconnect-particulier{
-    background: url(https://partenaires.franceconnect.gouv.fr/images/fc_bouton_alt2_v2.png) no-repeat center top;
+a.zocial.franceconnect-particulier-test,
+a.zocial.franceconnect-particulier
+{
+    background: url(https://partenaires.franceconnect.gouv.fr/images/fc_bouton_alt2_v2.png) no-repeat left top;
     height: 70px;
     width: auto;
     padding-top: 60px;
 }
 
+a.zocial.franceconnect-particulier-test:hover,
 a.zocial.franceconnect-particulier:hover {
-    background: url(https://partenaires.franceconnect.gouv.fr/images/fc_bouton_alt3_v2.png) no-repeat center top !important;
+    background: url(https://partenaires.franceconnect.gouv.fr/images/fc_bouton_alt3_v2.png) no-repeat left top !important;
     height: 70px;
     width: auto;
 }
 
+a.zocial.franceconnect-particulier-test span,
 a.zocial.franceconnect-particulier span{
     display:none;
 }
