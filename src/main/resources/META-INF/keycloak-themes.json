@@ -1,0 +1,11 @@
+{
+  "themes": [
+    {
+      "name": "fc-theme",
+      "types": [
+        "admin",
+        "login"
+      ]
+    }
+  ]
+}
