@@ -4,11 +4,12 @@ Extension [keycloak](https://www.keycloak.org) pour faciliter l'usage de France 
 
 ## Fonctionnalités
 
-* ajout de la vérification de signature (basée sur le cleint-secret)
+* ajout de la vérification de signature (basée sur le client-secret)
 * ajout d'un theme pour afficher les boutons france connect
 * meilleure gestion du logout (contourne https://issues.jboss.org/browse/KEYCLOAK-7209)
 
 ## Utilisation
+
 Vous aurez besoin du logiciel [keycloak](https://www.keycloak.org) dans une version supérieure à la 4.5.0.Final.
 Placer le jar dans `$keycloak_home/standalone/deployment`
 ou avec une installation locale de keycloak:
