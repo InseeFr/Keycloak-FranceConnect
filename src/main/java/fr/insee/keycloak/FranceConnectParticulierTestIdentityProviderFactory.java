@@ -12,7 +12,7 @@ public class FranceConnectParticulierTestIdentityProviderFactory
 
   @Override
   public String getName() {
-    return "France Connect Particuliers (Test)";
+    return "France Connect Particulier (Integration)";
   }
 
   @Override
