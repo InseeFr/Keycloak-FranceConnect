@@ -10,6 +10,8 @@ public class FranceConnectParticulierTestIdentityProviderFactory
     extends AbstractIdentityProviderFactory<FranceConnectIdentityProvider>
     implements SocialIdentityProviderFactory<FranceConnectIdentityProvider> {
 
+  public static final String PROVIDER_ID = "franceconnect-particulier-test";
+  
   @Override
   public String getName() {
     return "France Connect Particulier (Integration)";
@@ -24,7 +26,7 @@ public class FranceConnectParticulierTestIdentityProviderFactory
 
   @Override
   public String getId() {
-    return "franceconnect-particulier-test";
+    return PROVIDER_ID;
   }
 
 }
