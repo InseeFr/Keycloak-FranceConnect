@@ -18,6 +18,7 @@ ou avec une installation locale de keycloak:
 mvn clean install wildfly:deploy
 ```
 
+:warning: Il y avait un problème avec la version `4.8.0.Final` de keycloak, cette dernière n'est pas compatible avec cette extension (la version 4.8.1.Final l'est)
 ---
 
 # keycloak-franceconnect
@@ -39,3 +40,6 @@ or with a local install :
 ```
 mvn clean install wildfly:deploy
 ```
+
+:warning: There was a problem with keycloak version `4.8.0.Final`, please use `4.8.1.Final`
+
