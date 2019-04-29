@@ -44,26 +44,3 @@ Pour tester, vous pouvez choisir le theme `fc-theme` pour le realm, puis vous re
 
 ![keycloak-fc-login](/assets/keycloak-fc-login.PNG)
 
-
-# keycloak-franceconnect
-
-France Connect Openid-Connect Provider for Keycloak
-
-## Features
-
-* add missing signature verification (based on client-secret)
-* add custom Theme with FranceConnect buttons
-* add a better management for logout (https://issues.jboss.org/browse/KEYCLOAK-7209)
-
-## How to use it
-
-You will need [keycloak](https://www.keycloak.org) > 4.5.0.Final
-Simply drop the generated jar in `$keycloak_home/standalone/deployment`
-or with a local install :
-
-```
-mvn clean install wildfly:deploy
-```
-
-:warning: There was a problem with keycloak version `4.8.0.Final`, please use `4.8.1.Final`
-
