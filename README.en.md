@@ -22,13 +22,7 @@ mvn clean install wildfly:deploy
 :warning: There was a problem with keycloak version `4.8.0.Final`, please use `4.8.1.Final`
 
 
-Once the jar has been deployed, and before configuring the new provider, you will have to activate the new `fc-theme` theme for the administration interface of the realm` master`:
-
-![Keycloak-fc-theme-admin](/assets/keycloak-fc-theme-admin.png)
-
-To avoid possible cache problems, you will need to log out and reconnect on this interface.
-
-Once done, you can create a new "Identity Provider" (in a new realm preferably). In the drop-down list, you can choose between two providers that represent the production environment and the france connect test environment. The latter can be used with an account created on https://partenaires.franceconnect.gouv.fr/.
+Once the jar has been deployed, you can create a new "Identity Provider" (in a new realm preferably). In the drop-down list, you can choose between two providers that represent the production environment and the france connect test environment. The latter can be used with an account created on https://partenaires.franceconnect.gouv.fr/.
 
 Once chosen the provider, you arrive on the following page:
 
