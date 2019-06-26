@@ -2,7 +2,7 @@
 
 All contributions, whatever their forms, are welcome.
 
-### How to do ?
+### How ?
 
 * To declare a bug, or ask for an improvement, create an [*issue*] (https://github.com/InseeFr/Keycloak-FranceConnect/issues)
 * To contribute code or documentation directly, you can use a [*Pull Request*] (https://github.com/InseeFr/Keycloak-FranceConnect/pulls). In this case, it is best to link it to an *issue*.
@@ -11,7 +11,7 @@ All contributions, whatever their forms, are welcome.
 
 ### Certificate of Origin
 
-By contributing to this project you agree to the Developer Certificate of Origin (DCO). This document was created by the Linux Kernel community and is a simple statement that you, as a contributor, have the legal right to make the contribution. See the DCO file for details.
+By contributing to this project you agree to the Developer Certificate of Origin (DCO). This document was created by the Linux Kernel community and is a simple statement that you, as a contributor, have the legal right to make the contribution. [See the DCO file for details.](https://developercertificate.org/)
 
 Contributors sign-off that they adhere to these requirements by adding a Signed-off-by line to commit messages. For example:
 
