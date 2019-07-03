@@ -13,7 +13,7 @@ Toutes les contributions, quelles que soient leurs formes, sont les bienvenues.
 
 ### Certificat d'origine des contributions du développeur
 
-En contribuant à ce projet, vous acceptez le certificat d'origine des contributions du développeur (DCO). Il vous permet de contribuer à ce projet en respectant certaines exigences. Notamment que vous n'avez pas volé à d'autres la contribution que vous apportez au projet, que vous acceptez que votre contribution sera publique et pourra être réutilisée et modifiée par d'autres. Voir le [fichier DCO](https://github.com/DISIC/politique-de-contribution-open-source/blob/master/DCO-fr.txt) pour plus de détails.
+En contribuant à ce projet, vous acceptez le certificat d'origine des contributions du développeur (DCO). Il vous permet de contribuer à ce projet en respectant certaines exigences. Notamment que vous n'avez pas volé à d'autres la contribution que vous apportez au projet, que vous acceptez que votre contribution sera publique et pourra être réutilisée et modifiée par d'autres. Voir le [fichier DCO](DCO.txt) pour plus de détails.
 
 Les contributeurs indiquent qu'ils se conforment à ces exigences en signant (par une ligne Signed-off-by) leur message de commit. Par exemple:
 

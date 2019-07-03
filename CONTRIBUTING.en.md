@@ -11,7 +11,7 @@ All contributions, whatever their forms, are welcome.
 
 ### Certificate of Origin
 
-By contributing to this project you agree to the Developer Certificate of Origin (DCO). This document was created by the Linux Kernel community and is a simple statement that you, as a contributor, have the legal right to make the contribution. [See the DCO file for details.](https://developercertificate.org/)
+By contributing to this project you agree to the Developer Certificate of Origin (DCO). This document was created by the Linux Kernel community and is a simple statement that you, as a contributor, have the legal right to make the contribution. [See the DCO file for details.](DCO.txt)
 
 Contributors sign-off that they adhere to these requirements by adding a Signed-off-by line to commit messages. For example:
 
