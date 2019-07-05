@@ -1,0 +1,73 @@
+Developer Certificate of Origin
+Version 1.1
+
+Copyright (C) 2004, 2006 The Linux Foundation and its contributors.
+1 Letterman Drive
+Suite D4700
+San Francisco, CA, 94129
+
+Everyone is permitted to copy and distribute verbatim copies of this
+license document, but changing it is not allowed.
+
+
+Developer's Certificate of Origin 1.1
+
+By making a contribution to this project, I certify that:
+
+(a) The contribution was created in whole or in part by me and I
+    have the right to submit it under the open source license
+    indicated in the file; or
+
+(b) The contribution is based upon previous work that, to the best
+    of my knowledge, is covered under an appropriate open source
+    license and I have the right under that license to submit that
+    work with modifications, whether created in whole or in part
+    by me, under the same open source license (unless I am
+    permitted to submit under a different license), as indicated
+    in the file; or
+
+(c) The contribution was provided directly to me by some other
+    person who certified (a), (b) or (c) and I have not modified
+    it.
+
+(d) I understand and agree that this project and the contribution
+    are public and that a record of the contribution (including all
+    personal information I submit with it, including my sign-off) is
+    maintained indefinitely and may be redistributed consistent with
+    this project or the open source license(s) involved.
+
+---------------------------------------------------------------------
+
+Developer Certificate of Origin
+Version 1.1
+
+Certificat d'origine des contributions du développeur :
+
+En faisant une contribution à ce projet, j’atteste que :
+
+(a) Ma contribution a été créée en tout ou partie par moi, et que j’ai
+    le droit de la soumettre sous la licence applicable au projet; ou
+    que
+
+(b) Ma contribution s’appuie sur des travaux antérieurs qui, à ma
+    connaissance, sont couverts par une licence open source et que
+    j’ai le droit sous cette licence de soumettre cette contribution
+    avec mes modifications, créées en tout ou partie par moi, sous la
+    licence applicable au projet; ou que
+
+(c) La contribution m’a été offerte par un tiers qui a certifié que
+    les points (a), (b) ou (c) ont été respectés et que je n’ai pas
+    modifié cette contribution.
+
+(d) Je comprends et accepte que ce projet et ma contribution sont
+    publics, et qu’un enregistrement de cette contribution (comprenant
+    également l’ensemble des informations à caractère personnel me
+    concernant et notamment ma signature) soit attaché indéfiniment à
+    ce projet et qu’il peut librement être rediffusé à des tiers
+    conformément à la licence applicable au projet ou aux autres
+    licences impliquées.
+
+Certificat d'origine des contributions du développeur est une
+traduction et a été conçu pour être compatible avec sa version
+anglaise (même numéro de version) qui peut être utilisée
+indifféremment.

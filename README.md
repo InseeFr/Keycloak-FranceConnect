@@ -38,3 +38,6 @@ Pour tester, vous pouvez choisir le theme `fc-theme` pour le realm, puis vous re
 
 ![keycloak-fc-login](/assets/keycloak-fc-login.PNG)
 
+## Comment contribuer
+
+[Voir ici](CONTRIBUTING.md)
