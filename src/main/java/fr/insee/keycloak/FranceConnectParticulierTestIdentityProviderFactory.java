@@ -21,7 +21,7 @@ public class FranceConnectParticulierTestIdentityProviderFactory
   public FranceConnectParticulierTestIdentityProvider create(KeycloakSession session,
       IdentityProviderModel model) {
     return new FranceConnectParticulierTestIdentityProvider(session,
-        new OIDCIdentityProviderConfig(model));
+        new FranceConnectIdentityProviderConfig(model));
   }
 
   @Override

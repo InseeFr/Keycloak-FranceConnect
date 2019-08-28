@@ -6,7 +6,7 @@ import org.keycloak.models.KeycloakSession;
 public class FranceConnectParticulierTestIdentityProvider extends FranceConnectIdentityProvider {
 
   public FranceConnectParticulierTestIdentityProvider(KeycloakSession session,
-      OIDCIdentityProviderConfig config) {
+  FranceConnectIdentityProviderConfig config) {
     super(session, config);
     authorizationUrl = "https://fcp.integ01.dev-franceconnect.fr/api/v1/authorize";
     tokenUrl = "https://fcp.integ01.dev-franceconnect.fr/api/v1/token";

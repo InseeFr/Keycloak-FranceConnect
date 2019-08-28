@@ -169,6 +169,14 @@
                 </div>
                 <kc-tooltip>{{:: 'identity-provider.validate-signatures.tooltip' | translate}}</kc-tooltip>
             </div>
+            <div class="form-group">
+                <label class="col-md-2 control-label" for="ignoreAbsentStateParameterLogout">Ignore Absent State Parameter on logout</label>
+                <div class="col-md-6">
+                    <input ng-model="identityProvider.config.ignoreAbsentStateParameterLogout" id="ignoreAbsentStateParameterLogout" onoffswitchvalue on-text="{{:: 'onText' | translate}}" off-text="{{:: 'offText' | translate}}" />
+                </div>
+                <kc-tooltip>Enable to avoid errors when FranceConnect doesn''t return the sate parameter on logout</kc-tooltip>
+            </div>
+
 
 
             <div class="form-group">

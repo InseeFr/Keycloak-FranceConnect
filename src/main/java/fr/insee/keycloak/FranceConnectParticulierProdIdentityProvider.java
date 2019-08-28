@@ -7,7 +7,7 @@ public class FranceConnectParticulierProdIdentityProvider extends FranceConnectI
 
 
   public FranceConnectParticulierProdIdentityProvider(KeycloakSession session,
-      OIDCIdentityProviderConfig config) {
+      FranceConnectIdentityProviderConfig config) {
     super(session, config);
     authorizationUrl = "https://app.franceconnect.gouv.fr/api/v1/authorize";
     tokenUrl = "https://app.franceconnect.gouv.fr/api/v1/token";
