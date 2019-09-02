@@ -1,6 +1,5 @@
 package fr.insee.keycloak;
 
-import org.keycloak.broker.oidc.OIDCIdentityProviderConfig;
 import org.keycloak.models.KeycloakSession;
 
 public class FranceConnectParticulierProdIdentityProvider extends FranceConnectIdentityProvider {

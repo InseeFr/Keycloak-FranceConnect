@@ -17,5 +17,13 @@ public class FranceConnectIdentityProviderConfig extends OIDCIdentityProviderCon
       getConfig().put("ignoreAbsentStateParameterLogout", String.valueOf(value));
    }
 
-   
+  public String getAcrValues() {
+    String acr_values = (String)getConfig().get("acr_values");
+    
+    return (acr_values == null) || (acr_values.isEmpty()) ? null : acr_values;
+  }
+  
+  public void setAcrValues(String acrValues) {
+    getConfig().put("acr_values", acrValues);
+  }
 }
