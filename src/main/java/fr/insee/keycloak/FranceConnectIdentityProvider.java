@@ -8,8 +8,10 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
+import org.jboss.logging.Logger;
 import org.keycloak.broker.oidc.OIDCIdentityProvider;
 import org.keycloak.broker.oidc.OIDCIdentityProviderConfig;
+import org.keycloak.broker.provider.AuthenticationRequest;
 import org.keycloak.broker.social.SocialIdentityProvider;
 import org.keycloak.events.Errors;
 import org.keycloak.events.EventBuilder;
@@ -28,6 +30,8 @@ import org.keycloak.services.resources.RealmsResource;
 public class FranceConnectIdentityProvider extends OIDCIdentityProvider
     implements SocialIdentityProvider<OIDCIdentityProviderConfig> {
 
+  private static final Logger log = Logger.getLogger(FranceConnectIdentityProvider.class);
+	  
   protected String authorizationUrl;
   protected String tokenUrl;
   protected String userInfoUrl;
@@ -113,6 +117,17 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider
 
 
 
+  
+  @Override
+  protected UriBuilder createAuthorizationUrl(AuthenticationRequest request)
+  {
+    UriBuilder uriBuilder = super.createAuthorizationUrl(request);
+    FranceConnectIdentityProviderConfig fCConfig = (FranceConnectIdentityProviderConfig)getConfig();
+    uriBuilder.queryParam("acr_values", new Object[] { fCConfig.getAcrValues() });
+    logger.debugv("FranceConnect Authorization Url: {0}", uriBuilder.toString());
+    return uriBuilder;
+  }
+  
   @Override
   public Response keycloakInitiatedBrowserLogout(KeycloakSession session,
       UserSessionModel userSession, UriInfo uriInfo, RealmModel realm) {
