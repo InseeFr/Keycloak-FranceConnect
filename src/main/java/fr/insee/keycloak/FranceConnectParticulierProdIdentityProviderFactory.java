@@ -22,7 +22,7 @@ public class FranceConnectParticulierProdIdentityProviderFactory
   public FranceConnectParticulierProdIdentityProvider create(KeycloakSession session,
       IdentityProviderModel model) {
     return new FranceConnectParticulierProdIdentityProvider(session,
-        new OIDCIdentityProviderConfig(model));
+        new FranceConnectIdentityProviderConfig(model));
   }
 
   @Override
