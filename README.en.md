@@ -12,7 +12,7 @@ France Connect Openid-Connect Provider for Keycloak
 ## How to use it
 
 You will need [keycloak](https://www.keycloak.org) > 4.5.0.Final
-Simply drop the generated jar in `$keycloak_home/standalone/deployment`
+Simply drop the generated jar in `$keycloak_home/standalone/deployments`
 or with a local install :
 
 ```
