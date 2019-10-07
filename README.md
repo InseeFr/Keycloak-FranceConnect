@@ -13,7 +13,7 @@ Extension [keycloak](https://www.keycloak.org) pour faciliter l'usage de France 
 ## Utilisation
 
 Vous aurez besoin du logiciel [keycloak](https://www.keycloak.org) dans une version supérieure à la 4.5.0.Final.
-Placer le jar dans `$keycloak_home/standalone/deployment`
+Placer le jar dans `$keycloak_home/standalone/deployments`
 ou avec une installation locale de keycloak:
 
 ```
