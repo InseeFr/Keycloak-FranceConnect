@@ -38,6 +38,33 @@ To test, you can choose the theme `fc-theme` for the realm, then go to the addre
 
 ![Keycloak-fc-login](/assets/keycloak-fc-login.PNG)
 
+## Add design to FranceConnect button to your theme
+
+To apply the design to the FranceConnect button, add this CSS classes to your theme:
+
+```
+a.zocial.franceconnect-particulier-test,
+a.zocial.franceconnect-particulier
+{
+    background: url(https://partenaires.franceconnect.gouv.fr/images/fc_bouton_alt2_v2.png) no-repeat left top;
+    height: 70px;
+    width: auto;
+    padding-top: 60px;
+}
+
+a.zocial.franceconnect-particulier-test:hover,
+a.zocial.franceconnect-particulier:hover {
+    background: url(https://partenaires.franceconnect.gouv.fr/images/fc_bouton_alt3_v2.png) no-repeat left top !important;
+    height: 70px;
+    width: auto;
+}
+
+a.zocial.franceconnect-particulier-test span,
+a.zocial.franceconnect-particulier span{
+    display:none;
+}
+```
+
 ## How to contribute
 
 [See here](CONTRIBUTING.en.md)
