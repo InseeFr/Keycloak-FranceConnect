@@ -9,6 +9,7 @@ Extension [keycloak](https://www.keycloak.org) pour faciliter l'usage de France 
 * ajout de la vérification de signature (basée sur le client-secret)
 * ajout d'un theme pour afficher les boutons france connect
 * meilleure gestion du logout (contourne https://issues.jboss.org/browse/KEYCLOAK-7209)
+* gestion du niveau d'authentification dans la demande d'autorisation ( cf [communication FranceConnect] (https://dev.entrouvert.org/issues/34448) )
 
 ## Utilisation
 
@@ -24,7 +25,9 @@ mvn clean install wildfly:deploy
 
 Une fois le jar déployé, vous pouvez créer un nouveau "Identity Provider" (dans un nouveau realm préférablement). Dans la liste déroulante, vous avez le choix entre deux providers qui représentent l'environnement de production et l'environnement de test france connect. Ce dernier est utilisable avec un compte créé sur https://partenaires.franceconnect.gouv.fr/.
 
-Une fois choisi le provider, vous arrivez sur la page suivante:
+:warning: Si vous migrez et que vous disposez déjà d'un "Identity Provider" configuré, vous devez impérativement configurer le niveau eIDAS dans sa configuration.
+
+Une fois le provider choisi, vous arrivez sur la page suivante:
 
 ![keycloak-fc-conf-provider](/assets/keycloak-fc-conf-provider.PNG)
 

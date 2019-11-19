@@ -8,6 +8,7 @@ France Connect Openid-Connect Provider for Keycloak
 * add missing signature verification (based on client-secret)
 * add custom Theme with FranceConnect buttons
 * add a better management for logout (https://issues.jboss.org/browse/KEYCLOAK-7209)
+* add support for the user account warranty level required on authorization request ( cf [communication FranceConnect] (https://dev.entrouvert.org/issues/34448) )
 
 ## How to use it
 
@@ -23,6 +24,8 @@ mvn clean install wildfly:deploy
 
 
 Once the jar has been deployed, you can create a new "Identity Provider" (in a new realm preferably). In the drop-down list, you can choose between two providers that represent the production environment and the france connect test environment. The latter can be used with an account created on https://partenaires.franceconnect.gouv.fr/.
+
+:warning: If you already have a configured FranceConnect Identity Provider, You will need to configure the new eIDAS level in it's configuration.
 
 Once chosen the provider, you arrive on the following page:
 
