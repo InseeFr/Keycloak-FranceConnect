@@ -9,7 +9,7 @@ Extension [keycloak](https://www.keycloak.org) pour faciliter l'usage de France 
 * ajout de la vérification de signature (basée sur le client-secret)
 * ajout d'un theme pour afficher les boutons france connect
 * meilleure gestion du logout (contourne https://issues.jboss.org/browse/KEYCLOAK-7209)
-* gestion du niveau d'authentification dans la demande d'autorisation ( cf [communication FranceConnect] (https://dev.entrouvert.org/issues/34448) )
+* gestion du niveau d'authentification dans la demande d'autorisation ( cf [communication FranceConnect](https://dev.entrouvert.org/issues/34448) )
 
 ## Utilisation
 
@@ -68,6 +68,9 @@ a.zocial.franceconnect-particulier span{
 }
 ```
 
+## FAQ
+
+[FAQ](FAQ.md)
 
 ## Comment contribuer
 

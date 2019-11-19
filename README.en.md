@@ -68,6 +68,11 @@ a.zocial.franceconnect-particulier span{
 }
 ```
 
+## FAQ
+
+[FAQ](FAQ.md)
+
 ## How to contribute
 
 [See here](CONTRIBUTING.en.md)
+
