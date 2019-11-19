@@ -36,11 +36,6 @@
       <scope>provided</scope>
       <version>${keycloak.version}</version>
     </dependency>
-    <dependency>
-      <groupId>org.jboss.resteasy</groupId>
-      <artifactId>resteasy-jaxrs</artifactId>
-      <version>3.0.26.Final</version>
-    </dependency>
   </dependencies>
   <build>
     <plugins>
