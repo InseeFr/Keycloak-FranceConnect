@@ -129,7 +129,7 @@
                 <label class="col-md-2 control-label" for="clientId"><span class="required">*</span> {{:: 'client-id' | translate}}</label>
                 <div class="col-md-6">
                     <input class="form-control" id="clientId" type="text" ng-model="identityProvider.config.clientId" required>
-                    <a href="https://partenaires.franceconnect.gouv.fr/monprojet/cadrage/" target="_blank" rel="noopener noreferrer">Gérer mon espace FS FranceConnect<!--{{:: 'fc.account.managment.link' | translate}}--></a>
+                    <a href="https://partenaires.franceconnect.gouv.fr/monprojet/cadrage/" target="_blank" rel="noopener noreferrer">{{:: 'franceconnect.account.managment.link' | translate}}</a>
                 </div>
                 <kc-tooltip>{{:: 'identity-provider.client-id.tooltip' | translate}}</kc-tooltip>
             </div>
@@ -145,22 +145,22 @@
                 <label class="col-md-2 control-label" for="defaultScope">{{:: 'default-scopes' | translate}} </label>
                 <div class="col-md-6">
                     <input class="form-control" id="defaultScope" type="text" ng-model="identityProvider.config.defaultScope">
-                    <a href="https://partenaires.franceconnect.gouv.fr/fcp/fournisseur-service#identite_pivot" target="_blank" rel="noopener noreferrer">Liste des scopes proposés par FranceConnect<!--{{:: 'fc.scopes.supported' | translate}}--></a>
+                    <a href="https://partenaires.franceconnect.gouv.fr/fcp/fournisseur-service#identite_pivot" target="_blank" rel="noopener noreferrer">{{:: 'franceconnect.scopes.supported' | translate}}</a>
                 </div>
                 <kc-tooltip>{{:: 'identity-provider.default-scopes.tooltip' | translate}}</kc-tooltip>
             </div>
             <div class="form-group">
-                <label class="col-md-2 control-label" for="acrValues">Niveau de garantie eiDAS<!--{{:: 'fc.acr_values' | translate}}--></label>
+                <label class="col-md-2 control-label" for="acrValues">{{:: 'franceconnect.acr_values' | translate}}</label>
                 <div class="col-md-6">
                     <div>
                         <select class="form-control" id="acrValues" ng-model="identityProvider.config.acr_values">
-                            <option value="eidas1">eidas1 : niveau standard (identifiant / mot de passe)<!-- {{:: 'fc.acr_values.eidas1' | translate}} --></option>
-                            <option value="eidas2">eidas2 : niveau substantiel (ex : double facteur, ... Homologué eIDAS)<!-- {{:: 'fc.acr_values.eidas2' | translate}} --></option>
-                            <option value="eidas3">eidas3 : niveau élevé (ex : certificat sur support matériel, ... Homologué eIDAS)<!-- {{:: 'fc.acr_values.eidas3' | translate}} --></option>
+                            <option value="eidas1">{{:: 'franceconnect.acr_values.eidas1' | translate}}</option>
+                            <option value="eidas2">{{:: 'franceconnect.acr_values.eidas2' | translate}}</option>
+                            <option value="eidas3">{{:: 'franceconnect.acr_values.eidas3' | translate}}</option>
                         </select>
                     </div>
                 </div>
-                <kc-tooltip>Permet de fixer le niveau de garantie du compte utilisateur souhaité. Effet : désactive des fournisseurs d'identités (FI) sur la page de login FranceConnect.<!--{{:: 'fc.acr_values.tooltip' | translate}}--></kc-tooltip>
+                <kc-tooltip>{{:: 'franceconnect.acr_values.tooltip' | translate}}</kc-tooltip>
             </div>
             <div class="form-group">
                 <label class="col-md-2 control-label" for="prompt">{{:: 'prompt' | translate}}</label>
