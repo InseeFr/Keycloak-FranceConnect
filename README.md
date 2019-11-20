@@ -4,12 +4,14 @@
 
 Extension [keycloak](https://www.keycloak.org) pour faciliter l'usage de France Connect
 
+[![Build Status](https://travis-ci.org/inseefr/Keycloak-FranceConnect.svg?branch=master)](https://travis-ci.org/inseefr/Keycloak-FranceConnect)
+
 ## Fonctionnalités
 
-* ajout de la vérification de signature (basée sur le client-secret)
-* ajout d'un theme pour afficher les boutons france connect
-* meilleure gestion du logout (contourne https://issues.jboss.org/browse/KEYCLOAK-7209)
-* gestion du niveau d'authentification dans la demande d'autorisation ( cf [communication FranceConnect](https://dev.entrouvert.org/issues/34448) )
+- ajout de la vérification de signature (basée sur le client-secret)
+- ajout d'un theme pour afficher les boutons france connect
+- meilleure gestion du logout (contourne https://issues.jboss.org/browse/KEYCLOAK-7209)
+- gestion du niveau d'authentification dans la demande d'autorisation ( cf [communication FranceConnect](https://dev.entrouvert.org/issues/34448) )
 
 ## Utilisation
 
@@ -37,7 +39,7 @@ Sur cette page se trouve aussi l'uri de redirection qu'il vous faudra entrer sur
 
 Une fois validé, vous pouvez ajouter les mappers nécessaires pour récupérer les attributs que vous souhaitez à partir [des claims fournis par France Connect](https://partenaires.franceconnect.gouv.fr/fcp/fournisseur-service).
 
-Pour tester, vous pouvez choisir le theme `fc-theme` pour le realm, puis vous rendre sur l'adresse : `https://<keycloak>/auth/realms/<realm>/account` : 
+Pour tester, vous pouvez choisir le theme `fc-theme` pour le realm, puis vous rendre sur l'adresse : `https://<keycloak>/auth/realms/<realm>/account` :
 
 ![keycloak-fc-login](/assets/keycloak-fc-login.PNG)
 
