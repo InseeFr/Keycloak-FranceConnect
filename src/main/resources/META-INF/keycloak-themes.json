@@ -6,6 +6,13 @@
         "admin",
         "login"
       ]
+    },
+    {
+      "name": "iron-theme",
+      "types": [
+        "admin",
+        "login"
+      ]
     }
   ]
 }
