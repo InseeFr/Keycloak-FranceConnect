@@ -2,6 +2,11 @@
     background-image: none;
     background-color: #01579b;
     background-size: cover;
+    height: 100%;
+}
+
+.login-pf-page{
+    padding: 0;
 }
 
 .alert-error {
