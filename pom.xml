@@ -19,9 +19,9 @@
         <maven.surefire.plugin.version>3.0.0-M4</maven.surefire.plugin.version>
         <maven.jar.plugin.version>3.2.0</maven.jar.plugin.version>
         <maven.install.plugin.version>3.0.0-M1</maven.install.plugin.version>
+        <wildfly.maven.plugin.version>2.0.2.Final</wildfly.maven.plugin.version>
 
         <keycloak.version>8.0.1</keycloak.version>
-        <wildfly.maven.plugin.version>2.0.0.Final</wildfly.maven.plugin.version>
     </properties>
 
     <build>
