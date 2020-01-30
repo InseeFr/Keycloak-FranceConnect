@@ -56,7 +56,7 @@
                     <#list social.providers as p>
                         <li class="${properties.kcFormSocialAccountListLinkClass!}"><a href="${p.loginUrl}" id="zocial-${p.alias}" class="zocial ${p.providerId}"> <span>${p.displayName}</span></a></li>
                         <#if p.providerId?contains("franceconnect")>
-                        	<a href="https://app.franceconnect.gouv.fr/en-savoir-plus">${msg("fcInfos")}</href>
+                        	<a href="https://app.franceconnect.gouv.fr/en-savoir-plus">${msg("fcInfos")}</a>
                         </#if>
                     </#list>
                 </ul>
