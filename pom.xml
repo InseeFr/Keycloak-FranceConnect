@@ -7,6 +7,42 @@
     <artifactId>keycloak-franceconnect</artifactId>
     <version>2.0-SNAPSHOT</version>
 
+    <name>keycloak-franceconnect</name>
+    <description>France Connect Openid-Connect Provider for Keycloak</description>
+    <url>https://github.com/InseeFr/Keycloak-FranceConnect</url>
+
+    <licenses>
+        <license>
+            <name>The MIT License (MIT)</name>
+            <url>https://opensource.org/licenses/MIT</url>
+        </license>
+    </licenses>
+
+    <developers>
+        <developer>
+            <name>Cédric Couralet</name>
+            <email>cedric.couralet@insee.fr</email>
+            <organization>Insee</organization>
+            <organizationUrl>https://www.insee.fr/</organizationUrl>
+        </developer>
+    </developers>
+
+    <scm>
+        <connection>scm:git:git://github.com/InseeFr/Keycloak-FranceConnect.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com:InseeFr/Keycloak-FranceConnect.git</developerConnection>
+        <url>https://github.com/InseeFr/Keycloak-FranceConnect</url>
+    </scm>
+
+    <issueManagement>
+        <system>Github</system>
+        <url>https://github.com/InseeFr/Keycloak-FranceConnect/issues</url>
+    </issueManagement>
+
+    <ciManagement>
+        <system>Travis</system>
+        <url>https://travis-ci.org/InseeFr/Keycloak-FranceConnect</url>
+    </ciManagement>
+
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
