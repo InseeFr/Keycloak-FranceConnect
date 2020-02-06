@@ -14,6 +14,23 @@
     <form class="form-horizontal" name="realmForm" novalidate kc-read-only="!access.manageIdentityProviders">
         <fieldset>
             <div class="form-group clearfix">
+                <label class="col-md-2 control-label" for="fcEnvironment">{{:: 'franceconnect.fc_environment' | translate}}</label>
+
+                <div class="col-md-6">
+                    <div>
+                        <select class="form-control" id="fcEnvironment"
+                                ng-init="identityProvider.config.fc_environment = identityProvider.config.fc_environment || 'integration'"
+                                ng-model="identityProvider.config.fc_environment">
+                            <option value="integration">{{:: 'franceconnect.fc_environment.integration' | translate}}</option>
+                            <option value="production">{{:: 'franceconnect.fc_environment.production' | translate}}</option>
+                        </select>
+                    </div>
+                </div>
+
+                <kc-tooltip>{{:: 'franceconnect.fc_environment.tooltip' | translate}}</kc-tooltip>
+            </div>
+
+            <div class="form-group clearfix">
                 <label class="col-md-2 control-label" for="redirectUri">{{:: 'redirect-uri' | translate}}</label>
 
                 <div class="col-md-6">
@@ -92,7 +109,9 @@
 
                 <div class="col-md-6">
                     <div>
-                        <select class="form-control" id="acrValues" ng-model="identityProvider.config.acr_values">
+                        <select class="form-control" id="acrValues"
+                                ng-init="identityProvider.config.acr_values = identityProvider.config.acr_values || 'eidas1'"
+                                ng-model="identityProvider.config.acr_values">
                             <option value="eidas1">{{:: 'franceconnect.acr_values.eidas1' | translate}}</option>
                             <option value="eidas2">{{:: 'franceconnect.acr_values.eidas2' | translate}}</option>
                             <option value="eidas3">{{:: 'franceconnect.acr_values.eidas3' | translate}}</option>
@@ -269,7 +288,7 @@
             </div>
 
             <div class="form-group">
-                <label class="col-md-2 control-label" for="ignoreAbsentStateParameterLogout">{{:: 'franceconnect.logout.ignorstateparam' | translate}}</label>
+                <label class="col-md-2 control-label" for="ignoreAbsentStateParameterLogout">{{:: 'franceconnect.logout.ignorestateparam' | translate}}</label>
 
                 <div class="col-md-6">
                     <input ng-model="identityProvider.config.ignoreAbsentStateParameterLogout"
