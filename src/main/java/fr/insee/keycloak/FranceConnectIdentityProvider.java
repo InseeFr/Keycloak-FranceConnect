@@ -11,6 +11,8 @@ import org.jboss.logging.Logger;
 import org.keycloak.broker.oidc.OIDCIdentityProvider;
 import org.keycloak.broker.oidc.OIDCIdentityProviderConfig;
 import org.keycloak.broker.provider.AuthenticationRequest;
+import org.keycloak.broker.provider.BrokeredIdentityContext;
+import org.keycloak.broker.provider.IdentityBrokerException;
 import org.keycloak.broker.social.SocialIdentityProvider;
 import org.keycloak.events.Errors;
 import org.keycloak.events.EventBuilder;
@@ -30,16 +32,14 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider
     implements SocialIdentityProvider<OIDCIdentityProviderConfig> {
 
   private static final Logger log = Logger.getLogger(FranceConnectIdentityProvider.class);
-	  
+
   protected String authorizationUrl;
   protected String tokenUrl;
   protected String userInfoUrl;
   protected String logoutUrl;
 
-
   public FranceConnectIdentityProvider(KeycloakSession session, FranceConnectIdentityProviderConfig config) {
     super(session, config);
-    
 
   }
 
@@ -52,84 +52,84 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider
     this.getConfig().setBackchannelSupported(false);
   }
 
-
   @Override
-    public Object callback(RealmModel realm, AuthenticationCallback callback, EventBuilder event) {
-      
-      return new OIDCEndpoint(callback, realm, event, (FranceConnectIdentityProviderConfig)getConfig());
+  public Object callback(RealmModel realm, AuthenticationCallback callback, EventBuilder event) {
+
+    return new OIDCEndpoint(callback, realm, event, (FranceConnectIdentityProviderConfig) getConfig());
+  }
+
+  protected class OIDCEndpoint extends Endpoint {
+    FranceConnectIdentityProviderConfig config;
+
+    public OIDCEndpoint(AuthenticationCallback callback, RealmModel realm, EventBuilder event,
+        FranceConnectIdentityProviderConfig config) {
+      super(callback, realm, event);
+      this.config = config;
     }
 
-    protected class OIDCEndpoint extends Endpoint {
-        FranceConnectIdentityProviderConfig config;
-
-        public OIDCEndpoint(AuthenticationCallback callback, RealmModel realm, EventBuilder event, FranceConnectIdentityProviderConfig config) {
-            super(callback, realm, event);
-            this.config = config;
+    @GET
+    @Path("logout_response")
+    public Response logoutResponse(@QueryParam("state") String state) {
+      UserSessionModel userSession;
+      if (state == null) {
+        logger.error("state not found in query string");
+        if (config.isIgnoreAbsentStateParameterLogout()) {
+          logger.warn("Using usersession from cookie");
+          AuthenticationManager.AuthResult authResult = AuthenticationManager.authenticateIdentityCookie(session, realm,
+              false);
+          if (authResult != null) {
+            userSession = authResult.getSession();
+          } else {
+            logger.error("no valid user session");
+            EventBuilder event = new EventBuilder(realm, session, clientConnection);
+            event.event(EventType.LOGOUT);
+            event.error(Errors.USER_SESSION_NOT_FOUND);
+            return ErrorPage.error(session, null, Response.Status.BAD_REQUEST,
+                Messages.IDENTITY_PROVIDER_UNEXPECTED_ERROR);
+          }
+        } else {
+          EventBuilder event = new EventBuilder(realm, session, clientConnection);
+          event.event(EventType.LOGOUT);
+          event.error(Errors.USER_SESSION_NOT_FOUND);
+          return ErrorPage.error(session, null, Response.Status.BAD_REQUEST,
+              Messages.IDENTITY_PROVIDER_UNEXPECTED_ERROR);
         }
-
-
-        @GET
-        @Path("logout_response")
-        public Response logoutResponse(@QueryParam("state") String state) {
-            UserSessionModel userSession;
-            if(state == null){
-              logger.error("state not found in query string");
-              if (config.isIgnoreAbsentStateParameterLogout()){
-                logger.warn("Using usersession from cookie");
-                AuthenticationManager.AuthResult authResult = AuthenticationManager.authenticateIdentityCookie(session, realm, false);
-                if(authResult!=null){
-                  userSession = authResult.getSession();
-                }else{
-                  logger.error("no valid user session");
-                  EventBuilder event = new EventBuilder(realm, session, clientConnection);
-                  event.event(EventType.LOGOUT);
-                  event.error(Errors.USER_SESSION_NOT_FOUND);
-                  return ErrorPage.error(session, null, Response.Status.BAD_REQUEST, Messages.IDENTITY_PROVIDER_UNEXPECTED_ERROR);
-                 }
-              }else{
-                EventBuilder event = new EventBuilder(realm, session, clientConnection);
-                event.event(EventType.LOGOUT);
-                event.error(Errors.USER_SESSION_NOT_FOUND);
-                return ErrorPage.error(session, null, Response.Status.BAD_REQUEST, Messages.IDENTITY_PROVIDER_UNEXPECTED_ERROR);
-              }
-            }else{
-              userSession = session.sessions().getUserSession(realm, state);
-              if (userSession == null) {
-                  logger.error("no valid user session");
-                  EventBuilder event = new EventBuilder(realm, session, clientConnection);
-                  event.event(EventType.LOGOUT);
-                  event.error(Errors.USER_SESSION_NOT_FOUND);
-                  return ErrorPage.error(session, null, Response.Status.BAD_REQUEST, Messages.IDENTITY_PROVIDER_UNEXPECTED_ERROR);
-              }
-              if (userSession.getState() != UserSessionModel.State.LOGGING_OUT) {
-                  logger.error("usersession in different state");
-                  EventBuilder event = new EventBuilder(realm, session, clientConnection);
-                  event.event(EventType.LOGOUT);
-                  event.error(Errors.USER_SESSION_NOT_FOUND);
-                  return ErrorPage.error(session, null, Response.Status.BAD_REQUEST, Messages.SESSION_NOT_ACTIVE);
-              }
-            }
-            return AuthenticationManager.finishBrowserLogout(session, realm, userSession, session.getContext().getUri(), clientConnection, headers);
+      } else {
+        userSession = session.sessions().getUserSession(realm, state);
+        if (userSession == null) {
+          logger.error("no valid user session");
+          EventBuilder event = new EventBuilder(realm, session, clientConnection);
+          event.event(EventType.LOGOUT);
+          event.error(Errors.USER_SESSION_NOT_FOUND);
+          return ErrorPage.error(session, null, Response.Status.BAD_REQUEST,
+              Messages.IDENTITY_PROVIDER_UNEXPECTED_ERROR);
         }
-
+        if (userSession.getState() != UserSessionModel.State.LOGGING_OUT) {
+          logger.error("usersession in different state");
+          EventBuilder event = new EventBuilder(realm, session, clientConnection);
+          event.event(EventType.LOGOUT);
+          event.error(Errors.USER_SESSION_NOT_FOUND);
+          return ErrorPage.error(session, null, Response.Status.BAD_REQUEST, Messages.SESSION_NOT_ACTIVE);
+        }
+      }
+      return AuthenticationManager.finishBrowserLogout(session, realm, userSession, session.getContext().getUri(),
+          clientConnection, headers);
     }
 
+  }
 
-
-  
   @Override
-  protected UriBuilder createAuthorizationUrl(AuthenticationRequest request)
-  {
+  protected UriBuilder createAuthorizationUrl(AuthenticationRequest request) {
     UriBuilder uriBuilder = super.createAuthorizationUrl(request);
-    FranceConnectIdentityProviderConfig fCConfig = (FranceConnectIdentityProviderConfig)getConfig();
+    FranceConnectIdentityProviderConfig fCConfig = (FranceConnectIdentityProviderConfig) getConfig();
     uriBuilder.queryParam("acr_values", new Object[] { fCConfig.getAcrValues() });
     logger.debugv("FranceConnect Authorization Url: {0}", uriBuilder.toString());
     return uriBuilder;
   }
-  
+
   @Override
-  public Response keycloakInitiatedBrowserLogout(KeycloakSession session,
-      UserSessionModel userSession, UriInfo uriInfo, RealmModel realm) {
+  public Response keycloakInitiatedBrowserLogout(KeycloakSession session, UserSessionModel userSession, UriInfo uriInfo,
+      RealmModel realm) {
     if (getConfig().getLogoutUrl() == null || getConfig().getLogoutUrl().trim().equals("")) {
       return null;
     }
@@ -139,21 +139,17 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider
       return null;
     } else {
       String sessionId = userSession.getId();
-      UriBuilder logoutUri =
-          UriBuilder.fromUri(getConfig().getLogoutUrl()).queryParam("state", sessionId);
+      UriBuilder logoutUri = UriBuilder.fromUri(getConfig().getLogoutUrl()).queryParam("state", sessionId);
       if (idToken != null) {
         logoutUri.queryParam("id_token_hint", idToken);
       }
-      String redirect =
-          RealmsResource.brokerUrl(uriInfo).path(IdentityBrokerService.class, "getEndpoint")
-              .path(OIDCEndpoint.class, "logoutResponse")
-              .build(realm.getName(), getConfig().getAlias()).toString();
+      String redirect = RealmsResource.brokerUrl(uriInfo).path(IdentityBrokerService.class, "getEndpoint")
+          .path(OIDCEndpoint.class, "logoutResponse").build(realm.getName(), getConfig().getAlias()).toString();
       logoutUri.queryParam("post_logout_redirect_uri", redirect);
       Response response = Response.status(302).location(logoutUri.build()).build();
       return response;
     }
   }
-
 
   @Override
   protected boolean verify(JWSInput jws) {
@@ -167,41 +163,42 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider
     return authorizationUrl;
   }
 
-
   public void setAuthorizationUrl(String authorizationUrl) {
     this.authorizationUrl = authorizationUrl;
   }
-
 
   public String getTokenUrl() {
     return tokenUrl;
   }
 
-
   public void setTokenUrl(String tokenUrl) {
     this.tokenUrl = tokenUrl;
   }
-
 
   public String getUserInfoUrl() {
     return userInfoUrl;
   }
 
-
   public void setUserInfoUrl(String userInfoUrl) {
     this.userInfoUrl = userInfoUrl;
   }
-
 
   public String getLogoutUrl() {
     return logoutUrl;
   }
 
-
   public void setLogoutUrl(String logoutUrl) {
     this.logoutUrl = logoutUrl;
   }
 
-
+  @Override
+  public BrokeredIdentityContext getFederatedIdentity(String response) {
+    try {
+      return super.getFederatedIdentity(response);
+    } catch (IdentityBrokerException e) {
+      log.error("Got response" + response);
+      throw e;
+    }
+  }
 
 }
