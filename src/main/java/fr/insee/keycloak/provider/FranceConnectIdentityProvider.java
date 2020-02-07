@@ -62,26 +62,26 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider implemen
         if (idToken != null && getConfig().isBackchannelSupported()) {
             backchannelLogout(userSession, idToken);
             return null;
-        } else {
-            String sessionId = userSession.getId();
-            UriBuilder logoutUri = UriBuilder.fromUri(logoutUrl)
-                    .queryParam("state", sessionId);
-
-            if (idToken != null) {
-                logoutUri.queryParam("id_token_hint", idToken);
-            }
-            String redirectUri = RealmsResource.brokerUrl(uriInfo)
-                .path(IdentityBrokerService.class, "getEndpoint")
-                .path(OIDCEndpoint.class, "logoutResponse")
-                .build(realm.getName(), getConfig().getAlias())
-                .toString();
-
-            logoutUri.queryParam("post_logout_redirect_uri", redirectUri);
-
-            return Response.status(Response.Status.FOUND)
-                .location(logoutUri.build())
-                .build();
         }
+
+        String sessionId = userSession.getId();
+        UriBuilder logoutUri = UriBuilder.fromUri(logoutUrl)
+                .queryParam("state", sessionId);
+
+        if (idToken != null) {
+            logoutUri.queryParam("id_token_hint", idToken);
+        }
+        String redirectUri = RealmsResource.brokerUrl(uriInfo)
+            .path(IdentityBrokerService.class, "getEndpoint")
+            .path(OIDCEndpoint.class, "logoutResponse")
+            .build(realm.getName(), getConfig().getAlias())
+            .toString();
+
+        logoutUri.queryParam("post_logout_redirect_uri", redirectUri);
+
+        return Response.status(Response.Status.FOUND)
+            .location(logoutUri.build())
+            .build();
     }
 
     @Override
@@ -110,53 +110,48 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider implemen
             UserSessionModel userSession;
 
             if (state == null) {
-                logger.error("state not found in query string");
+                logger.error("State not found in query string");
 
-                if (config.isIgnoreAbsentStateParameterLogout()) {
-                    logger.warn("Using usersession from cookie");
-
-                    AuthResult authResult = AuthenticationManager.authenticateIdentityCookie(session, realm, false);
-
-                    if (authResult != null) {
-                        userSession = authResult.getSession();
-                    } else {
-                        logger.error("no valid user session");
-                        EventBuilder event = new EventBuilder(realm, session, clientConnection);
-                        event.event(EventType.LOGOUT);
-                        event.error(Errors.USER_SESSION_NOT_FOUND);
-
-                        return ErrorPage.error(session, null, Response.Status.BAD_REQUEST, Messages.IDENTITY_PROVIDER_UNEXPECTED_ERROR);
-                    }
-                } else {
-                    EventBuilder event = new EventBuilder(realm, session, clientConnection);
-                    event.event(EventType.LOGOUT);
-                    event.error(Errors.USER_SESSION_NOT_FOUND);
-
+                if (!config.isIgnoreAbsentStateParameterLogout()) {
+                    sendUserSessionNotFoundEvent();
                     return ErrorPage.error(session, null, Response.Status.BAD_REQUEST, Messages.IDENTITY_PROVIDER_UNEXPECTED_ERROR);
                 }
+
+                logger.warn("Using usersession from cookie");
+
+                AuthResult authResult = AuthenticationManager.authenticateIdentityCookie(session, realm, false);
+                if (authResult == null) {
+                    return noValidUserSession();
+                }
+
+                userSession = authResult.getSession();
             } else {
                 userSession = session.sessions().getUserSession(realm, state);
 
                 if (userSession == null) {
-                    logger.error("no valid user session");
-                    EventBuilder event = new EventBuilder(realm, session, clientConnection);
-                    event.event(EventType.LOGOUT);
-                    event.error(Errors.USER_SESSION_NOT_FOUND);
-
-                    return ErrorPage.error(session, null, Response.Status.BAD_REQUEST, Messages.IDENTITY_PROVIDER_UNEXPECTED_ERROR);
-                }
-
-                if (userSession.getState() != UserSessionModel.State.LOGGING_OUT) {
-                    logger.error("usersession in different state");
-                    EventBuilder event = new EventBuilder(realm, session, clientConnection);
-                    event.event(EventType.LOGOUT);
-                    event.error(Errors.USER_SESSION_NOT_FOUND);
+                    return noValidUserSession();
+                } else if (userSession.getState() != UserSessionModel.State.LOGGING_OUT) {
+                    logger.error("Usersession in different state");
+                    sendUserSessionNotFoundEvent();
 
                     return ErrorPage.error(session, null, Response.Status.BAD_REQUEST, Messages.SESSION_NOT_ACTIVE);
                 }
             }
 
             return AuthenticationManager.finishBrowserLogout(session, realm, userSession, session.getContext().getUri(), clientConnection, headers);
+        }
+
+        private Response noValidUserSession() {
+            logger.error("No valid user session");
+            sendUserSessionNotFoundEvent();
+
+            return ErrorPage.error(session, null, Response.Status.BAD_REQUEST, Messages.IDENTITY_PROVIDER_UNEXPECTED_ERROR);
+        }
+
+        private void sendUserSessionNotFoundEvent() {
+            EventBuilder event = new EventBuilder(realm, session, clientConnection);
+            event.event(EventType.LOGOUT);
+            event.error(Errors.USER_SESSION_NOT_FOUND);
         }
 
     }
