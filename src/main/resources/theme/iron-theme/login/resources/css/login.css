@@ -37,7 +37,6 @@ ul > li + a:hover {
   font-size: 1.8em;
 }
 
-a.zocial.franceconnect-particulier-test,
 a.zocial.franceconnect-particulier {
   background-image: url(https://partenaires.franceconnect.gouv.fr/images/fc_bouton_alt2_v2.png);
   background-repeat: no-repeat;
@@ -50,7 +49,6 @@ a.zocial.franceconnect-particulier {
   padding-top: 60px;
 }
 
-a.zocial.franceconnect-particulier-test:hover,
 a.zocial.franceconnect-particulier:hover {
   background-image: url(https://partenaires.franceconnect.gouv.fr/images/fc_bouton_alt3_v2.png) !important;
   background-repeat: no-repeat !important;
@@ -58,7 +56,6 @@ a.zocial.franceconnect-particulier:hover {
   background-position: center !important;
 }
 
-a.zocial.franceconnect-particulier-test span,
 a.zocial.franceconnect-particulier span {
   display: none;
 }
