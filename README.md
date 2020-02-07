@@ -46,8 +46,7 @@ Pour tester, vous pouvez choisir le theme `fc-theme` pour le realm, puis vous re
 Pour intégrer le design du bouton FranceConnect, il faut ajouter les classes CSS suivante à votre thème :
 
 ```
-a.zocial.franceconnect-particulier
-{
+a.zocial.franceconnect-particulier {
     background: url(https://partenaires.franceconnect.gouv.fr/images/fc_bouton_alt2_v2.png) no-repeat left top;
     height: 70px;
     width: auto;
@@ -60,7 +59,7 @@ a.zocial.franceconnect-particulier:hover {
     width: auto;
 }
 
-a.zocial.franceconnect-particulier span{
+a.zocial.franceconnect-particulier span {
     display:none;
 }
 ```
