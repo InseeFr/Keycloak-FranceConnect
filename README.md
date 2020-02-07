@@ -33,7 +33,7 @@ Une fois le provider choisi, vous arrivez sur la page suivante:
 
 Vous pouvez changer les paramètres comme vous le souhaitez, excepté pour l'alias qui doit rester celui ci, dans le cas où vous souhaitez profiter du theme offert par cette extension (dans le cas contraire, vous pouvez le modifier comme bon vous semble).
 
-Sur cette page se trouve aussi l'uri de redirection qu'il vous faudra entrer sur le portail partenaire de France Connect (ici : `http://localhost:8080/auth/realms/franceconnect/broker/franceconnect-particulier-test/endpoint`). L'uri de redirection pour le logout se construit à partir de la précedente en rajoutant `/logout_response` (ici : `http://localhost:8080/auth/realms/franceconnect/broker/franceconnect-particulier-test/endpoint/logout_response`).
+Sur cette page se trouve aussi l'uri de redirection qu'il vous faudra entrer sur le portail partenaire de France Connect (ici : `http://localhost:8080/auth/realms/franceconnect/broker/franceconnect-particulier/endpoint`). L'uri de redirection pour le logout se construit à partir de la précedente en rajoutant `/logout_response` (ici : `http://localhost:8080/auth/realms/franceconnect/broker/franceconnect-particulier/endpoint/logout_response`).
 
 Une fois validé, vous pouvez ajouter les mappers nécessaires pour récupérer les attributs que vous souhaitez à partir [des claims fournis par France Connect](https://partenaires.franceconnect.gouv.fr/fcp/fournisseur-service).
 
