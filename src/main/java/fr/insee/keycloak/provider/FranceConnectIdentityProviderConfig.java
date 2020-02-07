@@ -5,6 +5,9 @@ import org.keycloak.models.IdentityProviderModel;
 
 class FranceConnectIdentityProviderConfig extends OIDCIdentityProviderConfig {
 
+    private static final EidasLevel DEFAULT_EIDAS_LEVEL = EidasLevel.EIDAS1;
+    private static final Environment DEFAULT_FC_ENVIRONMENT = Environment.INTEGRATION;
+
     FranceConnectIdentityProviderConfig(IdentityProviderModel identityProviderModel) {
         super(identityProviderModel);
 
@@ -14,7 +17,7 @@ class FranceConnectIdentityProviderConfig extends OIDCIdentityProviderConfig {
     private void initialize() {
         Environment franceConnectEnvironment = Environment.getOrDefault(
             getConfig().get(Environment.ENVIRONMENT_PROPERTY_NAME),
-            Environment.INTEGRATION
+            DEFAULT_FC_ENVIRONMENT
         );
 
         franceConnectEnvironment.configureUrls(this);
@@ -24,13 +27,15 @@ class FranceConnectIdentityProviderConfig extends OIDCIdentityProviderConfig {
     }
 
     boolean isIgnoreAbsentStateParameterLogout() {
-        return Boolean.parseBoolean(getConfig().get("ignoreAbsentStateParameterLogout"));
+        return Boolean.parseBoolean(
+            getConfig().get("ignoreAbsentStateParameterLogout")
+        );
     }
 
-    String getAcrValues() {
+    String getEidasLevel() {
         return EidasLevel.getOrDefault(
             getConfig().get(EidasLevel.EIDAS_LEVEL_PROPERTY_NAME),
-            EidasLevel.EIDAS1
+            DEFAULT_EIDAS_LEVEL
         ).toString();
     }
 
@@ -57,8 +62,9 @@ class FranceConnectIdentityProviderConfig extends OIDCIdentityProviderConfig {
     }
 
     enum Environment {
+
         INTEGRATION(
-            "https://fcp.integ01.dev-franceconnect.fr/api/v1/authorize",
+                "https://fcp.integ01.dev-franceconnect.fr/api/v1/authorize",
                 "https://fcp.integ01.dev-franceconnect.fr/api/v1/token",
                 "https://fcp.integ01.dev-franceconnect.fr/api/v1/userinfo",
                 "https://fcp.integ01.dev-franceconnect.fr/api/v1/logout"

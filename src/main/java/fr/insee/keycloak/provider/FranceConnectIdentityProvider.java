@@ -14,6 +14,7 @@ import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserSessionModel;
 import org.keycloak.services.ErrorPage;
 import org.keycloak.services.managers.AuthenticationManager;
+import org.keycloak.services.managers.AuthenticationManager.AuthResult;
 import org.keycloak.services.messages.Messages;
 import org.keycloak.services.resources.IdentityBrokerService;
 import org.keycloak.services.resources.RealmsResource;
@@ -38,10 +39,11 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider implemen
 
     @Override
     protected UriBuilder createAuthorizationUrl(AuthenticationRequest request) {
+        FranceConnectIdentityProviderConfig config = (FranceConnectIdentityProviderConfig) getConfig();
 
-        UriBuilder uriBuilder = super.createAuthorizationUrl(request);
-        FranceConnectIdentityProviderConfig fCConfig = (FranceConnectIdentityProviderConfig) getConfig();
-        uriBuilder.queryParam("acr_values", fCConfig.getAcrValues());
+        UriBuilder uriBuilder = super.createAuthorizationUrl(request)
+                .queryParam("acr_values", config.getEidasLevel());
+
         logger.debug("FranceConnect Authorization Url: " + uriBuilder.build().toString());
 
         return uriBuilder;
@@ -68,13 +70,13 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider implemen
             if (idToken != null) {
                 logoutUri.queryParam("id_token_hint", idToken);
             }
-            String redirect = RealmsResource.brokerUrl(uriInfo)
+            String redirectUri = RealmsResource.brokerUrl(uriInfo)
                 .path(IdentityBrokerService.class, "getEndpoint")
                 .path(OIDCEndpoint.class, "logoutResponse")
                 .build(realm.getName(), getConfig().getAlias())
                 .toString();
 
-            logoutUri.queryParam("post_logout_redirect_uri", redirect);
+            logoutUri.queryParam("post_logout_redirect_uri", redirectUri);
 
             return Response.status(Response.Status.FOUND)
                 .location(logoutUri.build())
@@ -109,9 +111,12 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider implemen
 
             if (state == null) {
                 logger.error("state not found in query string");
+
                 if (config.isIgnoreAbsentStateParameterLogout()) {
                     logger.warn("Using usersession from cookie");
-                    AuthenticationManager.AuthResult authResult = AuthenticationManager.authenticateIdentityCookie(session, realm, false);
+
+                    AuthResult authResult = AuthenticationManager.authenticateIdentityCookie(session, realm, false);
+
                     if (authResult != null) {
                         userSession = authResult.getSession();
                     } else {
@@ -140,6 +145,7 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider implemen
 
                     return ErrorPage.error(session, null, Response.Status.BAD_REQUEST, Messages.IDENTITY_PROVIDER_UNEXPECTED_ERROR);
                 }
+
                 if (userSession.getState() != UserSessionModel.State.LOGGING_OUT) {
                     logger.error("usersession in different state");
                     EventBuilder event = new EventBuilder(realm, session, clientConnection);
