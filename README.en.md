@@ -37,7 +37,7 @@ Once validated, you can add the mappers needed to retrieve the attributes you wa
 
 To test, you can choose the theme `fc-theme` for the realm, then go to the address:`https://<keycloak>/auth/realms/<realm>/account`:
 
-![Keycloak-fc-login](/assets/keycloak-fc-login.PNG)
+![Keycloak-fc-login](/assets/keycloak-fc-login.png)
 
 ## Add design to FranceConnect button to your theme
 

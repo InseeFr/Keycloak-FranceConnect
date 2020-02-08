@@ -29,7 +29,7 @@ Une fois le jar déployé, vous pouvez créer un nouveau "Identity Provider" (da
 
 Une fois le provider choisi, vous arrivez sur la page suivante:
 
-![keycloak-fc-conf-provider](/assets/keycloak-fc-conf-provider.PNG)
+![keycloak-fc-conf-provider](/assets/keycloak-fc-conf-provider.png)
 
 Vous pouvez changer les paramètres comme vous le souhaitez, excepté pour l'alias qui doit rester celui ci, dans le cas où vous souhaitez profiter du theme offert par cette extension (dans le cas contraire, vous pouvez le modifier comme bon vous semble).
 
@@ -39,7 +39,7 @@ Une fois validé, vous pouvez ajouter les mappers nécessaires pour récupérer 
 
 Pour tester, vous pouvez choisir le theme `fc-theme` pour le realm, puis vous rendre sur l'adresse : `https://<keycloak>/auth/realms/<realm>/account` :
 
-![keycloak-fc-login](/assets/keycloak-fc-login.PNG)
+![keycloak-fc-login](/assets/keycloak-fc-login.png)
 
 ## Intégration du bouton FranceConnect dans votre theme
 
