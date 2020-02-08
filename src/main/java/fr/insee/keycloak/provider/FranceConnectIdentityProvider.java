@@ -34,12 +34,13 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider implemen
 
     @Override
     public Object callback(RealmModel realm, AuthenticationCallback callback, EventBuilder event) {
-        return new OIDCEndpoint(callback, realm, event, (FranceConnectIdentityProviderConfig) getConfig());
+        return new OIDCEndpoint(callback, realm, event, getFranceConnectConfig());
     }
 
     @Override
     protected UriBuilder createAuthorizationUrl(AuthenticationRequest request) {
-        FranceConnectIdentityProviderConfig config = (FranceConnectIdentityProviderConfig) getConfig();
+
+        FranceConnectIdentityProviderConfig config = getFranceConnectConfig();
 
         UriBuilder uriBuilder = super.createAuthorizationUrl(request)
                 .queryParam("acr_values", config.getEidasLevel());
@@ -53,13 +54,15 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider implemen
     public Response keycloakInitiatedBrowserLogout(KeycloakSession session, UserSessionModel userSession,
                                                    UriInfo uriInfo, RealmModel realm) {
 
-        String logoutUrl = getConfig().getLogoutUrl();
+        FranceConnectIdentityProviderConfig config = getFranceConnectConfig();
+
+        String logoutUrl = config.getLogoutUrl();
         if (logoutUrl == null || logoutUrl.trim().equals("")) {
             return null;
         }
 
         String idToken = userSession.getNote(FEDERATED_ID_TOKEN);
-        if (idToken != null && getConfig().isBackchannelSupported()) {
+        if (idToken != null && config.isBackchannelSupported()) {
             backchannelLogout(userSession, idToken);
             return null;
         }
@@ -74,7 +77,7 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider implemen
         String redirectUri = RealmsResource.brokerUrl(uriInfo)
             .path(IdentityBrokerService.class, "getEndpoint")
             .path(OIDCEndpoint.class, "logoutResponse")
-            .build(realm.getName(), getConfig().getAlias())
+            .build(realm.getName(), config.getAlias())
             .toString();
 
         logoutUri.queryParam("post_logout_redirect_uri", redirectUri);
@@ -87,11 +90,17 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider implemen
     @Override
     protected boolean verify(JWSInput jws) {
 
-        if (!getConfig().isValidateSignature()) {
+        FranceConnectIdentityProviderConfig config = getFranceConnectConfig();
+
+        if (!config.isValidateSignature()) {
             return true;
         }
 
-        return HMACProvider.verify(jws, getConfig().getClientSecret().getBytes());
+        return HMACProvider.verify(jws, config.getClientSecret().getBytes());
+    }
+
+    public FranceConnectIdentityProviderConfig getFranceConnectConfig() {
+        return (FranceConnectIdentityProviderConfig) super.getConfig();
     }
 
     protected class OIDCEndpoint extends Endpoint {
