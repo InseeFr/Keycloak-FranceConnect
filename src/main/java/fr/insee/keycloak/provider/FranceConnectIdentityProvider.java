@@ -14,7 +14,6 @@ import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserSessionModel;
 import org.keycloak.services.ErrorPage;
 import org.keycloak.services.managers.AuthenticationManager;
-import org.keycloak.services.managers.AuthenticationManager.AuthResult;
 import org.keycloak.services.messages.Messages;
 import org.keycloak.services.resources.IdentityBrokerService;
 import org.keycloak.services.resources.RealmsResource;
@@ -116,42 +115,37 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider implemen
         @GET
         @Path("logout_response")
         public Response logoutResponse(@QueryParam("state") String state) {
-            UserSessionModel userSession;
 
-            if (state == null) {
-                logger.error("State not found in query string");
-
-                if (!config.isIgnoreAbsentStateParameterLogout()) {
-                    sendUserSessionNotFoundEvent();
-                    return ErrorPage.error(session, null, Response.Status.BAD_REQUEST, Messages.IDENTITY_PROVIDER_UNEXPECTED_ERROR);
-                }
-
-                logger.warn("Using usersession from cookie");
-
-                AuthResult authResult = AuthenticationManager.authenticateIdentityCookie(session, realm, false);
+            if (state == null && config.isIgnoreAbsentStateParameterLogout()) {
+                logger.warn("using usersession from cookie");
+                AuthenticationManager.AuthResult authResult = AuthenticationManager.authenticateIdentityCookie(session, realm, false);
                 if (authResult == null) {
                     return noValidUserSession();
                 }
 
-                userSession = authResult.getSession();
-            } else {
-                userSession = session.sessions().getUserSession(realm, state);
+                UserSessionModel userSession = authResult.getSession();
+                return AuthenticationManager.finishBrowserLogout(session, realm, userSession, session.getContext().getUri(), clientConnection, headers);
+            } else if (state == null) {
+                logger.error("no state parameter returned");
+                sendUserSessionNotFoundEvent();
 
-                if (userSession == null) {
-                    return noValidUserSession();
-                } else if (userSession.getState() != UserSessionModel.State.LOGGING_OUT) {
-                    logger.error("Usersession in different state");
-                    sendUserSessionNotFoundEvent();
+                return ErrorPage.error(session, null, Response.Status.BAD_REQUEST, Messages.IDENTITY_PROVIDER_UNEXPECTED_ERROR);
+            }
 
-                    return ErrorPage.error(session, null, Response.Status.BAD_REQUEST, Messages.SESSION_NOT_ACTIVE);
-                }
+            UserSessionModel userSession = session.sessions().getUserSession(realm, state);
+            if (userSession == null) {
+                return noValidUserSession();
+            } else if (userSession.getState() != UserSessionModel.State.LOGGING_OUT) {
+                logger.error("usersession in different state");
+                sendUserSessionNotFoundEvent();
+                return ErrorPage.error(session, null, Response.Status.BAD_REQUEST, Messages.SESSION_NOT_ACTIVE);
             }
 
             return AuthenticationManager.finishBrowserLogout(session, realm, userSession, session.getContext().getUri(), clientConnection, headers);
         }
 
         private Response noValidUserSession() {
-            logger.error("No valid user session");
+            logger.error("no valid user session");
             sendUserSessionNotFoundEvent();
 
             return ErrorPage.error(session, null, Response.Status.BAD_REQUEST, Messages.IDENTITY_PROVIDER_UNEXPECTED_ERROR);
