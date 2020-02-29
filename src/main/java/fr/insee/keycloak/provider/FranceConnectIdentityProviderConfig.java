@@ -32,11 +32,11 @@ class FranceConnectIdentityProviderConfig extends OIDCIdentityProviderConfig {
         );
     }
 
-    String getEidasLevel() {
+    EidasLevel getEidasLevel() {
         return EidasLevel.getOrDefault(
             getConfig().get(EidasLevel.EIDAS_LEVEL_PROPERTY_NAME),
             DEFAULT_EIDAS_LEVEL
-        ).toString();
+        );
     }
 
     enum EidasLevel {
