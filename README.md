@@ -2,71 +2,84 @@
 
 [English Version](README.en.md)
 
-Extension [keycloak](https://www.keycloak.org) pour faciliter l'usage de France Connect
+Cette extension pour [Keycloak](https://www.keycloak.org), ajoute un fournisseur d'identité permettant d'utiliser les services proposés par [France Connect](https://franceconnect.gouv.fr/).
 
 [![Build Status](https://travis-ci.org/inseefr/Keycloak-FranceConnect.svg?branch=master)](https://travis-ci.org/inseefr/Keycloak-FranceConnect)
 
 ## Fonctionnalités
 
-- ajout de la vérification de signature (basée sur le client-secret)
-- ajout d'un theme pour afficher les boutons france connect
-- meilleure gestion du logout (contourne https://issues.jboss.org/browse/KEYCLOAK-7209)
-- gestion du niveau d'authentification dans la demande d'autorisation ( cf [communication FranceConnect](https://dev.entrouvert.org/issues/34448) )
+* Vérification de signature (basée sur le client-secret)
+* Gestion du niveau d'authentification (eIDAS) dans la demande d'autorisation (cf [communication FranceConnect](https://dev.entrouvert.org/issues/34448))
+* Thèmes de connexion permettant l'affichage des boutons France Connect (fc-theme/iron-theme)
+* Meilleure gestion du logout (contourne https://issues.jboss.org/browse/KEYCLOAK-7209)
+
+## Compatibilité
+
+Cette extension est compatible avec Keycloak `8.0.1.Final` et supérieur.
+
+## Migration
+
+Si vous utilisez déjà une ancienne version de l'extension, il est préférable de supprimer votre configuration afin d'éviter tout conflit possible.
+* 1.x -> 1.4 : Vous devez ajouter le niveau eIDAS dans la configuration du fournisseur d'identité.
+* 1.x -> 1.5 : Vérifiez que votre fournisseur d'identité existe et que l'environnemnt France Connect selectionné est celui désiré.
+
+## Installation
+
+L'installation de l'extension est simple et peut-être réalisée sans redémarrage de Keycloak.
+
+* Téléchargez la dernière version de l'extension à partir de la page de [release](https://github.com/InseeFr/Keycloak-FranceConnect/releases)
+* Copiez le fichier JAR dans le dossier `standalone/deployments` de votre serveur Keycloak
+* Redémarrez Keycloak (optionnel, le déploiement à chaud devrait fonctionner)
+
+Vous pouvez également cloner le repository Github et effectuer une installation locale avec la commande :
+
+```
+$ mvn clean install wildfly:deploy
+```
 
 ## Utilisation
 
-Vous aurez besoin du logiciel [keycloak](https://www.keycloak.org) dans une version supérieure à la 8.0.1.
-Placer le jar dans `$keycloak_home/standalone/deployments`
-ou avec une installation locale de keycloak:
+### Prérequis
 
-```
-mvn clean install wildfly:deploy
-```
+Vous devez créer un [compte France Connect](https://franceconnect.gouv.fr/partenaires) afin de récupérer les informations nécessaires à la configuration de cette extension (clientId, clientSecret, configuration de l'url de redirection autorisée, ...). 
 
-Une fois le jar déployé, vous pouvez créer un nouveau "Identity Provider" (dans un nouveau realm préférablement). Dans la liste déroulante, vous avez le choix entre deux providers qui représentent l'environnement de production et l'environnement de test france connect. Ce dernier est utilisable avec un compte créé sur https://partenaires.franceconnect.gouv.fr/.
+Il existe 2 environnements de connexion, `Integration` et `Production`. La demande d'un compte permettant l'accès à l'environnement d'Intégration s'effectue par email au service support de France Connect.
 
-:warning: Si vous migrez et que vous disposez déjà d'un "Identity Provider" configuré, vous devez impérativement configurer le niveau eIDAS dans sa configuration.
+### Configuration
 
-Une fois le provider choisi, vous arrivez sur la page suivante:
+Suite à l'installation de l'extension, le fournisseur d'identité `France Connect Particulier` est apparu. Une fois ce dernier selectionné, vous arrivez sur la page de configuration suivante :
 
 ![keycloak-fc-conf-provider](/assets/keycloak-fc-conf-provider.png)
 
-Vous pouvez changer les paramètres comme vous le souhaitez, excepté pour l'alias qui doit rester celui ci, dans le cas où vous souhaitez profiter du theme offert par cette extension (dans le cas contraire, vous pouvez le modifier comme bon vous semble).
+Sélectionnez l'environnement désiré, entrez votre clientId, clientSecret, [les scopes](https://partenaires.franceconnect.gouv.fr/fcp/fournisseur-service#identite-pivot) que vous souhaitez demander, le niveau d'authentification eIDAS.
+L'alias configuré par défaut (`france-connect-particulier`), est utilisé par les thèmes `fc-theme` et `iron-theme`. Vous pouvez donc modifier le nom de l'alias si vous n'utilisez pas un de ces thèmes.
 
-Sur cette page se trouve aussi l'uri de redirection qu'il vous faudra entrer sur le portail partenaire de France Connect (ici : `http://localhost:8080/auth/realms/franceconnect/broker/franceconnect-particulier/endpoint`). L'uri de redirection pour le logout se construit à partir de la précedente en rajoutant `/logout_response` (ici : `http://localhost:8080/auth/realms/franceconnect/broker/franceconnect-particulier/endpoint/logout_response`).
+Vous trouverez également l'url de redirection qu'il faudra enregistrer sur le portail Partenaire de France Connect :
+* `https://<keycloak-url>/auth/realms/<realm>/broker/franceconnect-particulier/endpoint` 
+* et l'url de redirection pour le logout en ajoutant `/logout_response` à la première url (`https://<keycloak-url>/auth/realms/<realm>/broker/franceconnect-particulier/endpoint/logout_response`).
 
-Une fois validé, vous pouvez ajouter les mappers nécessaires pour récupérer les attributs que vous souhaitez à partir [des claims fournis par France Connect](https://partenaires.franceconnect.gouv.fr/fcp/fournisseur-service).
+#### Mappers
 
-Pour tester, vous pouvez choisir le theme `fc-theme` pour le realm, puis vous rendre sur l'adresse : `https://<keycloak>/auth/realms/<realm>/account` :
+Une fois la configuration validée, vous pouvez ajouter des mappers afin de récupérer les attributs à partir [des claims fournis par France Connect](https://partenaires.franceconnect.gouv.fr/fcp/fournisseur-service).
+
+Exemples de mappers :
+* name : `lastName`, Mapper Type : `Attribute Importer`, Claim : `family_name`, User Attribute Name : `lastName`
+* name : `firstName`, Mapper Type : `Attribute Importer`, Claim : `given_name`, User Attribute Name : `firstName`
+* name : `email`, Mapper Type : `Attribute Importer`, Claim : `email`, User Attribute Name : `email`
+
+#### Thème
+
+Cette extension fournit 2 thèmes :
+* `fc-theme`
+* `iron-theme`
+
+Utilisez le thème de votre choix, et rendez-vous à l'adresse suivante : `https://<keycloak-url>/auth/realms/<realm>/account` :
 
 ![keycloak-fc-login](/assets/keycloak-fc-login.png)
 
-## Intégration du bouton FranceConnect dans votre theme
-
-Pour intégrer le design du bouton FranceConnect, il faut ajouter les classes CSS suivante à votre thème :
-
-```
-a.zocial.franceconnect-particulier {
-    background: url(https://partenaires.franceconnect.gouv.fr/images/fc_bouton_alt2_v2.png) no-repeat left top;
-    height: 70px;
-    width: auto;
-    padding-top: 60px;
-}
-
-a.zocial.franceconnect-particulier:hover {
-    background: url(https://partenaires.franceconnect.gouv.fr/images/fc_bouton_alt3_v2.png) no-repeat left top !important;
-    height: 70px;
-    width: auto;
-}
-
-a.zocial.franceconnect-particulier span {
-    display:none;
-}
-```
-
 ## FAQ
 
-[FAQ](FAQ.md)
+[Voir la FAQ](FAQ.md)
 
 ## Comment contribuer
 
