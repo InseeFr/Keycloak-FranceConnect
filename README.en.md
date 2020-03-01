@@ -1,70 +1,84 @@
 # keycloak-franceconnect
 
-France Connect Openid-Connect Provider for Keycloak
+This [Keycloak](https://www.keycloak.org) plugin adds an identity provider allowing to use [France Connect](https://franceconnect.gouv.fr/) services.
 
 [![Build Status](https://travis-ci.org/inseefr/Keycloak-FranceConnect.svg?branch=master)](https://travis-ci.org/inseefr/Keycloak-FranceConnect)
 
 ## Features
 
-- add missing signature verification (based on client-secret)
-- add custom Theme with FranceConnect buttons
-- add a better management for logout (https://issues.jboss.org/browse/KEYCLOAK-7209)
-- add support for the user account warranty level required on authorization request ( cf [communication FranceConnect](https://dev.entrouvert.org/issues/34448) )
+* Signature verification (based on client-secret)
+* User account warranty level (eIDAS) required on authorization request (cf [communication FranceConnect](https://dev.entrouvert.org/issues/34448))
+* Login themes with FranceConnect buttons (fc-theme and iron-theme)
+* Better management for logout (https://issues.jboss.org/browse/KEYCLOAK-7209)
+
+## Compatibility
+
+This plugin is compatible with Keycloak `8.0.1.Final` and higher.
+
+## Migration
+
+If you are already using an older version of the plugin, it's better to delete your configuration to avoid any conflict.
+
+* 1.x -> 1.4: You will need to configure the new eIDAS level in the configuration
+* 1.x -> 1.5: Check that your identity provider still exists and that the selected France Connect environment is good
+
+## Installation
+
+The plugin installation is simple and can be done without a Keycloak server restart.
+
+* Download the latest release from the [releases page](https://github.com/InseeFr/Keycloak-FranceConnect/releases)
+* Copy the JAR file into the `standalone/deployments` directory in your Keycloak server's root
+* Restart Keycloak (optional, hot deployment should work)
+
+You can also clone the Github Repository and install the plugin locally with the following command:
+
+```
+$ mvn clean install wildfly:deploy
+```
 
 ## How to use it
 
-You will need [keycloak](https://www.keycloak.org) > 8.0.1
-Simply drop the generated jar in `$keycloak_home/standalone/deployments`
-or with a local install :
+### Requirements
 
-```
-mvn clean install wildfly:deploy
-```
+You must have a [France Connect account](https://franceconnect.gouv.fr/partenaires) to retrieve plugin configuration information (clientId, clientSecret, authorized redirect uri, ...)
 
-Once the jar has been deployed, you can create a new "Identity Provider" (in a new realm preferably). In the drop-down list, you can choose between two providers that represent the production environment and the france connect test environment. The latter can be used with an account created on https://partenaires.franceconnect.gouv.fr/.
+There are 2 environments, `Integration` and `Production`. The request for an Integration account is made by email to the France Connect support team.
 
-:warning: If you already have a configured FranceConnect Identity Provider, You will need to configure the new eIDAS level in it's configuration.
+### Configuration
 
-Once chosen the provider, you arrive on the following page:
+Once the installation is complete, the `France Connect Particulier` identity provider appears. Once selected, you can see the following configuration page:
 
-![Keycloak-fc-conf-provider](/assets/keycloak-fc-conf-provider.PNG)
+![keycloak-fc-conf-provider](/assets/keycloak-fc-conf-provider.png)
 
-You can change the settings as you want, except for the alias that must remain this one, in case you want to take advantage of the theme offered by this extension (if not, you can change it as you see fit).
+Choose the France Connect environment, enter your clientId, clientSecret, requested [scopes](https://partenaires.franceconnect.gouv.fr/fcp/fournisseur-service#identite-pivot), the eIDAS authentication level.  
+The configured alias (`france-connect-particulier`) is used by `fc-theme` and `iron-theme` themes. You can rename this alias if you don't use one of theses themes.
 
-On this page is also the redirection uri you will need to enter on the France Connect partner portal (here: `http://localhost:8080/auth/realms/franceconnect/broker/franceconnect-particulier/endpoint`). The redirection uri for the logout is built from the previous one by adding `/logout_response` (here:`http://localhost:8080/auth/realms/franceconnect/broker/franceconnect-particulier/endpoint/logout_response`).
+You will also find the redirect uri you will need to enter on the France Connect partner portal:
+* endpoint: `https://<keycloak-url>/auth/realms/<realm>/broker/franceconnect-particulier/endpoint` 
+* logout: `https://<keycloak-url>/auth/realms/<realm>/broker/franceconnect-particulier/endpoint/logout_response`
 
-Once validated, you can add the mappers needed to retrieve the attributes you want from [claims provided by France Connect](https://partenaires.franceconnect.gouv.fr/fcp/profisseur-service).
+#### Mappers
 
-To test, you can choose the theme `fc-theme` for the realm, then go to the address:`https://<keycloak>/auth/realms/<realm>/account`:
+Once the configuration validated, you can add the mappers needed to retrieve the attributes you want from [claims provided by France Connect](https://partenaires.franceconnect.gouv.fr/fcp/fournisseur-service).
 
-![Keycloak-fc-login](/assets/keycloak-fc-login.png)
+Mappers examples:
+* Name : `lastName`, Mapper Type : `Attribute Importer`, Claim : `family_name`, User Attribute Name : `lastName`
+* Name : `firstName`, Mapper Type : `Attribute Importer`, Claim : `given_name`, User Attribute Name : `firstName`
+* Name : `email`, Mapper Type : `Attribute Importer`, Claim : `email`, User Attribute Name : `email`
 
-## Add design to FranceConnect button to your theme
+#### Theme
 
-To apply the design to the FranceConnect button, add this CSS classes to your theme:
+This plugin provides 2 themes:
+* `fc-theme`
+* `iron-theme`
 
-```
-a.zocial.franceconnect-particulier {
-    background: url(https://partenaires.franceconnect.gouv.fr/images/fc_bouton_alt2_v2.png) no-repeat left top;
-    height: 70px;
-    width: auto;
-    padding-top: 60px;
-}
+Choose your theme and go to the following url: `https://<keycloak-url>/auth/realms/<realm>/account`
 
-a.zocial.franceconnect-particulier:hover {
-    background: url(https://partenaires.franceconnect.gouv.fr/images/fc_bouton_alt3_v2.png) no-repeat left top !important;
-    height: 70px;
-    width: auto;
-}
+![keycloak-fc-login](/assets/keycloak-fc-login.png)
 
-a.zocial.franceconnect-particulier span {
-    display:none;
-}
-```
+## Q&A
 
-## FAQ
-
-[FAQ](FAQ.md)
+[See Q&A](FAQ.md)
 
 ## How to contribute
 

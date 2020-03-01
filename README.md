@@ -2,7 +2,7 @@
 
 [English Version](README.en.md)
 
-Cette extension pour [Keycloak](https://www.keycloak.org), ajoute un fournisseur d'identité permettant d'utiliser les services proposés par [France Connect](https://franceconnect.gouv.fr/).
+Cette extension pour [Keycloak](https://www.keycloak.org) ajoute un fournisseur d'identité permettant d'utiliser les services proposés par [France Connect](https://franceconnect.gouv.fr/).
 
 [![Build Status](https://travis-ci.org/inseefr/Keycloak-FranceConnect.svg?branch=master)](https://travis-ci.org/inseefr/Keycloak-FranceConnect)
 
@@ -10,7 +10,7 @@ Cette extension pour [Keycloak](https://www.keycloak.org), ajoute un fournisseur
 
 * Vérification de signature (basée sur le client-secret)
 * Gestion du niveau d'authentification (eIDAS) dans la demande d'autorisation (cf [communication FranceConnect](https://dev.entrouvert.org/issues/34448))
-* Thèmes de connexion permettant l'affichage des boutons France Connect (fc-theme/iron-theme)
+* Thèmes de connexion permettant l'affichage des boutons France Connect (fc-theme et iron-theme)
 * Meilleure gestion du logout (contourne https://issues.jboss.org/browse/KEYCLOAK-7209)
 
 ## Compatibilité
@@ -20,8 +20,9 @@ Cette extension est compatible avec Keycloak `8.0.1.Final` et supérieur.
 ## Migration
 
 Si vous utilisez déjà une ancienne version de l'extension, il est préférable de supprimer votre configuration afin d'éviter tout conflit possible.
+
 * 1.x -> 1.4 : Vous devez ajouter le niveau eIDAS dans la configuration du fournisseur d'identité.
-* 1.x -> 1.5 : Vérifiez que votre fournisseur d'identité existe et que l'environnemnt France Connect selectionné est celui désiré.
+* 1.x -> 1.5 : Vérifiez que votre fournisseur d'identité existe et que l'environnement France Connect selectionné est celui désiré.
 
 ## Installation
 
@@ -52,20 +53,20 @@ Suite à l'installation de l'extension, le fournisseur d'identité `France Conne
 ![keycloak-fc-conf-provider](/assets/keycloak-fc-conf-provider.png)
 
 Sélectionnez l'environnement désiré, entrez votre clientId, clientSecret, [les scopes](https://partenaires.franceconnect.gouv.fr/fcp/fournisseur-service#identite-pivot) que vous souhaitez demander, le niveau d'authentification eIDAS.
-L'alias configuré par défaut (`france-connect-particulier`), est utilisé par les thèmes `fc-theme` et `iron-theme`. Vous pouvez donc modifier le nom de l'alias si vous n'utilisez pas un de ces thèmes.
+L'alias configuré par défaut (`france-connect-particulier`) est utilisé par les thèmes `fc-theme` et `iron-theme`. Vous pouvez donc modifier le nom de l'alias si vous n'utilisez pas un de ces thèmes.
 
 Vous trouverez également l'url de redirection qu'il faudra enregistrer sur le portail Partenaire de France Connect :
-* `https://<keycloak-url>/auth/realms/<realm>/broker/franceconnect-particulier/endpoint` 
-* et l'url de redirection pour le logout en ajoutant `/logout_response` à la première url (`https://<keycloak-url>/auth/realms/<realm>/broker/franceconnect-particulier/endpoint/logout_response`).
+* endpoint : `https://<keycloak-url>/auth/realms/<realm>/broker/franceconnect-particulier/endpoint` 
+* logout : `https://<keycloak-url>/auth/realms/<realm>/broker/franceconnect-particulier/endpoint/logout_response`
 
 #### Mappers
 
 Une fois la configuration validée, vous pouvez ajouter des mappers afin de récupérer les attributs à partir [des claims fournis par France Connect](https://partenaires.franceconnect.gouv.fr/fcp/fournisseur-service).
 
 Exemples de mappers :
-* name : `lastName`, Mapper Type : `Attribute Importer`, Claim : `family_name`, User Attribute Name : `lastName`
-* name : `firstName`, Mapper Type : `Attribute Importer`, Claim : `given_name`, User Attribute Name : `firstName`
-* name : `email`, Mapper Type : `Attribute Importer`, Claim : `email`, User Attribute Name : `email`
+* Name : `lastName`, Mapper Type : `Attribute Importer`, Claim : `family_name`, User Attribute Name : `lastName`
+* Name : `firstName`, Mapper Type : `Attribute Importer`, Claim : `given_name`, User Attribute Name : `firstName`
+* Name : `email`, Mapper Type : `Attribute Importer`, Claim : `email`, User Attribute Name : `email`
 
 #### Thème
 
@@ -73,7 +74,7 @@ Cette extension fournit 2 thèmes :
 * `fc-theme`
 * `iron-theme`
 
-Utilisez le thème de votre choix, et rendez-vous à l'adresse suivante : `https://<keycloak-url>/auth/realms/<realm>/account` :
+Utilisez le thème de votre choix, et rendez-vous à l'adresse suivante : `https://<keycloak-url>/auth/realms/<realm>/account`
 
 ![keycloak-fc-login](/assets/keycloak-fc-login.png)
 
