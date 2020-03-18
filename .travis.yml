@@ -1,17 +1,21 @@
 language: java
+
 jdk:
   - openjdk8
 
+cache:
+  directories:
+    - $HOME/.m2/repository
+
 before_install:
-  - mvn -B versions:set -DnewVersion=$TRAVIS_BRANCH
+  - ./mvnw -B versions:set -DnewVersion=$TRAVIS_BRANCH
 
 script:
-  - mvn -B package
+  - ./mvnw -B clean verify
 
 deploy:
   skip_cleanup: true
   provider: releases
-  edge: true
   token:
     secure: "eZb6nhIbDlgI5jjK9lS8F/F/TQ8Ign5ij3REpv1D4q6j9nz973aoeQiWzx+wg1h/pG7VMSIvfJIF8MxaQCQY26KbBeMgXQpQVAZxK2P2U0SL58l5kzR8uCyC1YgQnrdSpI/W4IYGgQofJGwYOgKcg3hkismCxRfkYsVBdzndcDAvyHGQoEuAVARFkcgI2eeWxW42tMkHmRBtUdl+zULHlaZYe8A4IMCN6h9zBhzYbxVFsx7NdoCRvZxelPTKQum++bsXwSQo2tVYREMpe6BDuBQ1CYo4B0r/ThyULlx6OB9i3V8ttYB0QkRQKLhtIMtz7u9o/ruLtFCiuRTz4X0XEMAWNr+EkLzMDXjA2919FteXCx1TOYtbVy8t4ersP48DuZhUwYKXPK9zQU9Vz08eLpEY7m6boih2YFvNhhR4FKcRelOaEYtjy4dwsGv5c1Ovwzg4RLupccVMZG2TsnvXM5izmiczYl9ia/TogbyScFzHbaJMQY9yEh+JG3Ls6X9jtqTsUuR3KQGIg3v4ASgQsS39Dra5RIhUdSNF3BYL9YbcqICambyzNmRys2S8psIzEiTxGw2ikYbRSTUOk/Al/PT7WY4WhucFeQHc+57+uu33TA8dkwHStpehWG7DUtHa5ZtHfBlSJrvp7pa6qw8jylJxNc86+CrFwFJihndXSe8="
   file_glob: true
