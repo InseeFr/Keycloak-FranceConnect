@@ -1,2 +1,2 @@
-fr.insee.keycloak.FranceConnectUserAttributeMapper
-fr.insee.keycloak.FranceConnectUsernameTemplateMapper
+fr.insee.keycloak.mappers.FranceConnectUserAttributeMapper
+fr.insee.keycloak.mappers.FranceConnectUsernameTemplateMapper

@@ -112,6 +112,27 @@ Strict-Transport-Security: max-age=15768000
   },      
   "acr": "eidas2"
 }
+```
 
+## Use FranceConnect button in your theme
 
+You can add the following CSS classes to your theme to design the FranceConnect button.
+
+```
+a.zocial.franceconnect-particulier {
+    background: url(https://partenaires.franceconnect.gouv.fr/images/fc_bouton_alt2_v2.png) no-repeat left top;
+    height: 70px;
+    width: auto;
+    padding-top: 60px;
+}
+
+a.zocial.franceconnect-particulier:hover {
+    background: url(https://partenaires.franceconnect.gouv.fr/images/fc_bouton_alt3_v2.png) no-repeat left top !important;
+    height: 70px;
+    width: auto;
+}
+
+a.zocial.franceconnect-particulier span {
+    display:none;
+}
 ```
