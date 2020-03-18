@@ -22,7 +22,7 @@ Cette extension est compatible avec Keycloak `8.0.1.Final` et supérieur.
 Si vous utilisez déjà une ancienne version de l'extension, il est préférable de supprimer votre configuration afin d'éviter tout conflit possible.
 
 * 1.x -> 1.4 : Vous devez ajouter le niveau eIDAS dans la configuration du fournisseur d'identité.
-* 1.x -> 1.5 : Vérifiez que votre fournisseur d'identité existe et que l'environnement France Connect selectionné est celui désiré.
+* 1.x -> 2.0 : Vérifiez que votre fournisseur d'identité existe et que l'environnement France Connect sélectionné est celui désiré.
 
 ## Installation
 

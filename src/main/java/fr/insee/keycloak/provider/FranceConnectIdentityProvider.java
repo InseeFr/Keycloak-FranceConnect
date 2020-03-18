@@ -3,6 +3,8 @@ package fr.insee.keycloak.provider;
 import org.keycloak.broker.oidc.OIDCIdentityProvider;
 import org.keycloak.broker.oidc.OIDCIdentityProviderConfig;
 import org.keycloak.broker.provider.AuthenticationRequest;
+import org.keycloak.broker.provider.BrokeredIdentityContext;
+import org.keycloak.broker.provider.IdentityBrokerException;
 import org.keycloak.broker.social.SocialIdentityProvider;
 import org.keycloak.events.Errors;
 import org.keycloak.events.EventBuilder;
@@ -96,6 +98,16 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider implemen
         }
 
         return HMACProvider.verify(jws, config.getClientSecret().getBytes());
+    }
+
+    @Override
+    public BrokeredIdentityContext getFederatedIdentity(String response) {
+        try {
+            return super.getFederatedIdentity(response);
+        } catch (IdentityBrokerException e) {
+            logger.error("Got response " + response);
+            throw e;
+        }
     }
 
     public FranceConnectIdentityProviderConfig getFranceConnectConfig() {
