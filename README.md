@@ -15,15 +15,13 @@ Extension [keycloak](https://www.keycloak.org) pour faciliter l'usage de France 
 
 ## Utilisation
 
-Vous aurez besoin du logiciel [keycloak](https://www.keycloak.org) dans une version supérieure à la 4.5.0.Final.
+Vous aurez besoin du logiciel [keycloak](https://www.keycloak.org) dans une version supérieure à la 8.0.1.
 Placer le jar dans `$keycloak_home/standalone/deployments`
 ou avec une installation locale de keycloak:
 
 ```
 mvn clean install wildfly:deploy
 ```
-
-:warning: Il y avait un problème avec la version `4.8.0.Final` de keycloak, cette dernière n'est pas compatible avec cette extension (la version 4.8.1.Final l'est).
 
 Une fois le jar déployé, vous pouvez créer un nouveau "Identity Provider" (dans un nouveau realm préférablement). Dans la liste déroulante, vous avez le choix entre deux providers qui représentent l'environnement de production et l'environnement de test france connect. Ce dernier est utilisable avec un compte créé sur https://partenaires.franceconnect.gouv.fr/.
 
