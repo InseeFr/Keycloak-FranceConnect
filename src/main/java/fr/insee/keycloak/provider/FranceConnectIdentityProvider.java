@@ -30,6 +30,8 @@ import javax.ws.rs.core.UriInfo;
 
 public class FranceConnectIdentityProvider extends OIDCIdentityProvider implements SocialIdentityProvider<OIDCIdentityProviderConfig> {
 
+    private static final String ACR = "acr";
+
     public FranceConnectIdentityProvider(KeycloakSession session, FranceConnectIdentityProviderConfig config) {
         super(session, config);
     }
@@ -45,7 +47,7 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider implemen
         FranceConnectIdentityProviderConfig config = getFranceConnectConfig();
 
         UriBuilder uriBuilder = super.createAuthorizationUrl(request)
-                .queryParam("acr_values", config.getEidasLevel());
+                .queryParam(FranceConnectIdentityProviderConfig.EidasLevel.EIDAS_LEVEL_PROPERTY_NAME, config.getEidasLevel());
 
         logger.debug("FranceConnect Authorization Url: " + uriBuilder.build().toString());
 
@@ -106,8 +108,9 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider implemen
         try {
             BrokeredIdentityContext federatedIdentity = super.getFederatedIdentity(response);
             // Add verification for eidas level
-            JsonWebToken idToken = (JsonWebToken) federatedIdentity.getContextData().get("VALIDATED_ID_TOKEN");
-            FranceConnectIdentityProviderConfig.EidasLevel eidasLevelReturned = FranceConnectIdentityProviderConfig.EidasLevel.getOrDefault((String) idToken.getOtherClaims().get("acr"), null);
+            JsonWebToken idToken = (JsonWebToken) federatedIdentity.getContextData().get(VALIDATED_ID_TOKEN);
+            String acrClaim = (String) idToken.getOtherClaims().get(ACR);
+            FranceConnectIdentityProviderConfig.EidasLevel eidasLevelReturned = FranceConnectIdentityProviderConfig.EidasLevel.getOrDefault(acrClaim, null);
             FranceConnectIdentityProviderConfig.EidasLevel eidasLevelRequested = getFranceConnectConfig().getEidasLevel();
             if (eidasLevelReturned == null) {
                 throw new IdentityBrokerException("The returned eidas level cannot be retrieved");
