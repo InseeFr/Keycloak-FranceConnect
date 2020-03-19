@@ -105,20 +105,16 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider implemen
     public BrokeredIdentityContext getFederatedIdentity(String response) {
         try {
             BrokeredIdentityContext federatedIdentity = super.getFederatedIdentity(response);
-            // Code to add verification for eidas level
-            // See: https://github.com/InseeFr/Keycloak-FranceConnect/issues/29
+            // Add verification for eidas level
             JsonWebToken idToken = (JsonWebToken) federatedIdentity.getContextData().get("VALIDATED_ID_TOKEN");
-            if (idToken == null) {
-                throw new IdentityBrokerException("The id_token cannot be retrieved");
+            FranceConnectIdentityProviderConfig.EidasLevel eidasLevelReturned = FranceConnectIdentityProviderConfig.EidasLevel.getOrDefault((String) idToken.getOtherClaims().get("acr"), null);
+            FranceConnectIdentityProviderConfig.EidasLevel eidasLevelRequested = getFranceConnectConfig().getEidasLevel();
+            if (eidasLevelReturned == null) {
+                throw new IdentityBrokerException("The returned eidas level cannot be retrieved");
             }
-            FranceConnectIdentityProviderConfig.EidasLevel acrReturned = FranceConnectIdentityProviderConfig.EidasLevel.getOrDefault((String) idToken.getOtherClaims().get("acr"), FranceConnectIdentityProviderConfig.EidasLevel.EIDAS1);
-            FranceConnectIdentityProviderConfig.EidasLevel acrRequested = getFranceConnectConfig().getEidasLevel();
-            if (acrReturned == null || acrRequested == null) {
-                throw new IdentityBrokerException("The returned acr cannot be retrieved");
-            }
-            logger.debugv("FranceConnect acrReturned={0} vs acrRequest={1}", acrReturned, acrRequested);
-            if (acrReturned.compareTo(acrRequested) < 0) {
-                throw new IdentityBrokerException("The returned acr is insufficient");
+            logger.debugv("FranceConnect eidasLevelReturned={0} vs eidasLevelRequested={1}", eidasLevelReturned, eidasLevelRequested);
+            if (eidasLevelReturned.compareTo(eidasLevelRequested) < 0) {
+                throw new IdentityBrokerException("The returned eidas level is insufficient");
             }
             return federatedIdentity;
         } catch (IdentityBrokerException e) {
