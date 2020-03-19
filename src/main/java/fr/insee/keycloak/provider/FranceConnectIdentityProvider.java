@@ -1,7 +1,5 @@
 package fr.insee.keycloak.provider;
 
-import org.keycloak.OAuth2Constants;
-import org.keycloak.broker.oidc.AbstractOAuth2IdentityProvider;
 import org.keycloak.broker.oidc.OIDCIdentityProvider;
 import org.keycloak.broker.oidc.OIDCIdentityProviderConfig;
 import org.keycloak.broker.provider.AuthenticationRequest;
@@ -26,17 +24,11 @@ import org.keycloak.services.resources.RealmsResource;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
-import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class FranceConnectIdentityProvider extends OIDCIdentityProvider implements SocialIdentityProvider<OIDCIdentityProviderConfig> {
-
-    private static final Pattern EIDAS_PATTERN = Pattern.compile("eidas(\\d+)");
-    private static final String ACR_INSUFFICIENT_MESSAGE = "acrInsufficientMessage";
 
     public FranceConnectIdentityProvider(KeycloakSession session, FranceConnectIdentityProviderConfig config) {
         super(session, config);
@@ -112,7 +104,23 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider implemen
     @Override
     public BrokeredIdentityContext getFederatedIdentity(String response) {
         try {
-            return super.getFederatedIdentity(response);
+            BrokeredIdentityContext federatedIdentity = super.getFederatedIdentity(response);
+            // Code to add verification for eidas level
+            // See: https://github.com/InseeFr/Keycloak-FranceConnect/issues/29
+            JsonWebToken idToken = (JsonWebToken) federatedIdentity.getContextData().get("VALIDATED_ID_TOKEN");
+            if (idToken == null) {
+                throw new IdentityBrokerException("The id_token cannot be retrieved");
+            }
+            FranceConnectIdentityProviderConfig.EidasLevel acrReturned = FranceConnectIdentityProviderConfig.EidasLevel.getOrDefault((String) idToken.getOtherClaims().get("acr"), FranceConnectIdentityProviderConfig.EidasLevel.EIDAS1);
+            FranceConnectIdentityProviderConfig.EidasLevel acrRequested = getFranceConnectConfig().getEidasLevel();
+            if (acrReturned == null || acrRequested == null) {
+                throw new IdentityBrokerException("The returned acr cannot be retrieved");
+            }
+            logger.debugv("FranceConnect acrReturned={0} vs acrRequest={1}", acrReturned, acrRequested);
+            if (acrReturned.compareTo(acrRequested) < 0) {
+                throw new IdentityBrokerException("The returned acr is insufficient");
+            }
+            return federatedIdentity;
         } catch (IdentityBrokerException e) {
             logger.error("Got response " + response);
             throw e;
@@ -131,80 +139,6 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider implemen
                             EventBuilder event, FranceConnectIdentityProviderConfig config) {
             super(callback, realm, event);
             this.config = config;
-        }
-
-        @GET
-        public Response authResponse(@QueryParam(AbstractOAuth2IdentityProvider.OAUTH2_PARAMETER_STATE) String state,
-                                     @QueryParam(AbstractOAuth2IdentityProvider.OAUTH2_PARAMETER_CODE) String authorizationCode,
-                                     @QueryParam(OAuth2Constants.ERROR) String error) {
-            if (error != null) {
-                //logger.error("Failed " + getConfig().getAlias() + " broker login: " + error);
-                if (error.equals(ACCESS_DENIED)) {
-                    logger.error(ACCESS_DENIED + " for broker login " + getConfig().getProviderId());
-                    return callback.cancelled(state);
-                } else {
-                    logger.error(error + " for broker login " + getConfig().getProviderId());
-                    return callback.error(state, Messages.IDENTITY_PROVIDER_UNEXPECTED_ERROR);
-                }
-            }
-
-            try {
-                if (authorizationCode != null) {
-                    String response = generateTokenRequest(authorizationCode).asString();
-                    BrokeredIdentityContext federatedIdentity = getFederatedIdentity(response);
-
-                    // Code to add verification for eidas level
-                    // See: https://github.com/InseeFr/Keycloak-FranceConnect/issues/29
-                    JsonWebToken idToken = (JsonWebToken) federatedIdentity.getContextData().get("VALIDATED_ID_TOKEN");
-                    if (idToken == null) {
-                        event.event(EventType.LOGIN);
-                        event.error(Errors.INVALID_TOKEN);
-                        return ErrorPage.error(session, null, Response.Status.BAD_GATEWAY, Messages.IDENTITY_PROVIDER_UNEXPECTED_ERROR);
-                    }
-                    String acrReturned = (String) idToken.getOtherClaims().get("acr");
-                    String acrRequested = this.config.getEidasLevel().toString();
-                    if (acrReturned == null || acrRequested == null) {
-                        event.event(EventType.LOGIN);
-                        event.error(Errors.INVALID_TOKEN);
-                        return ErrorPage.error(session, null, Response.Status.BAD_GATEWAY, Messages.IDENTITY_PROVIDER_UNEXPECTED_ERROR);
-                    }
-                    Matcher acrReturnedMatcher = EIDAS_PATTERN.matcher(acrReturned);
-                    Matcher acrRequestedMatcher = EIDAS_PATTERN.matcher(acrRequested);
-                    if (!acrReturnedMatcher.find() || !acrRequestedMatcher.find()) {
-                        event.event(EventType.LOGIN);
-                        event.error(Errors.INVALID_TOKEN);
-                        return ErrorPage.error(session, null, Response.Status.BAD_GATEWAY, Messages.IDENTITY_PROVIDER_UNEXPECTED_ERROR);
-                    }
-                    int acrReturnedInt = Integer.decode(acrReturnedMatcher.group(1));
-                    int acrRequestInt = Integer.decode(acrRequestedMatcher.group(1));
-                    logger.debugv("FranceConnect acrReturned={0} vs acrRequest={1}", acrReturnedInt, acrRequestInt);
-                    if (acrReturnedInt < acrRequestInt) {
-                        event.event(EventType.LOGIN);
-                        event.error(Errors.INVALID_TOKEN);
-                        return ErrorPage.error(session, null, Response.Status.BAD_GATEWAY, ACR_INSUFFICIENT_MESSAGE);
-                    }
-                    // End verification for eidas level
-
-                    if (getConfig().isStoreToken()) {
-                        // make sure that token wasn't already set by getFederatedIdentity();
-                        // want to be able to allow provider to set the token itself.
-                        if (federatedIdentity.getToken() == null) federatedIdentity.setToken(response);
-                    }
-
-                    federatedIdentity.setIdpConfig(getConfig());
-                    federatedIdentity.setIdp(FranceConnectIdentityProvider.this);
-                    federatedIdentity.setCode(state);
-
-                    return callback.authenticated(federatedIdentity);
-                }
-            } catch (WebApplicationException e) {
-                return e.getResponse();
-            } catch (Exception e) {
-                logger.error("Failed to make identity provider oauth callback", e);
-            }
-            event.event(EventType.LOGIN);
-            event.error(Errors.IDENTITY_PROVIDER_LOGIN_FAILURE);
-            return ErrorPage.error(session, null, Response.Status.BAD_GATEWAY, Messages.IDENTITY_PROVIDER_UNEXPECTED_ERROR);
         }
 
         @GET
