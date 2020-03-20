@@ -105,21 +105,21 @@
             </div>
 
             <div class="form-group">
-                <label class="col-md-2 control-label" for="acrValues">{{:: 'franceconnect.acr_values' | translate}}</label>
+                <label class="col-md-2 control-label" for="eidasValues">{{:: 'franceconnect.eidas_values' | translate}}</label>
 
                 <div class="col-md-6">
                     <div>
-                        <select class="form-control" id="acrValues"
-                                ng-init="identityProvider.config.acr_values = identityProvider.config.acr_values || 'eidas1'"
-                                ng-model="identityProvider.config.acr_values">
-                            <option value="eidas1">{{:: 'franceconnect.acr_values.eidas1' | translate}}</option>
-                            <option value="eidas2">{{:: 'franceconnect.acr_values.eidas2' | translate}}</option>
-                            <option value="eidas3">{{:: 'franceconnect.acr_values.eidas3' | translate}}</option>
+                        <select class="form-control" id="eidasValues"
+                                ng-init="identityProvider.config.eidas_values = identityProvider.config.eidas_values || 'eidas1'"
+                                ng-model="identityProvider.config.eidas_values">
+                            <option value="eidas1">{{:: 'franceconnect.eidas_values.eidas1' | translate}}</option>
+                            <option value="eidas2">{{:: 'franceconnect.eidas_values.eidas2' | translate}}</option>
+                            <option value="eidas3">{{:: 'franceconnect.eidas_values.eidas3' | translate}}</option>
                         </select>
                     </div>
                 </div>
 
-                <kc-tooltip>{{:: 'franceconnect.acr_values.tooltip' | translate}}</kc-tooltip>
+                <kc-tooltip>{{:: 'franceconnect.eidas_values.tooltip' | translate}}</kc-tooltip>
             </div>
 
             <div class="form-group">

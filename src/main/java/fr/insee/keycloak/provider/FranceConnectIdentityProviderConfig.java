@@ -43,7 +43,7 @@ class FranceConnectIdentityProviderConfig extends OIDCIdentityProviderConfig {
 
         EIDAS1, EIDAS2, EIDAS3;
 
-        static final String EIDAS_LEVEL_PROPERTY_NAME = "acr_values";
+        static final String EIDAS_LEVEL_PROPERTY_NAME = "eidas_values";
 
         @Override
         public String toString() {
