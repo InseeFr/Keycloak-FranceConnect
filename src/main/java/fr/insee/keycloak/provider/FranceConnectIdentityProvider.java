@@ -14,6 +14,7 @@ import org.keycloak.jose.jws.crypto.HMACProvider;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserSessionModel;
+import org.keycloak.representations.JsonWebToken;
 import org.keycloak.services.ErrorPage;
 import org.keycloak.services.managers.AuthenticationManager;
 import org.keycloak.services.messages.Messages;
@@ -28,6 +29,8 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 
 public class FranceConnectIdentityProvider extends OIDCIdentityProvider implements SocialIdentityProvider<OIDCIdentityProviderConfig> {
+
+    private static final String ACR = "acr";
 
     public FranceConnectIdentityProvider(KeycloakSession session, FranceConnectIdentityProviderConfig config) {
         super(session, config);
@@ -44,7 +47,7 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider implemen
         FranceConnectIdentityProviderConfig config = getFranceConnectConfig();
 
         UriBuilder uriBuilder = super.createAuthorizationUrl(request)
-                .queryParam("acr_values", config.getEidasLevel());
+                .queryParam(FranceConnectIdentityProviderConfig.EidasLevel.EIDAS_LEVEL_PROPERTY_NAME, config.getEidasLevel());
 
         logger.debug("FranceConnect Authorization Url: " + uriBuilder.build().toString());
 
@@ -103,7 +106,20 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider implemen
     @Override
     public BrokeredIdentityContext getFederatedIdentity(String response) {
         try {
-            return super.getFederatedIdentity(response);
+            BrokeredIdentityContext federatedIdentity = super.getFederatedIdentity(response);
+            // Add verification for eidas level
+            JsonWebToken idToken = (JsonWebToken) federatedIdentity.getContextData().get(VALIDATED_ID_TOKEN);
+            String acrClaim = (String) idToken.getOtherClaims().get(ACR);
+            FranceConnectIdentityProviderConfig.EidasLevel eidasLevelReturned = FranceConnectIdentityProviderConfig.EidasLevel.getOrDefault(acrClaim, null);
+            FranceConnectIdentityProviderConfig.EidasLevel eidasLevelRequested = getFranceConnectConfig().getEidasLevel();
+            if (eidasLevelReturned == null) {
+                throw new IdentityBrokerException("The returned eidas level cannot be retrieved");
+            }
+            logger.debugv("FranceConnect eidasLevelReturned={0} vs eidasLevelRequested={1}", eidasLevelReturned, eidasLevelRequested);
+            if (eidasLevelReturned.compareTo(eidasLevelRequested) < 0) {
+                throw new IdentityBrokerException("The returned eidas level is insufficient");
+            }
+            return federatedIdentity;
         } catch (IdentityBrokerException e) {
             logger.error("Got response " + response);
             throw e;
