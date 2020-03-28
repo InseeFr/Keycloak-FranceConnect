@@ -50,7 +50,7 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider implemen
         UriBuilder uriBuilder = super.createAuthorizationUrl(request)
                 .queryParam("acr_values", config.getEidasLevel());
 
-        logger.debug("FranceConnect Authorization Url: " + uriBuilder.build().toString());
+        logger.debugv("FranceConnect Authorization Url: {0}", uriBuilder.build().toString());
 
         return uriBuilder;
     }
