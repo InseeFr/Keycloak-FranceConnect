@@ -118,10 +118,6 @@ a#kc-current-locale-link {
   padding: 0 5px;
 }
 
-/* a#kc-current-locale-link:hover {
-    background-color: rgba(0,0,0,0.2);
-} */
-
 a#kc-current-locale-link::after {
   content: "\2c5";
   margin-left: 4px;
@@ -179,15 +175,6 @@ div.kc-logo-text span {
 
 #kc-content {
   width: 100%;
-}
-
-/* #kc-content-wrapper {
-    overflow-y: hidden;
-} */
-
-#kc-info {
-  /* padding-bottom: 200px;
-  margin-bottom: -200px; */
 }
 
 #kc-info-wrapper {
