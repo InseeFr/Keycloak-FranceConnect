@@ -63,38 +63,22 @@ class FranceConnectIdentityProviderConfig extends OIDCIdentityProviderConfig {
 
     enum Environment {
 
-        INTEGRATION(
-                "https://fcp.integ01.dev-franceconnect.fr/api/v1/authorize",
-                "https://fcp.integ01.dev-franceconnect.fr/api/v1/token",
-                "https://fcp.integ01.dev-franceconnect.fr/api/v1/userinfo",
-                "https://fcp.integ01.dev-franceconnect.fr/api/v1/logout"
-        ),
-        PRODUCTION(
-                "https://app.franceconnect.gouv.fr/api/v1/authorize",
-                "https://app.franceconnect.gouv.fr/api/v1/token",
-                "https://app.franceconnect.gouv.fr/api/v1/userinfo",
-                "https://app.franceconnect.gouv.fr/api/v1/logout"
-        );
+        INTEGRATION("https://fcp.integ01.dev-franceconnect.fr/api/v1"),
+        PRODUCTION("https://app.franceconnect.gouv.fr/api/v1");
 
         static final String ENVIRONMENT_PROPERTY_NAME = "fc_environment";
 
-        private final String authorizationUrl;
-        private final String tokenUrl;
-        private final String userInfoUrl;
-        private final String logoutUrl;
+        private final String baseUrl;
 
-        Environment(String authorizationUrl, String tokenUrl, String userInfoUrl, String logoutUrl) {
-            this.authorizationUrl = authorizationUrl;
-            this.tokenUrl = tokenUrl;
-            this.userInfoUrl = userInfoUrl;
-            this.logoutUrl = logoutUrl;
+        Environment(String baseUrl) {
+            this.baseUrl = baseUrl;
         }
 
         void configureUrls(OIDCIdentityProviderConfig config) {
-            config.setAuthorizationUrl(authorizationUrl);
-            config.setTokenUrl(tokenUrl);
-            config.setUserInfoUrl(userInfoUrl);
-            config.setLogoutUrl(logoutUrl);
+            config.setAuthorizationUrl(baseUrl + "/authorize");
+            config.setTokenUrl(baseUrl + "/token");
+            config.setUserInfoUrl(baseUrl + "/userinfo");
+            config.setLogoutUrl(baseUrl + "/logout");
         }
 
         static Environment getOrDefault(String environmentName, Environment defaultEnvironment) {

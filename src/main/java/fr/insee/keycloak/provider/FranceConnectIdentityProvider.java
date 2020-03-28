@@ -192,7 +192,6 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider implemen
             event.event(EventType.LOGOUT);
             event.error(Errors.USER_SESSION_NOT_FOUND);
         }
-
     }
 
 }
