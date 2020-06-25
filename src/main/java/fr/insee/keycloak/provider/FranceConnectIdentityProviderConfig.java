@@ -14,6 +14,11 @@ class FranceConnectIdentityProviderConfig extends OIDCIdentityProviderConfig {
         initialize();
     }
 
+    FranceConnectIdentityProviderConfig() {
+        super();
+        initialize();
+    }
+
     private void initialize() {
         Environment franceConnectEnvironment = Environment.getOrDefault(
             getConfig().get(Environment.ENVIRONMENT_PROPERTY_NAME),

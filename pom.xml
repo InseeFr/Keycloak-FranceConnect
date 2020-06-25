@@ -70,7 +70,7 @@
         <maven.javadoc.plugin.version>3.1.1</maven.javadoc.plugin.version>
         <wildfly.maven.plugin.version>2.0.2.Final</wildfly.maven.plugin.version>
 
-        <keycloak.version>8.0.1</keycloak.version>
+        <keycloak.version>9.0.2</keycloak.version>
     </properties>
 
     <build>

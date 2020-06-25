@@ -31,4 +31,9 @@ public class FranceConnectIdentityProviderFactory extends AbstractIdentityProvid
         );
     }
 
+    @Override
+    public FranceConnectIdentityProviderConfig createConfig() {
+        return new FranceConnectIdentityProviderConfig();
+    }
+
 }

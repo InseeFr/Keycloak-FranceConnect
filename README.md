@@ -15,14 +15,15 @@ Cette extension pour [Keycloak](https://www.keycloak.org) ajoute un fournisseur 
 
 ## Compatibilité
 
-Cette extension est compatible avec Keycloak `8.0.1.Final` et supérieur.
+La version 2.1 est compatible avec Keycloak `9.0.2` et supérieur.
+La version 2.0 est compatible avec Keycloak `8.0.1` jusqu'à `9.0.0`.
 
 ## Migration
 
 Si vous utilisez déjà une ancienne version de l'extension, il est préférable de supprimer votre configuration afin d'éviter tout conflit possible.
 
 * 1.x -> 1.4 : Vous devez ajouter le niveau eIDAS dans la configuration du fournisseur d'identité.
-* 1.x -> 2.0 : Vérifiez que votre fournisseur d'identité existe et que l'environnement France Connect sélectionné est celui désiré.
+* 1.x -> 2.0+ : Vérifiez que votre fournisseur d'identité existe et que l'environnement France Connect sélectionné est celui désiré.
 
 ## Installation
 
