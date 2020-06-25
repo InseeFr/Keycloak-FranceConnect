@@ -13,14 +13,15 @@ This [Keycloak](https://www.keycloak.org) plugin adds an identity provider allow
 
 ## Compatibility
 
-This plugin is compatible with Keycloak `8.0.1.Final` and higher.
+The version 2.1 of this plugin is compatible with Keycloak `9.0.2` and higher.
+The version 2.0 of this plugin is compatible with Keycloak `8.0.1` until `9.0.2`.
 
 ## Migration
 
 If you are already using an older version of the plugin, it's better to delete your configuration to avoid any conflict.
 
 * 1.x -> 1.4: You will need to configure the new eIDAS level in the configuration
-* 1.x -> 2.0: Check that your identity provider still exists and that the selected France Connect environment is good
+* 1.x -> 2.0+: Check that your identity provider still exists and that the selected France Connect environment is good
 
 ## Installation
 
