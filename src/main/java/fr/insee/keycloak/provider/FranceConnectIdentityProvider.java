@@ -21,6 +21,7 @@ import org.keycloak.services.managers.AuthenticationManager;
 import org.keycloak.services.messages.Messages;
 import org.keycloak.services.resources.IdentityBrokerService;
 import org.keycloak.services.resources.RealmsResource;
+import org.keycloak.vault.VaultStringSecret;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -100,8 +101,11 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider implemen
         if (!config.isValidateSignature()) {
             return true;
         }
-
-        return HMACProvider.verify(jws, config.getClientSecret().getBytes());
+        try (VaultStringSecret vaultStringSecret = session.vault().getStringSecret(getConfig().getClientSecret())){
+            String clientSecret = vaultStringSecret.get().orElse(getConfig().getClientSecret());
+            return HMACProvider.verify(jws, clientSecret.getBytes());
+        }
+        
     }
 
     @Override
