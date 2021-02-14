@@ -8,6 +8,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get_version.outputs.VERSION }}
     steps:
       - uses: actions/checkout@v2
 
@@ -24,8 +26,11 @@ jobs:
         with:
           java-version: 8
 
+      - id: get_version
+        run: echo ::set-output name=VERSION::$(echo $GITHUB_REF | cut -d / -f 3)
+
       - name: Set current version
-        run: ./mvnw -B versions:set -DnewVersion=${GITHUB_REF##*/}
+        run: ./mvnw -B versions:set -DnewVersion=${{ steps.get_version.outputs.VERSION }}
 
       - name: Build with Maven
         run: ./mvnw -B clean verify
@@ -41,13 +46,6 @@ jobs:
     name: Create Release
     runs-on: ubuntu-latest
     steps:
-      - name: Get the version
-        id: get_version
-        run: echo ::set-output name=VERSION::$(echo $GITHUB_REF | cut -d / -f 3)
-
-      - name: Checkout code
-        uses: actions/checkout@v2
-
       - name: Checkout artifact
         uses: actions/download-artifact@v2
         with:
@@ -60,8 +58,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.ref }}
+          tag_name: ${{ needs.build.outputs.version }}
+          release_name: ${{ needs.build.outputs.version }}
           body: |
             ${{github.event.head_commit.message}}
           draft: false
@@ -73,8 +71,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./target/keycloak-franceconnect-${{ steps.get_version.outputs.VERSION }}-javadoc.jar
-          asset_name: keycloak-franceconnect-${{ steps.get_version.outputs.VERSION }}-javadoc.jar
+          asset_path: ./target/keycloak-franceconnect-${{ needs.build.outputs.version }}-javadoc.jar
+          asset_name: keycloak-franceconnect-${{ needs.build.outputs.version }}-javadoc.jar
           asset_content_type: jar
 
       - name: Upload Release sources
@@ -83,8 +81,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./target/keycloak-franceconnect-${{ steps.get_version.outputs.VERSION }}-sources.jar
-          asset_name: keycloak-franceconnect-${{ steps.get_version.outputs.VERSION }}-sources.jar
+          asset_path: ./target/keycloak-franceconnect-${{ needs.build.outputs.version }}-sources.jar
+          asset_name: keycloak-franceconnect-${{ needs.build.outputs.version }}-sources.jar
           asset_content_type: jar
 
       - name: Upload Release
@@ -93,6 +91,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./target/keycloak-franceconnect-${{ steps.get_version.outputs.VERSION }}.jar
-          asset_name: keycloak-franceconnect-${{ steps.get_version.outputs.VERSION }}.jar
+          asset_path: ./target/keycloak-franceconnect-${{ needs.build.outputs.version }}.jar
+          asset_name: keycloak-franceconnect-${{ needs.build.outputs.version }}.jar
           asset_content_type: jar
