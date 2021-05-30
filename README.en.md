@@ -1,5 +1,18 @@
 # keycloak-franceconnect
 
+- [keycloak-franceconnect](#keycloak-franceconnect)
+  - [Features](#features)
+  - [Compatibility](#compatibility)
+  - [Migration](#migration)
+  - [Installation](#installation)
+  - [How to use it](#how-to-use-it)
+    - [Requirements](#requirements)
+    - [Configuration](#configuration)
+      - [Mappers](#mappers)
+      - [Theme](#theme)
+  - [Q&A](#qa)
+  - [How to contribute](#how-to-contribute)
+
 This [Keycloak](https://www.keycloak.org) plugin adds an identity provider allowing to use [France Connect](https://franceconnect.gouv.fr/) services.
 
 [![Build Status](https://travis-ci.org/inseefr/Keycloak-FranceConnect.svg?branch=master)](https://travis-ci.org/inseefr/Keycloak-FranceConnect)
@@ -13,8 +26,8 @@ This [Keycloak](https://www.keycloak.org) plugin adds an identity provider allow
 
 ## Compatibility
 
-The version 2.1 of this plugin is compatible with Keycloak `9.0.2` and higher.
-The version 2.0 of this plugin is compatible with Keycloak `8.0.1` until `9.0.2`.
+* The version 2.1 and above of this plugin is compatible with Keycloak `9.0.2` and higher.
+* The version 2.0 of this plugin is compatible with Keycloak `8.0.1` until `9.0.2`.
 
 ## Migration
 
