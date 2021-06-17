@@ -84,12 +84,12 @@ class AgentConnectIdentityProviderConfig extends OIDCIdentityProviderConfig {
         config.setAuthorizationUrl(baseUrl + "/api/v1/authorize");
         config.setTokenUrl(baseUrl + "/api/v1/token");
         config.setUserInfoUrl(baseUrl + "/api/v1/userinfo");
-        config.setLogoutUrl(baseUrl + "/api/v1/logout");
+        // config.setLogoutUrl(baseUrl + "/api/v1/logout");
       } else if (version == 2) {
         config.setAuthorizationUrl(baseUrl + "/api/v2/authorize");
         config.setTokenUrl(baseUrl + "/api/v2/token");
         config.setUserInfoUrl(baseUrl + "/api/v2/userinfo");
-        config.setLogoutUrl(baseUrl + "/api/v2/logout");
+        // config.setLogoutUrl(baseUrl + "/api/v2/logout");
         config.setIssuer(baseUrl + "/api/v2");
         config.setJwksUrl(baseUrl + "/api/v2/jwks");
         config.setUseJwksUrl(true);
