@@ -69,7 +69,7 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider
     try {
       jwks = JWKSHttpUtils.sendJwksRequest(session, config.getJwksUrl());
     } catch (IOException e) {
-      logger.warn("Error when fetching keys on JWKS URL: " + config.getJwksUrl());
+      logger.warn("Error when fetching keys on JWKS URL: " + config.getJwksUrl(), e);
     }
   }
 
@@ -81,9 +81,8 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider
     UriBuilder uriBuilder = super.createAuthorizationUrl(request);
     String nonce = Base64Url.encode(KeycloakModelUtils.generateSecret(48));
     AuthenticationSessionModel authenticationSession = request.getAuthenticationSession();
-
     authenticationSession.setClientNote(BROKER_NONCE_PARAM, nonce);
-    uriBuilder.queryParam(OIDCLoginProtocol.NONCE_PARAM, nonce);
+    uriBuilder.replaceQueryParam(OIDCLoginProtocol.NONCE_PARAM, nonce);
     uriBuilder.queryParam("acr_values", config.getEidasLevel());
     return uriBuilder;
   }
