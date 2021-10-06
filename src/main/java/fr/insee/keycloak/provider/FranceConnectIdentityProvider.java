@@ -19,6 +19,7 @@ import org.keycloak.broker.provider.AuthenticationRequest;
 import org.keycloak.broker.provider.BrokeredIdentityContext;
 import org.keycloak.broker.provider.IdentityBrokerException;
 import org.keycloak.broker.social.SocialIdentityProvider;
+import org.keycloak.common.util.Base64Url;
 import org.keycloak.crypto.JavaAlgorithm;
 import org.keycloak.events.Errors;
 import org.keycloak.events.EventBuilder;
@@ -32,6 +33,8 @@ import org.keycloak.jose.jws.crypto.HMACProvider;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserSessionModel;
+import org.keycloak.models.utils.KeycloakModelUtils;
+import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.protocol.oidc.utils.JWKSHttpUtils;
 import org.keycloak.representations.JsonWebToken;
 import org.keycloak.services.ErrorPage;
@@ -39,6 +42,7 @@ import org.keycloak.services.managers.AuthenticationManager;
 import org.keycloak.services.messages.Messages;
 import org.keycloak.services.resources.IdentityBrokerService;
 import org.keycloak.services.resources.RealmsResource;
+import org.keycloak.sessions.AuthenticationSessionModel;
 import org.keycloak.vault.VaultStringSecret;
 
 public class FranceConnectIdentityProvider extends OIDCIdentityProvider
@@ -47,6 +51,8 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider
   private static final String ACR_CLAIM_NAME = "acr";
 
   private static JSONWebKeySet jwks;
+
+  private static final String BROKER_NONCE_PARAM = "BROKER_NONCE";
 
   public FranceConnectIdentityProvider(
       KeycloakSession session, FranceConnectIdentityProviderConfig config) {
@@ -67,16 +73,18 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider
     }
   }
 
+  /** France connect requires nonce to be exactly 64 char long, so...yes */
   @Override
   protected UriBuilder createAuthorizationUrl(AuthenticationRequest request) {
-
     FranceConnectIdentityProviderConfig config = getFranceConnectConfig();
 
-    UriBuilder uriBuilder =
-        super.createAuthorizationUrl(request).queryParam("acr_values", config.getEidasLevel());
+    UriBuilder uriBuilder = super.createAuthorizationUrl(request);
+    String nonce = Base64Url.encode(KeycloakModelUtils.generateSecret(48));
+    AuthenticationSessionModel authenticationSession = request.getAuthenticationSession();
 
-    logger.debugv("FranceConnect Authorization Url: {0}", uriBuilder.build().toString());
-
+    authenticationSession.setClientNote(BROKER_NONCE_PARAM, nonce);
+    uriBuilder.queryParam(OIDCLoginProtocol.NONCE_PARAM, nonce);
+    uriBuilder.queryParam("acr_values", config.getEidasLevel());
     return uriBuilder;
   }
 
