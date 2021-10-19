@@ -1,18 +1,20 @@
 package fr.insee.keycloak.provider;
 
-import fr.insee.keycloak.provider.FranceConnectIdentityProviderConfig.EidasLevel;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.PublicKey;
 import java.security.Signature;
 import java.util.HashMap;
 import java.util.Map;
+
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
+import javax.xml.bind.DatatypeConverter;
+
 import org.keycloak.broker.oidc.OIDCIdentityProvider;
 import org.keycloak.broker.oidc.OIDCIdentityProviderConfig;
 import org.keycloak.broker.provider.AuthenticationRequest;
@@ -20,6 +22,7 @@ import org.keycloak.broker.provider.BrokeredIdentityContext;
 import org.keycloak.broker.provider.IdentityBrokerException;
 import org.keycloak.broker.social.SocialIdentityProvider;
 import org.keycloak.common.util.Base64Url;
+import org.keycloak.common.util.Time;
 import org.keycloak.crypto.JavaAlgorithm;
 import org.keycloak.events.Errors;
 import org.keycloak.events.EventBuilder;
@@ -36,6 +39,7 @@ import org.keycloak.models.UserSessionModel;
 import org.keycloak.models.utils.KeycloakModelUtils;
 import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.protocol.oidc.utils.JWKSHttpUtils;
+import org.keycloak.representations.AccessTokenResponse;
 import org.keycloak.representations.JsonWebToken;
 import org.keycloak.services.ErrorPage;
 import org.keycloak.services.managers.AuthenticationManager;
@@ -43,7 +47,10 @@ import org.keycloak.services.messages.Messages;
 import org.keycloak.services.resources.IdentityBrokerService;
 import org.keycloak.services.resources.RealmsResource;
 import org.keycloak.sessions.AuthenticationSessionModel;
+import org.keycloak.util.TokenUtil;
 import org.keycloak.vault.VaultStringSecret;
+
+import fr.insee.keycloak.provider.FranceConnectIdentityProviderConfig.EidasLevel;
 
 public class FranceConnectIdentityProvider extends OIDCIdentityProvider
     implements SocialIdentityProvider<OIDCIdentityProviderConfig> {
@@ -73,13 +80,14 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider
     }
   }
 
+
   /** France connect requires nonce to be exactly 64 char long, so...yes */
   @Override
   protected UriBuilder createAuthorizationUrl(AuthenticationRequest request) {
     FranceConnectIdentityProviderConfig config = getFranceConnectConfig();
 
     UriBuilder uriBuilder = super.createAuthorizationUrl(request);
-    String nonce = Base64Url.encode(KeycloakModelUtils.generateSecret(48));
+    String nonce = DatatypeConverter.printHexBinary(KeycloakModelUtils.generateSecret(32));
     AuthenticationSessionModel authenticationSession = request.getAuthenticationSession();
     authenticationSession.setClientNote(BROKER_NONCE_PARAM, nonce);
     uriBuilder.replaceQueryParam(OIDCLoginProtocol.NONCE_PARAM, nonce);
@@ -87,6 +95,8 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider
     return uriBuilder;
   }
 
+  
+  
   @Override
   public Response keycloakInitiatedBrowserLogout(
       KeycloakSession session, UserSessionModel userSession, UriInfo uriInfo, RealmModel realm) {
