@@ -2,6 +2,7 @@ package fr.insee.keycloak.provider;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.security.Key;
 import java.security.PublicKey;
 import java.security.Signature;
 import java.util.HashMap;
@@ -10,28 +11,41 @@ import java.util.Map;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import javax.xml.bind.DatatypeConverter;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
+import org.jboss.logging.Logger;
 import org.keycloak.broker.oidc.OIDCIdentityProvider;
 import org.keycloak.broker.oidc.OIDCIdentityProviderConfig;
+import org.keycloak.broker.oidc.mappers.AbstractJsonUserAttributeMapper;
 import org.keycloak.broker.provider.AuthenticationRequest;
 import org.keycloak.broker.provider.BrokeredIdentityContext;
 import org.keycloak.broker.provider.IdentityBrokerException;
+import org.keycloak.broker.provider.util.SimpleHttp;
 import org.keycloak.broker.social.SocialIdentityProvider;
-import org.keycloak.common.util.Base64Url;
-import org.keycloak.common.util.Time;
 import org.keycloak.crypto.JavaAlgorithm;
 import org.keycloak.events.Errors;
 import org.keycloak.events.EventBuilder;
 import org.keycloak.events.EventType;
+import org.keycloak.jose.jwe.JWE;
+import org.keycloak.jose.jwe.JWEConstants;
+import org.keycloak.jose.jwe.JWEException;
+import org.keycloak.jose.jwe.alg.JWEAlgorithmProvider;
+import org.keycloak.jose.jwe.alg.RsaKeyEncryptionJWEAlgorithmProvider;
+import org.keycloak.jose.jwe.enc.AesGcmJWEEncryptionProvider;
+import org.keycloak.jose.jwe.enc.JWEEncryptionProvider;
 import org.keycloak.jose.jwk.JSONWebKeySet;
 import org.keycloak.jose.jwk.JWK;
 import org.keycloak.jose.jwk.JWKParser;
 import org.keycloak.jose.jws.Algorithm;
 import org.keycloak.jose.jws.JWSInput;
+import org.keycloak.jose.jws.JWSInputException;
 import org.keycloak.jose.jws.crypto.HMACProvider;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
@@ -40,6 +54,7 @@ import org.keycloak.models.utils.KeycloakModelUtils;
 import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.protocol.oidc.utils.JWKSHttpUtils;
 import org.keycloak.representations.AccessTokenResponse;
+import org.keycloak.representations.IDToken;
 import org.keycloak.representations.JsonWebToken;
 import org.keycloak.services.ErrorPage;
 import org.keycloak.services.managers.AuthenticationManager;
@@ -47,7 +62,7 @@ import org.keycloak.services.messages.Messages;
 import org.keycloak.services.resources.IdentityBrokerService;
 import org.keycloak.services.resources.RealmsResource;
 import org.keycloak.sessions.AuthenticationSessionModel;
-import org.keycloak.util.TokenUtil;
+import org.keycloak.util.JsonSerialization;
 import org.keycloak.vault.VaultStringSecret;
 
 import fr.insee.keycloak.provider.FranceConnectIdentityProviderConfig.EidasLevel;
@@ -55,16 +70,21 @@ import fr.insee.keycloak.provider.FranceConnectIdentityProviderConfig.EidasLevel
 public class FranceConnectIdentityProvider extends OIDCIdentityProvider
     implements SocialIdentityProvider<OIDCIdentityProviderConfig> {
 
+  private static final Logger logger = Logger.getLogger(FranceConnectIdentityProvider.class);
+
   private static final String ACR_CLAIM_NAME = "acr";
 
   private static JSONWebKeySet jwks;
 
   private static final String BROKER_NONCE_PARAM = "BROKER_NONCE";
 
-  public FranceConnectIdentityProvider(
-      KeycloakSession session, FranceConnectIdentityProviderConfig config) {
+  private static final MediaType APPLICATION_JWT_TYPE = MediaType.valueOf("application/jwt");
+
+  public FranceConnectIdentityProvider(KeycloakSession session, FranceConnectIdentityProviderConfig config) {
     super(session, config);
-    initjwks(config);
+    if (!config.getEidasLevel().equals(EidasLevel.EIDAS1)) {
+      initjwks(config);
+    }
   }
 
   @Override
@@ -80,6 +100,49 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider
     }
   }
 
+  @Override
+  public JsonWebToken validateToken(String encodedToken) {
+    boolean ignoreAudience = false;
+    switch (getFranceConnectConfig().getEidasLevel()) {
+    case EIDAS1:
+      return validateToken(encodedToken, ignoreAudience);
+    case EIDAS2:
+    case EIDAS3:
+    default:
+      return decryptAndValidateToken(encodedToken, ignoreAudience);
+    }
+
+  }
+
+  private String decryptJwe(String encryptedJwe) throws JWEException {
+    JWE jwe = new JWE(encryptedJwe);
+    String kid = jwe.getHeader().getKeyId();
+
+    // finding the key from all the realms keys
+    Key k = session.keys().getKeysStream(session.getContext().getRealm())
+        .filter(key -> key.getKid().equalsIgnoreCase(kid)).findFirst().get().getPrivateKey();
+
+    if (k != null) {
+      logger.debug("Found corresponding secret key for kid " + kid);
+    } else {
+      throw new IdentityBrokerException("No key found for kid" + kid);
+    }
+    jwe.getKeyStorage().setDecryptionKey(k);
+
+    return new String(jwe.verifyAndDecodeJwe().getContent());
+
+  }
+
+  private JsonWebToken decryptAndValidateToken(String encodedToken, boolean ignoreAudience) {
+
+    try {
+      String decryptedContent = decryptJwe(encodedToken);
+      return validateToken(decryptedContent, ignoreAudience);
+    } catch (JWEException e) {
+      throw new IdentityBrokerException("Invalid token", e);
+    }
+
+  }
 
   /** France connect requires nonce to be exactly 64 char long, so...yes */
   @Override
@@ -95,11 +158,9 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider
     return uriBuilder;
   }
 
-  
-  
   @Override
-  public Response keycloakInitiatedBrowserLogout(
-      KeycloakSession session, UserSessionModel userSession, UriInfo uriInfo, RealmModel realm) {
+  public Response keycloakInitiatedBrowserLogout(KeycloakSession session, UserSessionModel userSession, UriInfo uriInfo,
+      RealmModel realm) {
 
     FranceConnectIdentityProviderConfig config = getFranceConnectConfig();
 
@@ -120,12 +181,8 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider
     if (idToken != null) {
       logoutUri.queryParam("id_token_hint", idToken);
     }
-    String redirectUri =
-        RealmsResource.brokerUrl(uriInfo)
-            .path(IdentityBrokerService.class, "getEndpoint")
-            .path(OIDCEndpoint.class, "logoutResponse")
-            .build(realm.getName(), config.getAlias())
-            .toString();
+    String redirectUri = RealmsResource.brokerUrl(uriInfo).path(IdentityBrokerService.class, "getEndpoint")
+        .path(OIDCEndpoint.class, "logoutResponse").build(realm.getName(), config.getAlias()).toString();
 
     logoutUri.queryParam("post_logout_redirect_uri", redirectUri);
 
@@ -142,8 +199,7 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider
       return true;
     }
     if (jws.getHeader().getAlgorithm() == Algorithm.HS256) {
-      try (VaultStringSecret vaultStringSecret =
-          session.vault().getStringSecret(getConfig().getClientSecret())) {
+      try (VaultStringSecret vaultStringSecret = session.vault().getStringSecret(getConfig().getClientSecret())) {
         String clientSecret = vaultStringSecret.get().orElse(getConfig().getClientSecret());
         return HMACProvider.verify(jws, clientSecret.getBytes());
       }
@@ -182,14 +238,165 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider
     }
   }
 
+  private SimpleHttp.Response executeRequest(String url, SimpleHttp request) throws IOException {
+    SimpleHttp.Response response = request.asResponse();
+    if (response.getStatus() != 200) {
+      String msg = "failed to invoke url [" + url + "]";
+      try {
+        String tmp = response.asString();
+        if (tmp != null)
+          msg = tmp;
+
+      } catch (IOException e) {
+
+      }
+      throw new IdentityBrokerException("Failed to invoke url [" + url + "]: " + msg);
+    }
+    return response;
+  }
+
+  protected BrokeredIdentityContext extractIdentity(AccessTokenResponse tokenResponse, String accessToken,
+      JsonWebToken idToken) throws IOException {
+    String id = idToken.getSubject();
+    BrokeredIdentityContext identity = new BrokeredIdentityContext(id);
+    String name = (String) idToken.getOtherClaims().get(IDToken.NAME);
+    String givenName = (String) idToken.getOtherClaims().get(IDToken.GIVEN_NAME);
+    String familyName = (String) idToken.getOtherClaims().get(IDToken.FAMILY_NAME);
+    String preferredUsername = (String) idToken.getOtherClaims().get(getusernameClaimNameForIdToken());
+    String email = (String) idToken.getOtherClaims().get(IDToken.EMAIL);
+
+    if (!getConfig().isDisableUserInfoService()) {
+      String userInfoUrl = getUserInfoUrl();
+      if (userInfoUrl != null && !userInfoUrl.isEmpty()) {
+
+        if (accessToken != null) {
+          SimpleHttp.Response response = executeRequest(userInfoUrl,
+              SimpleHttp.doGet(userInfoUrl, session).header("Authorization", "Bearer " + accessToken));
+          String contentType = response.getFirstHeader(HttpHeaders.CONTENT_TYPE);
+          MediaType contentMediaType;
+          try {
+            contentMediaType = MediaType.valueOf(contentType);
+          } catch (IllegalArgumentException ex) {
+            contentMediaType = null;
+          }
+          if (contentMediaType == null || contentMediaType.isWildcardSubtype() || contentMediaType.isWildcardType()) {
+            throw new RuntimeException(
+                "Unsupported content-type [" + contentType + "] in response from [" + userInfoUrl + "].");
+          }
+          JsonNode userInfo;
+
+          if (MediaType.APPLICATION_JSON_TYPE.isCompatible(contentMediaType)) {
+            userInfo = response.asJson();
+          } else if (APPLICATION_JWT_TYPE.isCompatible(contentMediaType)) {
+            switch (getFranceConnectConfig().getEidasLevel()) {
+            case EIDAS1:
+              try {
+                userInfo = getJsonFromJWT(response.asString());
+              } catch (IdentityBrokerException e) {
+                throw new RuntimeException(
+                    "Failed to verify signature of userinfo response from [" + userInfoUrl + "].", e);
+              }
+              break;
+            case EIDAS2:
+            case EIDAS3:
+            default:
+              try {
+                String decryptedContent = decryptJwe(response.asString());
+                try {
+                  userInfo = getJsonFromJWT(decryptedContent);
+                } catch (IdentityBrokerException e) {
+                  throw new RuntimeException(
+                      "Failed to verify signature of userinfo response from [" + userInfoUrl + "].", e);
+                }
+                break;
+              } catch (JWEException e) {
+                throw new IdentityBrokerException("Invalid token", e);
+              }
+
+            }
+          } else {
+            throw new RuntimeException(
+                "Unsupported content-type [" + contentType + "] in response from [" + userInfoUrl + "].");
+          }
+
+          id = getJsonProperty(userInfo, "sub");
+          name = getJsonProperty(userInfo, "name");
+          givenName = getJsonProperty(userInfo, IDToken.GIVEN_NAME);
+          familyName = getJsonProperty(userInfo, IDToken.FAMILY_NAME);
+          preferredUsername = getUsernameFromUserInfo(userInfo);
+          email = getJsonProperty(userInfo, "email");
+          AbstractJsonUserAttributeMapper.storeUserProfileForMapper(identity, userInfo, getConfig().getAlias());
+        }
+      }
+    }
+    identity.getContextData().put(VALIDATED_ID_TOKEN, idToken);
+
+    identity.setId(id);
+
+    if (givenName != null) {
+      identity.setFirstName(givenName);
+    }
+
+    if (familyName != null) {
+      identity.setLastName(familyName);
+    }
+
+    if (givenName == null && familyName == null) {
+      identity.setName(name);
+    }
+
+    identity.setEmail(email);
+
+    identity.setBrokerUserId(getConfig().getAlias() + "." + id);
+
+    if (preferredUsername == null) {
+      preferredUsername = email;
+    }
+
+    if (preferredUsername == null) {
+      preferredUsername = id;
+    }
+
+    identity.setUsername(preferredUsername);
+    if (tokenResponse != null && tokenResponse.getSessionState() != null) {
+      identity.setBrokerSessionId(getConfig().getAlias() + "." + tokenResponse.getSessionState());
+    }
+    if (tokenResponse != null)
+      identity.getContextData().put(FEDERATED_ACCESS_TOKEN_RESPONSE, tokenResponse);
+    if (tokenResponse != null)
+      processAccessTokenResponse(identity, tokenResponse);
+
+    return identity;
+  }
+
+  private JsonNode getJsonFromJWT(String jwt) throws IdentityBrokerException {
+    JWSInput jwsInput;
+
+    try {
+      jwsInput = new JWSInput(jwt);
+    } catch (JWSInputException cause) {
+      throw new RuntimeException("Failed to parse JWT userinfo response", cause);
+    }
+
+    if (verify(jwsInput)) {
+      try {
+        return JsonSerialization.readValue(jwsInput.getContent(), JsonNode.class);
+      } catch (IOException e) {
+        throw new IdentityBrokerException("Failed to parse jwt", e);
+      }
+    } else {
+      throw new IdentityBrokerException("Failed to verify signature of of jwt");
+    }
+
+  }
+
   @Override
   public BrokeredIdentityContext getFederatedIdentity(String response) {
 
     try {
       BrokeredIdentityContext federatedIdentity = super.getFederatedIdentity(response);
 
-      JsonWebToken idToken =
-          (JsonWebToken) federatedIdentity.getContextData().get(VALIDATED_ID_TOKEN);
+      JsonWebToken idToken = (JsonWebToken) federatedIdentity.getContextData().get(VALIDATED_ID_TOKEN);
       String acrClaim = (String) idToken.getOtherClaims().get(ACR_CLAIM_NAME);
 
       EidasLevel fcReturnedEidasLevel = EidasLevel.getOrDefault(acrClaim, null);
@@ -199,8 +406,7 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider
         throw new IdentityBrokerException("The returned eIDAS level cannot be retrieved");
       }
 
-      logger.debugv(
-          "Expecting eIDAS level: {0}, actual: {1}", expectedEidasLevel, fcReturnedEidasLevel);
+      logger.debugv("Expecting eIDAS level: {0}, actual: {1}", expectedEidasLevel, fcReturnedEidasLevel);
 
       if (fcReturnedEidasLevel.compareTo(expectedEidasLevel) < 0) {
         throw new IdentityBrokerException("The returned eIDAS level is insufficient");
@@ -222,10 +428,7 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider
 
     private final FranceConnectIdentityProviderConfig config;
 
-    public OIDCEndpoint(
-        AuthenticationCallback callback,
-        RealmModel realm,
-        EventBuilder event,
+    public OIDCEndpoint(AuthenticationCallback callback, RealmModel realm, EventBuilder event,
         FranceConnectIdentityProviderConfig config) {
       super(callback, realm, event);
       this.config = config;
@@ -237,24 +440,20 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider
 
       if (state == null && config.isIgnoreAbsentStateParameterLogout()) {
         logger.warn("using usersession from cookie");
-        AuthenticationManager.AuthResult authResult =
-            AuthenticationManager.authenticateIdentityCookie(session, realm, false);
+        AuthenticationManager.AuthResult authResult = AuthenticationManager.authenticateIdentityCookie(session, realm,
+            false);
         if (authResult == null) {
           return noValidUserSession();
         }
 
         UserSessionModel userSession = authResult.getSession();
-        return AuthenticationManager.finishBrowserLogout(
-            session, realm, userSession, session.getContext().getUri(), clientConnection, headers);
+        return AuthenticationManager.finishBrowserLogout(session, realm, userSession, session.getContext().getUri(),
+            clientConnection, headers);
       } else if (state == null) {
         logger.error("no state parameter returned");
         sendUserSessionNotFoundEvent();
 
-        return ErrorPage.error(
-            session,
-            null,
-            Response.Status.BAD_REQUEST,
-            Messages.IDENTITY_PROVIDER_UNEXPECTED_ERROR);
+        return ErrorPage.error(session, null, Response.Status.BAD_REQUEST, Messages.IDENTITY_PROVIDER_UNEXPECTED_ERROR);
       }
 
       UserSessionModel userSession = session.sessions().getUserSession(realm, state);
@@ -263,20 +462,18 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider
       } else if (userSession.getState() != UserSessionModel.State.LOGGING_OUT) {
         logger.error("usersession in different state");
         sendUserSessionNotFoundEvent();
-        return ErrorPage.error(
-            session, null, Response.Status.BAD_REQUEST, Messages.SESSION_NOT_ACTIVE);
+        return ErrorPage.error(session, null, Response.Status.BAD_REQUEST, Messages.SESSION_NOT_ACTIVE);
       }
 
-      return AuthenticationManager.finishBrowserLogout(
-          session, realm, userSession, session.getContext().getUri(), clientConnection, headers);
+      return AuthenticationManager.finishBrowserLogout(session, realm, userSession, session.getContext().getUri(),
+          clientConnection, headers);
     }
 
     private Response noValidUserSession() {
       logger.error("no valid user session");
       sendUserSessionNotFoundEvent();
 
-      return ErrorPage.error(
-          session, null, Response.Status.BAD_REQUEST, Messages.IDENTITY_PROVIDER_UNEXPECTED_ERROR);
+      return ErrorPage.error(session, null, Response.Status.BAD_REQUEST, Messages.IDENTITY_PROVIDER_UNEXPECTED_ERROR);
     }
 
     private void sendUserSessionNotFoundEvent() {
@@ -294,8 +491,7 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider
     for (JWK jwk : keySet.getKeys()) {
       JWKParser parser = JWKParser.create(jwk);
       logger.info("Parsing " + jwk.getKeyId());
-      if (jwk.getPublicKeyUse() != null
-          && jwk.getPublicKeyUse().equals(requestedUse.asString())
+      if (jwk.getPublicKeyUse() != null && jwk.getPublicKeyUse().equals(requestedUse.asString())
           && parser.isKeyTypeSupported(jwk.getKeyType())) {
         result.put(jwk.getKeyId(), parser.toPublicKey());
       }
