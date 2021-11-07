@@ -11,7 +11,8 @@
     - [France Connect](#france-connect)
       - [Prérequis](#prérequis)
       - [Configuration](#configuration)
-        - [Mappers](#mappers)
+      - [Mappers](#mappers)
+      - [Particularités de FranceConnect+](#particularités-de-franceconnect)
     - [Agent Connect](#agent-connect)
       - [Prérequis](#prérequis-1)
       - [Configuration](#configuration-1)
@@ -25,6 +26,9 @@ Cette extension pour [Keycloak](https://www.keycloak.org) ajoute un fournisseur 
 
 [![Build Status](https://travis-ci.org/inseefr/Keycloak-FranceConnect.svg?branch=master)](https://travis-ci.org/inseefr/Keycloak-FranceConnect)
 
+
+Pour toutes questions sur l'utilisation de cette extension, n'hésitez pas à ouvrir une [discussion](https://github.com/InseeFr/Keycloak-FranceConnect/discussions).
+
 ## Fonctionnalités
 
 * Vérification de signature (basée sur le client-secret)
@@ -32,10 +36,12 @@ Cette extension pour [Keycloak](https://www.keycloak.org) ajoute un fournisseur 
 * Thèmes de connexion permettant l'affichage des boutons France Connect (fc-theme et iron-theme)
 * Meilleure gestion du logout (contourne https://issues.jboss.org/browse/KEYCLOAK-7209)
 * Provider pour [AgentConnect](https://agentconnect.gouv.fr/)
+* Gestion de FranceConnect+ (niveau EIDAS2 et EIDAS3)
 
 ## Compatibilité
 
-- La version 2.1 est compatible avec Keycloak `9.0.2` et supérieur.
+- La version 4.0.0 est compatible avec Keycloak `15.0.0` et supérieur/
+- La version 2.1 jusqu'à 3.0.0 est compatible avec Keycloak `9.0.2` et supérieur.
 - La version 2.0 est compatible avec Keycloak `8.0.1` jusqu'à `9.0.0`.
 
 ## Migration
@@ -81,7 +87,7 @@ Vous trouverez également l'url de redirection qu'il faudra enregistrer sur le p
 * endpoint : `https://<keycloak-url>/auth/realms/<realm>/broker/franceconnect-particulier/endpoint` 
 * logout : `https://<keycloak-url>/auth/realms/<realm>/broker/franceconnect-particulier/endpoint/logout_response`
 
-##### Mappers
+#### Mappers
 
 Une fois la configuration validée, vous pouvez ajouter des mappers afin de récupérer les attributs à partir [des claims fournis par France Connect](https://partenaires.franceconnect.gouv.fr/fcp/fournisseur-service).
 
@@ -90,6 +96,31 @@ Exemples de mappers :
 * Name : `firstName`, Mapper Type : `Attribute Importer`, Claim : `given_name`, User Attribute Name : `firstName`
 * Name : `email`, Mapper Type : `Attribute Importer`, Claim : `email`, User Attribute Name : `email`
 
+#### Particularités de FranceConnect+
+
+France Connect est une évolution de service pour le support des niveaux EIDAS2 et EIDAS3. Cette évolution implique un renforcement sur le niveau de confidentialité requis, ce qui se traduit par un chiffrement des jetons échangés.
+Pour permettre ce chiffrement, un nouveau provider de clés à été ajouté `rsa-generated-fc+` qui permettra de générer une clé RSA et publier cette clé avec le bon algorithm sur l'url jwks de keycloak.
+
+![](/assets/keys-provider-fc+.png)
+
+:warning: Lors de la création de cette clé, il faut bien préciser `enc` pour l'usage de la clé.
+
+Les informations à fournir à France Connect+ seront les suivantes :
+
+| |  |
+--|--
+URL de redirection de connexion | https://*<KEYCLOAK_SERVER>*/auth/realms/*<KEYCLOAK_REALM>*/broker/franceconnect-particulier/endpoint
+URL de redirection de déconnexion | https://*<KEYCLOAK_SERVER>*/auth/realms/*<KEYCLOAK_REALM>*/broker/franceconnect-particulier/endpoint?logout_response
+Client keys url (jwks) | https://*<KEYCLOAK_SERVER>*/auth/realms/*<KEYCLOAK_REALM>*/protocol/openid-connect/certs
+Chiffrement de l'userinfo (A256GCM / -) |  A256GCM
+Algo de chiffrement de l'userinfo (ECDH-ES / RSA-OAEP) | RSA-OAEP
+Algo de signature de l'userinfo (ES256 obligatoire) | ES256
+Algo de signature de l'id_token (ES256 obligatoire) | ES256
+Algo de chiffrement de l'id_token (ECDH-ES / RSA-OAEP) | RSA-OAEP
+Chiffrement de  l'id_token  (A256GCM / -) |  A256GCM
+Adresse de la clé de chiffrement (pour ouverture des flux) |  https://*<KEYCLOAK_SERVER>*/auth/realms/*<KEYCLOAK_REALM>*/protocol/openid-connect/certs
+
+L'implémentation permettant de déchiffrer les jetons échangés s'appuie sur le travail de l'équipe keycloak autour de FAPI, cela implique que cette extension supporte uniquement Keycloak en verison supérieure à 15.
 ### Agent Connect
 
 La version 3.0 de cette extension ajoute le support pour AgentConnect pour l'authentification des agents de la fonction publique d'Etat : https://github.com/france-connect/Documentation-AgentConnect.
