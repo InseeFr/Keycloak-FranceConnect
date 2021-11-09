@@ -32,6 +32,7 @@ import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.nio.charset.StandardCharsets;
 import java.security.Signature;
+import java.util.Optional;
 
 import static fr.insee.keycloak.providers.common.Utils.transcodeSignatureToDER;
 import static org.keycloak.util.JWKSUtils.getKeysForUse;
@@ -102,39 +103,42 @@ public abstract class AbstractBaseIdentityProvider<T extends AbstractBaseProvide
         if (!config.isValidateSignature()) {
             return true;
         }
-        if (jws.getHeader().getAlgorithm() == Algorithm.HS256) {
+
+        if (Algorithm.HS256.equals(jws.getHeader().getAlgorithm())) {
             try (var vaultStringSecret = session.vault().getStringSecret(getConfig().getClientSecret())) {
                 var clientSecret = vaultStringSecret.get().orElse(getConfig().getClientSecret());
                 return HMACProvider.verify(jws, clientSecret.getBytes());
             }
-        } else {
-            try {
-                var publicKey = getKeysForUse(jwks, JWK.Use.SIG).get(jws.getHeader().getKeyId());
-                if (publicKey == null) {
+        }
+
+        try {
+            var publicKey = Optional.ofNullable(getKeysForUse(jwks, JWK.Use.SIG).get(jws.getHeader().getKeyId()))
+                .or(() -> {
                     // Try reloading jwks url
                     jwks = Utils.getJsonWebKeySetFrom(config.getJwksUrl(), session);
-                    publicKey = getKeysForUse(jwks, JWK.Use.SIG).get(jws.getHeader().getKeyId());
-                }
-                if (publicKey != null) {
-                    var algorithm = JavaAlgorithm.getJavaAlgorithm(jws.getHeader().getAlgorithm().name());
+                    return Optional.ofNullable(getKeysForUse(jwks, JWK.Use.SIG).get(jws.getHeader().getKeyId()));
+                })
+                .orElse(null);
 
-                    var verifier = Signature.getInstance(algorithm);
-                    verifier.initVerify(publicKey);
-                    verifier.update(jws.getEncodedSignatureInput().getBytes(StandardCharsets.UTF_8));
-
-                    if (algorithm.endsWith("ECDSA")) {
-                        return verifier.verify(transcodeSignatureToDER(jws.getSignature()));
-                    } else {
-                        return verifier.verify(jws.getSignature());
-                    }
-                } else {
-                    logger.error("No keys found for kid: " + jws.getHeader().getKeyId());
-                    return false;
-                }
-            } catch (Exception e) {
-                logger.error("Signature verification failed", e);
+            if (publicKey == null) {
+                logger.error("No keys found for kid: " + jws.getHeader().getKeyId());
                 return false;
             }
+
+            var algorithm = JavaAlgorithm.getJavaAlgorithm(jws.getHeader().getAlgorithm().name());
+
+            var verifier = Signature.getInstance(algorithm);
+            verifier.initVerify(publicKey);
+            verifier.update(jws.getEncodedSignatureInput().getBytes(StandardCharsets.UTF_8));
+
+            if (algorithm.endsWith("ECDSA")) {
+                return verifier.verify(transcodeSignatureToDER(jws.getSignature()));
+            }
+
+            return verifier.verify(jws.getSignature());
+        } catch (Exception ex) {
+            logger.error("Signature verification failed", ex);
+            return false;
         }
     }
 
