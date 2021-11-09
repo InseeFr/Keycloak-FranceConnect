@@ -9,9 +9,9 @@ public class FranceConnectUsernameTemplateMapper extends UsernameTemplateMapper 
   private static final String MAPPER_NAME = "franceconnect-username-template-mapper";
 
   public static final String[] COMPATIBLE_PROVIDERS =
-      new String[] {
-        AgentConnectIdentityProviderFactory.AC_PROVIDER_ID,
-        FranceConnectIdentityProviderFactory.FC_PROVIDER_ID
+      new String[]{
+          AgentConnectIdentityProviderFactory.AC_PROVIDER_ID,
+          FranceConnectIdentityProviderFactory.FC_PROVIDER_ID
       };
 
   @Override

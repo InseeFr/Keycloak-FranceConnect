@@ -9,9 +9,9 @@ public class FranceConnectUserAttributeMapper extends UserAttributeMapper {
   private static final String MAPPER_NAME = "franceconnect-user-attribute-mapper";
 
   public static final String[] COMPATIBLE_PROVIDERS =
-      new String[] {
-        AgentConnectIdentityProviderFactory.AC_PROVIDER_ID,
-        FranceConnectIdentityProviderFactory.FC_PROVIDER_ID
+      new String[]{
+          AgentConnectIdentityProviderFactory.AC_PROVIDER_ID,
+          FranceConnectIdentityProviderFactory.FC_PROVIDER_ID
       };
 
   @Override

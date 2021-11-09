@@ -12,26 +12,26 @@ import java.util.List;
  */
 public class GeneratedRsaKeyFCProviderFactory extends GeneratedRsaKeyProviderFactory {
 
-    public static final String ID = "rsa-generated-fc+";
+  public static final String ID = "rsa-generated-fc+";
 
-    private static final ProviderConfigProperty RS_ALGORITHM_PROPERTY = new ProviderConfigProperty("algorithm", "Algorithm",
-            "Intended algorithm for the key", ProviderConfigProperty.LIST_TYPE, "RSA-OAEP", "RSA-OAEP");
-    
-    private static final List<ProviderConfigProperty> CONFIG_PROPERTIES = AbstractRsaKeyProviderFactory.configurationBuilder()
-            .property(Attributes.KEY_SIZE_PROPERTY)
-            .property(Attributes.KEY_USE_PROPERTY)
-            .build();
-            
-    @Override
-    public String getId() {
-        return ID;
-    }
+  private static final ProviderConfigProperty RS_ALGORITHM_PROPERTY = new ProviderConfigProperty("algorithm", "Algorithm",
+      "Intended algorithm for the key", ProviderConfigProperty.LIST_TYPE, "RSA-OAEP", "RSA-OAEP");
 
-    @Override
-    public List<ProviderConfigProperty> getConfigProperties() {
-        CONFIG_PROPERTIES.removeIf(p -> p.getName().equals("algorithm"));
-        CONFIG_PROPERTIES.add(RS_ALGORITHM_PROPERTY);
-        return CONFIG_PROPERTIES;
-    }
+  private static final List<ProviderConfigProperty> CONFIG_PROPERTIES = AbstractRsaKeyProviderFactory.configurationBuilder()
+      .property(Attributes.KEY_SIZE_PROPERTY)
+      .property(Attributes.KEY_USE_PROPERTY)
+      .build();
 
+  @Override
+  public String getId() {
+    return ID;
+  }
+
+  @Override
+  public List<ProviderConfigProperty> getConfigProperties() {
+    CONFIG_PROPERTIES.removeIf(p -> p.getName().equals("algorithm"));
+    CONFIG_PROPERTIES.add(RS_ALGORITHM_PROPERTY);
+
+    return CONFIG_PROPERTIES;
+  }
 }
