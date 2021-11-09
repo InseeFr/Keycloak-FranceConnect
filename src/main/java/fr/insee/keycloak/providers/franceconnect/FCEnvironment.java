@@ -11,7 +11,6 @@ enum FCEnvironment {
     static final String ENVIRONMENT_PROPERTY_NAME = "fc_environment";
 
     private final String baseUrl;
-
     private final int version;
 
     FCEnvironment(String baseUrl, int version) {
