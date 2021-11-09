@@ -1,5 +1,6 @@
 package fr.insee.keycloak.providers.agentconnect;
 
+import fr.insee.keycloak.providers.common.EidasLevel;
 import org.keycloak.broker.oidc.OIDCIdentityProviderConfig;
 import org.keycloak.models.IdentityProviderModel;
 
@@ -37,29 +38,6 @@ class AgentConnectIdentityProviderConfig extends OIDCIdentityProviderConfig {
   EidasLevel getEidasLevel() {
     return EidasLevel.getOrDefault(
         getConfig().get(EidasLevel.EIDAS_LEVEL_PROPERTY_NAME), DEFAULT_EIDAS_LEVEL);
-  }
-
-  enum EidasLevel {
-    EIDAS1,
-    EIDAS2,
-    EIDAS3;
-
-    static final String EIDAS_LEVEL_PROPERTY_NAME = "eidas_values";
-
-    @Override
-    public String toString() {
-      return name().toLowerCase();
-    }
-
-    static EidasLevel getOrDefault(String eidasLevelName, EidasLevel defaultEidasLevel) {
-      for (var eidasLevel : EidasLevel.values()) {
-        if (eidasLevel.name().equalsIgnoreCase(eidasLevelName)) {
-          return eidasLevel;
-        }
-      }
-
-      return defaultEidasLevel;
-    }
   }
 
   enum Environment {

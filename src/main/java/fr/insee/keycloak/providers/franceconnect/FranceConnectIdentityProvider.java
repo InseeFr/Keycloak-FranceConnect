@@ -1,9 +1,9 @@
 package fr.insee.keycloak.providers.franceconnect;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import fr.insee.keycloak.providers.franceconnect.FranceConnectIdentityProviderConfig.EidasLevel;
-import fr.insee.keycloak.providers.utils.JWKSUtils;
-import fr.insee.keycloak.providers.utils.SignatureUtils;
+import fr.insee.keycloak.providers.common.EidasLevel;
+import fr.insee.keycloak.providers.common.JWKSUtils;
+import fr.insee.keycloak.providers.common.SignatureUtils;
 import org.jboss.logging.Logger;
 import org.keycloak.broker.oidc.OIDCIdentityProvider;
 import org.keycloak.broker.oidc.OIDCIdentityProviderConfig;

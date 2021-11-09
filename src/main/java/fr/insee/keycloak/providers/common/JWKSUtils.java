@@ -1,4 +1,4 @@
-package fr.insee.keycloak.providers.utils;
+package fr.insee.keycloak.providers.common;
 
 import org.jboss.logging.Logger;
 import org.keycloak.jose.jwk.JSONWebKeySet;
