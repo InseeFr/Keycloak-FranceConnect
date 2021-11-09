@@ -1,17 +1,14 @@
 package fr.insee.keycloak.providers.agentconnect;
 
-import fr.insee.keycloak.providers.common.EidasLevel;
-import org.keycloak.broker.oidc.OIDCIdentityProviderConfig;
+import fr.insee.keycloak.providers.common.AbstractBaseProviderConfig;
 import org.keycloak.models.IdentityProviderModel;
 
-class AgentConnectIdentityProviderConfig extends OIDCIdentityProviderConfig {
+class AgentConnectIdentityProviderConfig extends AbstractBaseProviderConfig {
 
-  private static final EidasLevel DEFAULT_EIDAS_LEVEL = EidasLevel.EIDAS1;
   private static final ACEnvironment DEFAULT_FC_ENVIRONMENT = ACEnvironment.INTEGRATION_INTERNET;
 
   AgentConnectIdentityProviderConfig(IdentityProviderModel identityProviderModel) {
     super(identityProviderModel);
-
     initialize();
   }
 
@@ -30,14 +27,4 @@ class AgentConnectIdentityProviderConfig extends OIDCIdentityProviderConfig {
     this.setValidateSignature(true);
     this.setBackchannelSupported(false);
   }
-
-  boolean isIgnoreAbsentStateParameterLogout() {
-    return Boolean.parseBoolean(getConfig().get("ignoreAbsentStateParameterLogout"));
-  }
-
-  EidasLevel getEidasLevel() {
-    return EidasLevel.getOrDefault(
-        getConfig().get(EidasLevel.EIDAS_LEVEL_PROPERTY_NAME), DEFAULT_EIDAS_LEVEL);
-  }
-
 }
