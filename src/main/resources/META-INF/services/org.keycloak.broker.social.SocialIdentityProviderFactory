@@ -1,2 +1,2 @@
-fr.insee.keycloak.provider.FranceConnectIdentityProviderFactory
-fr.insee.keycloak.provider.AgentConnectIdentityProviderFactory
+fr.insee.keycloak.providers.franceconnect.FranceConnectIdentityProviderFactory
+fr.insee.keycloak.providers.agentconnect.AgentConnectIdentityProviderFactory

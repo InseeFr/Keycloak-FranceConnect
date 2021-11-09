@@ -1,7 +1,7 @@
 package fr.insee.keycloak.mappers;
 
-import fr.insee.keycloak.provider.AgentConnectIdentityProviderFactory;
-import fr.insee.keycloak.provider.FranceConnectIdentityProviderFactory;
+import fr.insee.keycloak.providers.agentconnect.AgentConnectIdentityProviderFactory;
+import fr.insee.keycloak.providers.franceconnect.FranceConnectIdentityProviderFactory;
 import org.keycloak.broker.oidc.mappers.UsernameTemplateMapper;
 
 public class FranceConnectUsernameTemplateMapper extends UsernameTemplateMapper {

@@ -1,4 +1,4 @@
-package fr.insee.keycloak.provider;
+package fr.insee.keycloak.providers.franceconnect;
 
 import org.keycloak.broker.provider.AbstractIdentityProviderFactory;
 import org.keycloak.broker.social.SocialIdentityProviderFactory;
@@ -23,8 +23,7 @@ public class FranceConnectIdentityProviderFactory
   }
 
   @Override
-  public FranceConnectIdentityProvider create(
-      KeycloakSession session, IdentityProviderModel model) {
+  public FranceConnectIdentityProvider create(KeycloakSession session, IdentityProviderModel model) {
     return new FranceConnectIdentityProvider(
         session, new FranceConnectIdentityProviderConfig(model));
   }

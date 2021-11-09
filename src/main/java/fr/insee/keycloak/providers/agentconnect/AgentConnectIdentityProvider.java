@@ -1,19 +1,7 @@
-package fr.insee.keycloak.provider;
+package fr.insee.keycloak.providers.agentconnect;
 
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.security.PublicKey;
-import java.security.Signature;
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriInfo;
-
+import fr.insee.keycloak.providers.agentconnect.AgentConnectIdentityProviderConfig.EidasLevel;
+import fr.insee.keycloak.providers.utils.JWKSUtils;
 import org.keycloak.broker.oidc.OIDCIdentityProvider;
 import org.keycloak.broker.oidc.OIDCIdentityProviderConfig;
 import org.keycloak.broker.provider.AuthenticationRequest;
@@ -42,21 +30,34 @@ import org.keycloak.services.resources.IdentityBrokerService;
 import org.keycloak.services.resources.RealmsResource;
 import org.keycloak.vault.VaultStringSecret;
 
-import fr.insee.keycloak.provider.AgentConnectIdentityProviderConfig.EidasLevel;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.Response;
+import javax.ws.rs.core.UriBuilder;
+import javax.ws.rs.core.UriInfo;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.PublicKey;
+import java.security.Signature;
+import java.util.HashMap;
+import java.util.Map;
+
+import static fr.insee.keycloak.providers.utils.SignatureUtils.transcodeSignatureToDER;
 
 public class AgentConnectIdentityProvider extends OIDCIdentityProvider
     implements SocialIdentityProvider<OIDCIdentityProviderConfig> {
 
   private static final String ACR_CLAIM_NAME = "acr";
 
-  private static JSONWebKeySet jwks;
+  private JSONWebKeySet jwks;
 
   public AgentConnectIdentityProvider(KeycloakSession session, AgentConnectIdentityProviderConfig config) {
     super(session, config);
-    initjwks(config);
+    jwks = JWKSUtils.getJsonWebKeySetFrom(config.getJwksUrl(), session);
   }
 
-  private void initjwks(AgentConnectIdentityProviderConfig config) {
+  private void initJwks(AgentConnectIdentityProviderConfig config) {
     try {
       jwks = JWKSHttpUtils.sendJwksRequest(session, config.getJwksUrl());
     } catch (IOException e) {
@@ -132,7 +133,7 @@ public class AgentConnectIdentityProvider extends OIDCIdentityProvider
         PublicKey publicKey = getKeysForUse(jwks, JWK.Use.SIG).get(jws.getHeader().getKeyId());
         if (publicKey == null) {
           // Try reloading jwks url
-          initjwks(config);
+          initJwks(config);
           publicKey = getKeysForUse(jwks, JWK.Use.SIG).get(jws.getHeader().getKeyId());
 
         }
@@ -273,74 +274,4 @@ public class AgentConnectIdentityProvider extends OIDCIdentityProvider
 
     return result;
   }
-
-  // We need this due to a bug in signature verification
-  // (https://github.com/GluuFederation/oxAuth/issues/1210)
-  public static byte[] transcodeSignatureToDER(byte[] jwsSignature) {
-
-    // Adapted from
-    // org.apache.xml.security.algorithms.implementations.SignatureECDSA
-
-    int rawLen = jwsSignature.length / 2;
-
-    int i;
-
-    for (i = rawLen; (i > 0) && (jwsSignature[rawLen - i] == 0); i--) {
-      // do nothing
-    }
-
-    int j = i;
-
-    if (jwsSignature[rawLen - i] < 0) {
-      j += 1;
-    }
-
-    int k;
-
-    for (k = rawLen; (k > 0) && (jwsSignature[2 * rawLen - k] == 0); k--) {
-      // do nothing
-    }
-
-    int l = k;
-
-    if (jwsSignature[2 * rawLen - k] < 0) {
-      l += 1;
-    }
-
-    int len = 2 + j + 2 + l;
-
-    if (len > 255) {
-      throw new RuntimeException("Invalid ECDSA signature format");
-    }
-
-    int offset;
-
-    final byte derSignature[];
-
-    if (len < 128) {
-      derSignature = new byte[2 + 2 + j + 2 + l];
-      offset = 1;
-    } else {
-      derSignature = new byte[3 + 2 + j + 2 + l];
-      derSignature[1] = (byte) 0x81;
-      offset = 2;
-    }
-
-    derSignature[0] = 48;
-    derSignature[offset++] = (byte) len;
-    derSignature[offset++] = 2;
-    derSignature[offset++] = (byte) j;
-
-    System.arraycopy(jwsSignature, rawLen - i, derSignature, (offset + j) - i, i);
-
-    offset += j;
-
-    derSignature[offset++] = 2;
-    derSignature[offset++] = (byte) l;
-
-    System.arraycopy(jwsSignature, 2 * rawLen - k, derSignature, (offset + l) - k, k);
-
-    return derSignature;
-  }
-
 }
