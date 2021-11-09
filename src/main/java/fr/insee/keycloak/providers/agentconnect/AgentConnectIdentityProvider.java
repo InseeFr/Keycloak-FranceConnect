@@ -1,7 +1,7 @@
 package fr.insee.keycloak.providers.agentconnect;
 
-import fr.insee.keycloak.providers.agentconnect.AgentConnectIdentityProviderConfig.EidasLevel;
-import fr.insee.keycloak.providers.utils.JWKSUtils;
+import fr.insee.keycloak.providers.common.EidasLevel;
+import fr.insee.keycloak.providers.common.JWKSUtils;
 import org.keycloak.broker.oidc.OIDCIdentityProvider;
 import org.keycloak.broker.oidc.OIDCIdentityProviderConfig;
 import org.keycloak.broker.provider.AuthenticationRequest;
@@ -40,7 +40,7 @@ import java.security.Signature;
 import java.util.HashMap;
 import java.util.Map;
 
-import static fr.insee.keycloak.providers.utils.SignatureUtils.transcodeSignatureToDER;
+import static fr.insee.keycloak.providers.common.SignatureUtils.transcodeSignatureToDER;
 
 public class AgentConnectIdentityProvider extends OIDCIdentityProvider
     implements SocialIdentityProvider<OIDCIdentityProviderConfig> {

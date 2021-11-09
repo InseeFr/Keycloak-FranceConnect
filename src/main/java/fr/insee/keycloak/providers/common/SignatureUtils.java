@@ -1,4 +1,4 @@
-package fr.insee.keycloak.providers.utils;
+package fr.insee.keycloak.providers.common;
 
 public final class SignatureUtils {
 
