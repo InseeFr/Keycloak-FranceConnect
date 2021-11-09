@@ -2,8 +2,7 @@ package fr.insee.keycloak.providers.franceconnect;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import fr.insee.keycloak.providers.common.EidasLevel;
-import fr.insee.keycloak.providers.common.JWKSUtils;
-import fr.insee.keycloak.providers.common.SignatureUtils;
+import fr.insee.keycloak.providers.common.Utils;
 import org.jboss.logging.Logger;
 import org.keycloak.broker.oidc.OIDCIdentityProvider;
 import org.keycloak.broker.oidc.OIDCIdentityProviderConfig;
@@ -21,7 +20,6 @@ import org.keycloak.jose.jwe.JWE;
 import org.keycloak.jose.jwe.JWEException;
 import org.keycloak.jose.jwk.JSONWebKeySet;
 import org.keycloak.jose.jwk.JWK;
-import org.keycloak.jose.jwk.JWKParser;
 import org.keycloak.jose.jws.Algorithm;
 import org.keycloak.jose.jws.JWSInput;
 import org.keycloak.jose.jws.JWSInputException;
@@ -49,10 +47,9 @@ import javax.ws.rs.core.*;
 import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.security.PublicKey;
 import java.security.Signature;
-import java.util.HashMap;
-import java.util.Map;
+
+import static org.keycloak.util.JWKSUtils.getKeysForUse;
 
 public class FranceConnectIdentityProvider extends OIDCIdentityProvider
     implements SocialIdentityProvider<OIDCIdentityProviderConfig> {
@@ -69,7 +66,7 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider
     super(session, config);
 
     if (!config.getEidasLevel().equals(EidasLevel.EIDAS1)) {
-      jwks = JWKSUtils.getJsonWebKeySetFrom(config.getJwksUrl(), session);
+      jwks = Utils.getJsonWebKeySetFrom(config.getJwksUrl(), session);
     }
   }
 
@@ -207,7 +204,7 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider
           verifier.update(jws.getEncodedSignatureInput().getBytes(StandardCharsets.UTF_8));
 
           if (algorithm.endsWith("ECDSA")) {
-            return verifier.verify(SignatureUtils.transcodeSignatureToDER(jws.getSignature()));
+            return verifier.verify(Utils.transcodeSignatureToDER(jws.getSignature()));
           } else {
             return verifier.verify(jws.getSignature());
           }
@@ -466,22 +463,4 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider
       event.error(Errors.USER_SESSION_NOT_FOUND);
     }
   }
-
-  // Agent connect doesn't publish an usage for the rsa key (even though it is not
-  // used)
-  public static Map<String, PublicKey> getKeysForUse(JSONWebKeySet keySet, JWK.Use requestedUse) {
-    Map<String, PublicKey> result = new HashMap<>();
-
-    for (var jwk : keySet.getKeys()) {
-      var parser = JWKParser.create(jwk);
-      logger.info("Parsing " + jwk.getKeyId());
-      if (jwk.getPublicKeyUse() != null && jwk.getPublicKeyUse().equals(requestedUse.asString())
-          && parser.isKeyTypeSupported(jwk.getKeyType())) {
-        result.put(jwk.getKeyId(), parser.toPublicKey());
-      }
-    }
-
-    return result;
-  }
-
 }
