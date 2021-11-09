@@ -1,7 +1,7 @@
 package fr.insee.keycloak.providers.agentconnect;
 
 import fr.insee.keycloak.providers.common.EidasLevel;
-import fr.insee.keycloak.providers.common.JWKSUtils;
+import fr.insee.keycloak.providers.common.Utils;
 import org.keycloak.broker.oidc.OIDCIdentityProvider;
 import org.keycloak.broker.oidc.OIDCIdentityProviderConfig;
 import org.keycloak.broker.provider.AuthenticationRequest;
@@ -14,7 +14,6 @@ import org.keycloak.events.EventBuilder;
 import org.keycloak.events.EventType;
 import org.keycloak.jose.jwk.JSONWebKeySet;
 import org.keycloak.jose.jwk.JWK;
-import org.keycloak.jose.jwk.JWKParser;
 import org.keycloak.jose.jws.Algorithm;
 import org.keycloak.jose.jws.JWSInput;
 import org.keycloak.jose.jws.crypto.HMACProvider;
@@ -35,12 +34,10 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
 import java.nio.charset.StandardCharsets;
-import java.security.PublicKey;
 import java.security.Signature;
-import java.util.HashMap;
-import java.util.Map;
 
-import static fr.insee.keycloak.providers.common.SignatureUtils.transcodeSignatureToDER;
+import static fr.insee.keycloak.providers.common.Utils.transcodeSignatureToDER;
+import static org.keycloak.util.JWKSUtils.getKeysForUse;
 
 public class AgentConnectIdentityProvider extends OIDCIdentityProvider
     implements SocialIdentityProvider<OIDCIdentityProviderConfig> {
@@ -51,7 +48,7 @@ public class AgentConnectIdentityProvider extends OIDCIdentityProvider
 
   public AgentConnectIdentityProvider(KeycloakSession session, AgentConnectIdentityProviderConfig config) {
     super(session, config);
-    jwks = JWKSUtils.getJsonWebKeySetFrom(config.getJwksUrl(), session);
+    jwks = Utils.getJsonWebKeySetFrom(config.getJwksUrl(), session);
   }
 
   @Override
@@ -125,7 +122,7 @@ public class AgentConnectIdentityProvider extends OIDCIdentityProvider
         var publicKey = getKeysForUse(jwks, JWK.Use.SIG).get(jws.getHeader().getKeyId());
         if (publicKey == null) {
           // Try reloading jwks url
-          jwks = JWKSUtils.getJsonWebKeySetFrom(config.getJwksUrl(), session);
+          jwks = Utils.getJsonWebKeySetFrom(config.getJwksUrl(), session);
           publicKey = getKeysForUse(jwks, JWK.Use.SIG).get(jws.getHeader().getKeyId());
         }
         if (publicKey != null) {
@@ -244,22 +241,5 @@ public class AgentConnectIdentityProvider extends OIDCIdentityProvider
       event.event(EventType.LOGOUT);
       event.error(Errors.USER_SESSION_NOT_FOUND);
     }
-  }
-
-  // Agent connect doesn't publish an usage for the rsa key (even though it is not
-  // used)
-  public static Map<String, PublicKey> getKeysForUse(JSONWebKeySet keySet, JWK.Use requestedUse) {
-    Map<String, PublicKey> result = new HashMap<>();
-
-    for (var jwk : keySet.getKeys()) {
-      var parser = JWKParser.create(jwk);
-      logger.info("Parsing " + jwk.getKeyId());
-      if (jwk.getPublicKeyUse() != null && jwk.getPublicKeyUse().equals(requestedUse.asString())
-          && parser.isKeyTypeSupported(jwk.getKeyType())) {
-        result.put(jwk.getKeyId(), parser.toPublicKey());
-      }
-    }
-
-    return result;
   }
 }

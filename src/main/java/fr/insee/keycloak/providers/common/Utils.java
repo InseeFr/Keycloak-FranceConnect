@@ -1,8 +1,25 @@
 package fr.insee.keycloak.providers.common;
 
-public final class SignatureUtils {
+import org.jboss.logging.Logger;
+import org.keycloak.jose.jwk.JSONWebKeySet;
+import org.keycloak.models.KeycloakSession;
+import org.keycloak.protocol.oidc.utils.JWKSHttpUtils;
 
-    private SignatureUtils() {
+import java.io.IOException;
+
+public final class Utils {
+
+    private static final Logger logger = Logger.getLogger(Utils.class);
+
+    private Utils() {}
+
+    public static JSONWebKeySet getJsonWebKeySetFrom(String jwksUrl, KeycloakSession session) {
+        try {
+            return JWKSHttpUtils.sendJwksRequest(session, jwksUrl);
+        } catch (IOException ex) {
+            logger.warn("Error when fetching keys on JWKS URL: " + jwksUrl, ex);
+            throw new IllegalStateException(ex);
+        }
     }
 
     // We need this due to a bug in signature verification

@@ -1,13 +1,11 @@
 package fr.insee.keycloak.keys;
 
-import java.util.List;
-
-
-import org.keycloak.crypto.Algorithm;
 import org.keycloak.keys.AbstractRsaKeyProviderFactory;
 import org.keycloak.keys.Attributes;
 import org.keycloak.keys.GeneratedRsaKeyProviderFactory;
 import org.keycloak.provider.ProviderConfigProperty;
+
+import java.util.List;
 
 /**
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
@@ -16,10 +14,7 @@ public class GeneratedRsaKeyFCProviderFactory extends GeneratedRsaKeyProviderFac
 
     public static final String ID = "rsa-generated-fc+";
 
-
-
-
-    private static ProviderConfigProperty RS_ALGORITHM_PROPERTY = new ProviderConfigProperty("algorithm", "Algorithm",
+    private static final ProviderConfigProperty RS_ALGORITHM_PROPERTY = new ProviderConfigProperty("algorithm", "Algorithm",
             "Intended algorithm for the key", ProviderConfigProperty.LIST_TYPE, "RSA-OAEP", "RSA-OAEP");
     
     private static final List<ProviderConfigProperty> CONFIG_PROPERTIES = AbstractRsaKeyProviderFactory.configurationBuilder()
