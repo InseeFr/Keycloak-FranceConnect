@@ -1,25 +1,9 @@
-package fr.insee.keycloak.provider;
-
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.security.Key;
-import java.security.PublicKey;
-import java.security.Signature;
-import java.util.HashMap;
-import java.util.Map;
-
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriInfo;
-import javax.xml.bind.DatatypeConverter;
+package fr.insee.keycloak.providers.franceconnect;
 
 import com.fasterxml.jackson.databind.JsonNode;
-
+import fr.insee.keycloak.providers.franceconnect.FranceConnectIdentityProviderConfig.EidasLevel;
+import fr.insee.keycloak.providers.utils.JWKSUtils;
+import fr.insee.keycloak.providers.utils.SignatureUtils;
 import org.jboss.logging.Logger;
 import org.keycloak.broker.oidc.OIDCIdentityProvider;
 import org.keycloak.broker.oidc.OIDCIdentityProviderConfig;
@@ -34,12 +18,7 @@ import org.keycloak.events.Errors;
 import org.keycloak.events.EventBuilder;
 import org.keycloak.events.EventType;
 import org.keycloak.jose.jwe.JWE;
-import org.keycloak.jose.jwe.JWEConstants;
 import org.keycloak.jose.jwe.JWEException;
-import org.keycloak.jose.jwe.alg.JWEAlgorithmProvider;
-import org.keycloak.jose.jwe.alg.RsaKeyEncryptionJWEAlgorithmProvider;
-import org.keycloak.jose.jwe.enc.AesGcmJWEEncryptionProvider;
-import org.keycloak.jose.jwe.enc.JWEEncryptionProvider;
 import org.keycloak.jose.jwk.JSONWebKeySet;
 import org.keycloak.jose.jwk.JWK;
 import org.keycloak.jose.jwk.JWKParser;
@@ -65,7 +44,18 @@ import org.keycloak.sessions.AuthenticationSessionModel;
 import org.keycloak.util.JsonSerialization;
 import org.keycloak.vault.VaultStringSecret;
 
-import fr.insee.keycloak.provider.FranceConnectIdentityProviderConfig.EidasLevel;
+import javax.ws.rs.GET;
+import javax.ws.rs.Path;
+import javax.ws.rs.QueryParam;
+import javax.ws.rs.core.*;
+import javax.xml.bind.DatatypeConverter;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.Key;
+import java.security.PublicKey;
+import java.security.Signature;
+import java.util.HashMap;
+import java.util.Map;
 
 public class FranceConnectIdentityProvider extends OIDCIdentityProvider
     implements SocialIdentityProvider<OIDCIdentityProviderConfig> {
@@ -73,17 +63,16 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider
   private static final Logger logger = Logger.getLogger(FranceConnectIdentityProvider.class);
 
   private static final String ACR_CLAIM_NAME = "acr";
-
-  private static JSONWebKeySet jwks;
-
   private static final String BROKER_NONCE_PARAM = "BROKER_NONCE";
-
   private static final MediaType APPLICATION_JWT_TYPE = MediaType.valueOf("application/jwt");
+
+  private JSONWebKeySet jwks;
 
   public FranceConnectIdentityProvider(KeycloakSession session, FranceConnectIdentityProviderConfig config) {
     super(session, config);
+
     if (!config.getEidasLevel().equals(EidasLevel.EIDAS1)) {
-      initjwks(config);
+      jwks = JWKSUtils.getJsonWebKeySetFrom(config.getJwksUrl(), session);
     }
   }
 
@@ -92,7 +81,7 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider
     return new OIDCEndpoint(callback, realm, event, getFranceConnectConfig());
   }
 
-  private void initjwks(FranceConnectIdentityProviderConfig config) {
+  private void initJwks(FranceConnectIdentityProviderConfig config) {
     try {
       jwks = JWKSHttpUtils.sendJwksRequest(session, config.getJwksUrl());
     } catch (IOException e) {
@@ -209,7 +198,7 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider
         PublicKey publicKey = getKeysForUse(jwks, JWK.Use.SIG).get(jws.getHeader().getKeyId());
         if (publicKey == null) {
           // Try reloading jwks url
-          initjwks(config);
+          initJwks(config);
           publicKey = getKeysForUse(jwks, JWK.Use.SIG).get(jws.getHeader().getKeyId());
         }
         if (publicKey != null) {
@@ -223,7 +212,7 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider
           verifier.update(jws.getEncodedSignatureInput().getBytes(StandardCharsets.UTF_8));
 
           if (algorithm.endsWith("ECDSA")) {
-            return verifier.verify(transcodeSignatureToDER(jws.getSignature()));
+            return verifier.verify(SignatureUtils.transcodeSignatureToDER(jws.getSignature()));
           } else {
             return verifier.verify(jws.getSignature());
           }
@@ -500,51 +489,4 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider
     return result;
   }
 
-  // We need this due to a bug in signature verification
-  // (https://github.com/GluuFederation/oxAuth/issues/1210)
-  public static byte[] transcodeSignatureToDER(byte[] jwsSignature) {
-    // Adapted from
-    // org.apache.xml.security.algorithms.implementations.SignatureECDSA
-    int rawLen = jwsSignature.length / 2;
-    int i;
-    for (i = rawLen; (i > 0) && (jwsSignature[rawLen - i] == 0); i--) {
-      // do nothing
-    }
-    int j = i;
-    if (jwsSignature[rawLen - i] < 0) {
-      j += 1;
-    }
-    int k;
-    for (k = rawLen; (k > 0) && (jwsSignature[2 * rawLen - k] == 0); k--) {
-      // do nothing
-    }
-    int l = k;
-    if (jwsSignature[2 * rawLen - k] < 0) {
-      l += 1;
-    }
-    int len = 2 + j + 2 + l;
-    if (len > 255) {
-      throw new RuntimeException("Invalid ECDSA signature format");
-    }
-    int offset;
-    final byte derSignature[];
-    if (len < 128) {
-      derSignature = new byte[2 + 2 + j + 2 + l];
-      offset = 1;
-    } else {
-      derSignature = new byte[3 + 2 + j + 2 + l];
-      derSignature[1] = (byte) 0x81;
-      offset = 2;
-    }
-    derSignature[0] = 48;
-    derSignature[offset++] = (byte) len;
-    derSignature[offset++] = 2;
-    derSignature[offset++] = (byte) j;
-    System.arraycopy(jwsSignature, rawLen - i, derSignature, (offset + j) - i, i);
-    offset += j;
-    derSignature[offset++] = 2;
-    derSignature[offset++] = (byte) l;
-    System.arraycopy(jwsSignature, 2 * rawLen - k, derSignature, (offset + l) - k, k);
-    return derSignature;
-  }
 }

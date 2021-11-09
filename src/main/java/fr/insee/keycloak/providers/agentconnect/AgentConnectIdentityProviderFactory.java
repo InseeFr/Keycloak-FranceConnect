@@ -1,4 +1,4 @@
-package fr.insee.keycloak.provider;
+package fr.insee.keycloak.providers.agentconnect;
 
 import org.keycloak.broker.provider.AbstractIdentityProviderFactory;
 import org.keycloak.broker.social.SocialIdentityProviderFactory;
