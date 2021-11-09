@@ -26,6 +26,7 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.UriBuilder;
 import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
+import java.util.Optional;
 
 import static fr.insee.keycloak.providers.common.EidasLevel.EIDAS1;
 import static javax.ws.rs.core.Response.Status.OK;
@@ -75,6 +76,7 @@ public class FranceConnectIdentityProvider extends AbstractBaseIdentityProvider<
                                                     JsonWebToken idToken) throws IOException {
     var id = idToken.getSubject();
     var identity = new BrokeredIdentityContext(id);
+
     var name = (String) idToken.getOtherClaims().get(IDToken.NAME);
     var givenName = (String) idToken.getOtherClaims().get(IDToken.GIVEN_NAME);
     var familyName = (String) idToken.getOtherClaims().get(IDToken.FAMILY_NAME);
@@ -117,7 +119,7 @@ public class FranceConnectIdentityProvider extends AbstractBaseIdentityProvider<
               case EIDAS3:
               default:
                 try {
-                  String decryptedContent = decryptJwe(response.asString());
+                  var decryptedContent = decryptJWE(response.asString());
                   try {
                     userInfo = getJsonFromJWT(decryptedContent);
                   } catch (IdentityBrokerException e) {
@@ -144,48 +146,40 @@ public class FranceConnectIdentityProvider extends AbstractBaseIdentityProvider<
         }
       }
     }
-    identity.getContextData().put(VALIDATED_ID_TOKEN, idToken);
 
     identity.setId(id);
+    identity.getContextData().put(VALIDATED_ID_TOKEN, idToken);
 
-    if (givenName != null) {
-      identity.setFirstName(givenName);
-    }
-
-    if (familyName != null) {
-      identity.setLastName(familyName);
-    }
+    identity.setFirstName(givenName);
+    identity.setLastName(familyName);
 
     if (givenName == null && familyName == null) {
       identity.setName(name);
     }
 
     identity.setEmail(email);
-
     identity.setBrokerUserId(getConfig().getAlias() + "." + id);
 
-    if (preferredUsername == null) {
-      preferredUsername = email;
-    }
-
-    if (preferredUsername == null) {
-      preferredUsername = id;
-    }
-
+    var emailOptional = Optional.ofNullable(email);
+    preferredUsername = Optional.ofNullable(preferredUsername)
+          .or(() -> emailOptional)
+          .orElse(id);
     identity.setUsername(preferredUsername);
+
     if (tokenResponse != null && tokenResponse.getSessionState() != null) {
       identity.setBrokerSessionId(getConfig().getAlias() + "." + tokenResponse.getSessionState());
     }
-    if (tokenResponse != null)
+
+    if (tokenResponse != null) {
       identity.getContextData().put(FEDERATED_ACCESS_TOKEN_RESPONSE, tokenResponse);
-    if (tokenResponse != null)
       processAccessTokenResponse(identity, tokenResponse);
+    }
 
     return identity;
   }
 
-  private String decryptJwe(String encryptedJwe) throws JWEException {
-    var jwe = new JWE(encryptedJwe);
+  private String decryptJWE(String encryptedJWE) throws JWEException {
+    var jwe = new JWE(encryptedJWE);
     var kid = jwe.getHeader().getKeyId();
 
     // finding the key from all the realms keys
@@ -203,9 +197,8 @@ public class FranceConnectIdentityProvider extends AbstractBaseIdentityProvider<
   }
 
   private JsonWebToken decryptAndValidateToken(String encodedToken, boolean ignoreAudience) {
-
     try {
-      var decryptedContent = decryptJwe(encodedToken);
+      var decryptedContent = decryptJWE(encodedToken);
       return validateToken(decryptedContent, ignoreAudience);
     } catch (JWEException e) {
       throw new IdentityBrokerException("Invalid token", e);
@@ -228,17 +221,17 @@ public class FranceConnectIdentityProvider extends AbstractBaseIdentityProvider<
     try {
       jwsInput = new JWSInput(jwt);
     } catch (JWSInputException cause) {
-      throw new RuntimeException("Failed to parse JWT userinfo response", cause);
+      throw new IdentityBrokerException("Failed to parse JWT userinfo response", cause);
     }
 
-    if (verify(jwsInput)) {
-      try {
-        return JsonSerialization.readValue(jwsInput.getContent(), JsonNode.class);
-      } catch (IOException e) {
-        throw new IdentityBrokerException("Failed to parse jwt", e);
-      }
-    } else {
+    if (!verify(jwsInput)) {
       throw new IdentityBrokerException("Failed to verify signature of of jwt");
+    }
+
+    try {
+      return JsonSerialization.readValue(jwsInput.getContent(), JsonNode.class);
+    } catch (IOException e) {
+      throw new IdentityBrokerException("Failed to parse jwt", e);
     }
   }
 }
