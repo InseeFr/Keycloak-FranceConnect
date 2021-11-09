@@ -40,9 +40,7 @@ import org.keycloak.services.managers.AuthenticationManager;
 import org.keycloak.services.messages.Messages;
 import org.keycloak.services.resources.IdentityBrokerService;
 import org.keycloak.services.resources.RealmsResource;
-import org.keycloak.sessions.AuthenticationSessionModel;
 import org.keycloak.util.JsonSerialization;
-import org.keycloak.vault.VaultStringSecret;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -51,7 +49,6 @@ import javax.ws.rs.core.*;
 import javax.xml.bind.DatatypeConverter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.security.Key;
 import java.security.PublicKey;
 import java.security.Signature;
 import java.util.HashMap;
@@ -91,7 +88,7 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider
 
   @Override
   public JsonWebToken validateToken(String encodedToken) {
-    boolean ignoreAudience = false;
+    var ignoreAudience = false;
     switch (getFranceConnectConfig().getEidasLevel()) {
     case EIDAS1:
       return validateToken(encodedToken, ignoreAudience);
@@ -104,11 +101,11 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider
   }
 
   private String decryptJwe(String encryptedJwe) throws JWEException {
-    JWE jwe = new JWE(encryptedJwe);
-    String kid = jwe.getHeader().getKeyId();
+    var jwe = new JWE(encryptedJwe);
+    var kid = jwe.getHeader().getKeyId();
 
     // finding the key from all the realms keys
-    Key k = session.keys().getKeysStream(session.getContext().getRealm())
+    var k = session.keys().getKeysStream(session.getContext().getRealm())
         .filter(key -> key.getKid().equalsIgnoreCase(kid)).findFirst().get().getPrivateKey();
 
     if (k != null) {
@@ -125,7 +122,7 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider
   private JsonWebToken decryptAndValidateToken(String encodedToken, boolean ignoreAudience) {
 
     try {
-      String decryptedContent = decryptJwe(encodedToken);
+      var decryptedContent = decryptJwe(encodedToken);
       return validateToken(decryptedContent, ignoreAudience);
     } catch (JWEException e) {
       throw new IdentityBrokerException("Invalid token", e);
@@ -136,11 +133,11 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider
   /** France connect requires nonce to be exactly 64 char long, so...yes */
   @Override
   protected UriBuilder createAuthorizationUrl(AuthenticationRequest request) {
-    FranceConnectIdentityProviderConfig config = getFranceConnectConfig();
+    var config = getFranceConnectConfig();
 
-    UriBuilder uriBuilder = super.createAuthorizationUrl(request);
-    String nonce = DatatypeConverter.printHexBinary(KeycloakModelUtils.generateSecret(32));
-    AuthenticationSessionModel authenticationSession = request.getAuthenticationSession();
+    var uriBuilder = super.createAuthorizationUrl(request);
+    var nonce = DatatypeConverter.printHexBinary(KeycloakModelUtils.generateSecret(32));
+    var authenticationSession = request.getAuthenticationSession();
     authenticationSession.setClientNote(BROKER_NONCE_PARAM, nonce);
     uriBuilder.replaceQueryParam(OIDCLoginProtocol.NONCE_PARAM, nonce);
     uriBuilder.queryParam("acr_values", config.getEidasLevel());
@@ -151,26 +148,26 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider
   public Response keycloakInitiatedBrowserLogout(KeycloakSession session, UserSessionModel userSession, UriInfo uriInfo,
       RealmModel realm) {
 
-    FranceConnectIdentityProviderConfig config = getFranceConnectConfig();
+    var config = getFranceConnectConfig();
 
-    String logoutUrl = config.getLogoutUrl();
+    var logoutUrl = config.getLogoutUrl();
     if (logoutUrl == null || logoutUrl.trim().equals("")) {
       return null;
     }
 
-    String idToken = userSession.getNote(FEDERATED_ID_TOKEN);
+    var idToken = userSession.getNote(FEDERATED_ID_TOKEN);
     if (idToken != null && config.isBackchannelSupported()) {
       backchannelLogout(userSession, idToken);
       return null;
     }
 
-    String sessionId = userSession.getId();
-    UriBuilder logoutUri = UriBuilder.fromUri(logoutUrl).queryParam("state", sessionId);
+    var sessionId = userSession.getId();
+    var logoutUri = UriBuilder.fromUri(logoutUrl).queryParam("state", sessionId);
 
     if (idToken != null) {
       logoutUri.queryParam("id_token_hint", idToken);
     }
-    String redirectUri = RealmsResource.brokerUrl(uriInfo).path(IdentityBrokerService.class, "getEndpoint")
+    var redirectUri = RealmsResource.brokerUrl(uriInfo).path(IdentityBrokerService.class, "getEndpoint")
         .path(OIDCEndpoint.class, "logoutResponse").build(realm.getName(), config.getAlias()).toString();
 
     logoutUri.queryParam("post_logout_redirect_uri", redirectUri);
@@ -182,20 +179,20 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider
   protected boolean verify(JWSInput jws) {
     logger.info("Validating: " + jws.getWireString());
 
-    FranceConnectIdentityProviderConfig config = getFranceConnectConfig();
+    var config = getFranceConnectConfig();
 
     if (!config.isValidateSignature()) {
       return true;
     }
     if (jws.getHeader().getAlgorithm() == Algorithm.HS256) {
-      try (VaultStringSecret vaultStringSecret = session.vault().getStringSecret(getConfig().getClientSecret())) {
-        String clientSecret = vaultStringSecret.get().orElse(getConfig().getClientSecret());
+      try (var vaultStringSecret = session.vault().getStringSecret(getConfig().getClientSecret())) {
+        var clientSecret = vaultStringSecret.get().orElse(getConfig().getClientSecret());
         return HMACProvider.verify(jws, clientSecret.getBytes());
       }
     } else {
       try {
 
-        PublicKey publicKey = getKeysForUse(jwks, JWK.Use.SIG).get(jws.getHeader().getKeyId());
+        var publicKey = getKeysForUse(jwks, JWK.Use.SIG).get(jws.getHeader().getKeyId());
         if (publicKey == null) {
           // Try reloading jwks url
           initJwks(config);
@@ -203,11 +200,9 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider
         }
         if (publicKey != null) {
 
-          Signature verifier;
+          var algorithm = JavaAlgorithm.getJavaAlgorithm(jws.getHeader().getAlgorithm().name());
 
-          String algorithm = JavaAlgorithm.getJavaAlgorithm(jws.getHeader().getAlgorithm().name());
-
-          verifier = Signature.getInstance(algorithm);
+          var verifier = Signature.getInstance(algorithm);
           verifier.initVerify(publicKey);
           verifier.update(jws.getEncodedSignatureInput().getBytes(StandardCharsets.UTF_8));
 
@@ -228,11 +223,11 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider
   }
 
   private SimpleHttp.Response executeRequest(String url, SimpleHttp request) throws IOException {
-    SimpleHttp.Response response = request.asResponse();
+    var response = request.asResponse();
     if (response.getStatus() != 200) {
-      String msg = "failed to invoke url [" + url + "]";
+      var msg = "failed to invoke url [" + url + "]";
       try {
-        String tmp = response.asString();
+        var tmp = response.asString();
         if (tmp != null)
           msg = tmp;
 
@@ -246,22 +241,22 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider
 
   protected BrokeredIdentityContext extractIdentity(AccessTokenResponse tokenResponse, String accessToken,
       JsonWebToken idToken) throws IOException {
-    String id = idToken.getSubject();
-    BrokeredIdentityContext identity = new BrokeredIdentityContext(id);
-    String name = (String) idToken.getOtherClaims().get(IDToken.NAME);
-    String givenName = (String) idToken.getOtherClaims().get(IDToken.GIVEN_NAME);
-    String familyName = (String) idToken.getOtherClaims().get(IDToken.FAMILY_NAME);
-    String preferredUsername = (String) idToken.getOtherClaims().get(getusernameClaimNameForIdToken());
-    String email = (String) idToken.getOtherClaims().get(IDToken.EMAIL);
+    var id = idToken.getSubject();
+    var identity = new BrokeredIdentityContext(id);
+    var name = (String) idToken.getOtherClaims().get(IDToken.NAME);
+    var givenName = (String) idToken.getOtherClaims().get(IDToken.GIVEN_NAME);
+    var familyName = (String) idToken.getOtherClaims().get(IDToken.FAMILY_NAME);
+    var preferredUsername = (String) idToken.getOtherClaims().get(getusernameClaimNameForIdToken());
+    var email = (String) idToken.getOtherClaims().get(IDToken.EMAIL);
 
     if (!getConfig().isDisableUserInfoService()) {
-      String userInfoUrl = getUserInfoUrl();
+      var userInfoUrl = getUserInfoUrl();
       if (userInfoUrl != null && !userInfoUrl.isEmpty()) {
 
         if (accessToken != null) {
-          SimpleHttp.Response response = executeRequest(userInfoUrl,
+          var response = executeRequest(userInfoUrl,
               SimpleHttp.doGet(userInfoUrl, session).header("Authorization", "Bearer " + accessToken));
-          String contentType = response.getFirstHeader(HttpHeaders.CONTENT_TYPE);
+          var contentType = response.getFirstHeader(HttpHeaders.CONTENT_TYPE);
           MediaType contentMediaType;
           try {
             contentMediaType = MediaType.valueOf(contentType);
@@ -383,13 +378,13 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider
   public BrokeredIdentityContext getFederatedIdentity(String response) {
 
     try {
-      BrokeredIdentityContext federatedIdentity = super.getFederatedIdentity(response);
+      var federatedIdentity = super.getFederatedIdentity(response);
 
-      JsonWebToken idToken = (JsonWebToken) federatedIdentity.getContextData().get(VALIDATED_ID_TOKEN);
-      String acrClaim = (String) idToken.getOtherClaims().get(ACR_CLAIM_NAME);
+      var idToken = (JsonWebToken) federatedIdentity.getContextData().get(VALIDATED_ID_TOKEN);
+      var acrClaim = (String) idToken.getOtherClaims().get(ACR_CLAIM_NAME);
 
-      EidasLevel fcReturnedEidasLevel = EidasLevel.getOrDefault(acrClaim, null);
-      EidasLevel expectedEidasLevel = getFranceConnectConfig().getEidasLevel();
+      var fcReturnedEidasLevel = EidasLevel.getOrDefault(acrClaim, null);
+      var expectedEidasLevel = getFranceConnectConfig().getEidasLevel();
 
       if (fcReturnedEidasLevel == null) {
         throw new IdentityBrokerException("The returned eIDAS level cannot be retrieved");
@@ -429,13 +424,13 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider
 
       if (state == null && config.isIgnoreAbsentStateParameterLogout()) {
         logger.warn("using usersession from cookie");
-        AuthenticationManager.AuthResult authResult = AuthenticationManager.authenticateIdentityCookie(session, realm,
+        var authResult = AuthenticationManager.authenticateIdentityCookie(session, realm,
             false);
         if (authResult == null) {
           return noValidUserSession();
         }
 
-        UserSessionModel userSession = authResult.getSession();
+        var userSession = authResult.getSession();
         return AuthenticationManager.finishBrowserLogout(session, realm, userSession, session.getContext().getUri(),
             clientConnection, headers);
       } else if (state == null) {
@@ -445,7 +440,7 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider
         return ErrorPage.error(session, null, Response.Status.BAD_REQUEST, Messages.IDENTITY_PROVIDER_UNEXPECTED_ERROR);
       }
 
-      UserSessionModel userSession = session.sessions().getUserSession(realm, state);
+      var userSession = session.sessions().getUserSession(realm, state);
       if (userSession == null) {
         return noValidUserSession();
       } else if (userSession.getState() != UserSessionModel.State.LOGGING_OUT) {
@@ -466,7 +461,7 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider
     }
 
     private void sendUserSessionNotFoundEvent() {
-      EventBuilder event = new EventBuilder(realm, session, clientConnection);
+      var event = new EventBuilder(realm, session, clientConnection);
       event.event(EventType.LOGOUT);
       event.error(Errors.USER_SESSION_NOT_FOUND);
     }
@@ -477,8 +472,8 @@ public class FranceConnectIdentityProvider extends OIDCIdentityProvider
   public static Map<String, PublicKey> getKeysForUse(JSONWebKeySet keySet, JWK.Use requestedUse) {
     Map<String, PublicKey> result = new HashMap<>();
 
-    for (JWK jwk : keySet.getKeys()) {
-      JWKParser parser = JWKParser.create(jwk);
+    for (var jwk : keySet.getKeys()) {
+      var parser = JWKParser.create(jwk);
       logger.info("Parsing " + jwk.getKeyId());
       if (jwk.getPublicKeyUse() != null && jwk.getPublicKeyUse().equals(requestedUse.asString())
           && parser.isKeyTypeSupported(jwk.getKeyType())) {
