@@ -93,6 +93,7 @@ public class FranceConnectIdentityProvider extends AbstractBaseIdentityProvider<
           var response = executeRequest(userInfoUrl,
               SimpleHttp.doGet(userInfoUrl, session).header("Authorization", "Bearer " + accessToken));
           var contentType = response.getFirstHeader(HttpHeaders.CONTENT_TYPE);
+
           MediaType contentMediaType;
           try {
             contentMediaType = MediaType.valueOf(contentType);
@@ -103,36 +104,20 @@ public class FranceConnectIdentityProvider extends AbstractBaseIdentityProvider<
             throw new RuntimeException(
                 "Unsupported content-type [" + contentType + "] in response from [" + userInfoUrl + "].");
           }
+
           JsonNode userInfo;
 
           if (MediaType.APPLICATION_JSON_TYPE.isCompatible(contentMediaType)) {
             userInfo = response.asJson();
           } else if (APPLICATION_JWT_TYPE.isCompatible(contentMediaType)) {
-            switch (getConfig().getEidasLevel()) {
-              case EIDAS1:
-                try {
-                  userInfo = getJsonFromJWT(response.asString());
-                } catch (IdentityBrokerException e) {
-                  throw new RuntimeException(
-                      "Failed to verify signature of userinfo response from [" + userInfoUrl + "].", e);
-                }
-                break;
-              case EIDAS2:
-              case EIDAS3:
-              default:
-                try {
-                  var decryptedContent = decryptJWE(response.asString());
-                  try {
-                    userInfo = getJsonFromJWT(decryptedContent);
-                  } catch (IdentityBrokerException e) {
-                    throw new RuntimeException(
-                        "Failed to verify signature of userinfo response from [" + userInfoUrl + "].", e);
-                  }
-                  break;
-                } catch (JWEException e) {
-                  throw new IdentityBrokerException("Invalid token", e);
-                }
-
+            try {
+              var eidasLevel = getConfig().getEidasLevel();
+              var jwt = EIDAS1.equals(eidasLevel) ? response.asString() : decryptJWE(response.asString());
+              userInfo = getJsonFromJWT(jwt);
+            } catch (JWEException ex) {
+              throw new IdentityBrokerException("Invalid token", ex);
+            } catch (IdentityBrokerException ex) {
+              throw new RuntimeException("Failed to verify signature of userinfo response from [" + userInfoUrl + "].", ex);
             }
           } else {
             throw new RuntimeException("Unsupported content-type [" + contentType + "] in response from [" + userInfoUrl + "].");
