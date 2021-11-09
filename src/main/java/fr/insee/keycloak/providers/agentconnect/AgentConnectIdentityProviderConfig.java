@@ -20,11 +20,11 @@ class AgentConnectIdentityProviderConfig extends OIDCIdentityProviderConfig {
   }
 
   private void initialize() {
-    Environment AgentConnectEnvironment =
+    var agentConnectEnvironment =
         Environment.getOrDefault(
             getConfig().get(Environment.ENVIRONMENT_PROPERTY_NAME), DEFAULT_FC_ENVIRONMENT);
 
-    AgentConnectEnvironment.configureUrls(this);
+    agentConnectEnvironment.configureUrls(this);
 
     this.setValidateSignature(true);
     this.setBackchannelSupported(false);
@@ -52,7 +52,7 @@ class AgentConnectIdentityProviderConfig extends OIDCIdentityProviderConfig {
     }
 
     static EidasLevel getOrDefault(String eidasLevelName, EidasLevel defaultEidasLevel) {
-      for (EidasLevel eidasLevel : EidasLevel.values()) {
+      for (var eidasLevel : EidasLevel.values()) {
         if (eidasLevel.name().equalsIgnoreCase(eidasLevelName)) {
           return eidasLevel;
         }
@@ -97,7 +97,7 @@ class AgentConnectIdentityProviderConfig extends OIDCIdentityProviderConfig {
     }
 
     static Environment getOrDefault(String environmentName, Environment defaultEnvironment) {
-      for (Environment environment : Environment.values()) {
+      for (var environment : Environment.values()) {
         if (environment.name().equalsIgnoreCase(environmentName)) {
           return environment;
         }

@@ -21,14 +21,12 @@ import org.keycloak.jose.jws.crypto.HMACProvider;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserSessionModel;
-import org.keycloak.protocol.oidc.utils.JWKSHttpUtils;
 import org.keycloak.representations.JsonWebToken;
 import org.keycloak.services.ErrorPage;
 import org.keycloak.services.managers.AuthenticationManager;
 import org.keycloak.services.messages.Messages;
 import org.keycloak.services.resources.IdentityBrokerService;
 import org.keycloak.services.resources.RealmsResource;
-import org.keycloak.vault.VaultStringSecret;
 
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -36,7 +34,6 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.PublicKey;
 import java.security.Signature;
@@ -57,14 +54,6 @@ public class AgentConnectIdentityProvider extends OIDCIdentityProvider
     jwks = JWKSUtils.getJsonWebKeySetFrom(config.getJwksUrl(), session);
   }
 
-  private void initJwks(AgentConnectIdentityProviderConfig config) {
-    try {
-      jwks = JWKSHttpUtils.sendJwksRequest(session, config.getJwksUrl());
-    } catch (IOException e) {
-      logger.warn("Error when fetching keys on JWKS URL: " + config.getJwksUrl());
-    }
-  }
-
   @Override
   public Object callback(RealmModel realm, AuthenticationCallback callback, EventBuilder event) {
     return new OIDCEndpoint(callback, realm, event, getAgentConnectConfig());
@@ -73,9 +62,9 @@ public class AgentConnectIdentityProvider extends OIDCIdentityProvider
   @Override
   protected UriBuilder createAuthorizationUrl(AuthenticationRequest request) {
 
-    AgentConnectIdentityProviderConfig config = getAgentConnectConfig();
+    var config = getAgentConnectConfig();
 
-    UriBuilder uriBuilder = super.createAuthorizationUrl(request).queryParam("acr_values", config.getEidasLevel());
+    var uriBuilder = super.createAuthorizationUrl(request).queryParam("acr_values", config.getEidasLevel());
 
     logger.debugv("AgentConnect Authorization Url: {0}", uriBuilder.build().toString());
 
@@ -86,64 +75,63 @@ public class AgentConnectIdentityProvider extends OIDCIdentityProvider
   public Response keycloakInitiatedBrowserLogout(KeycloakSession session, UserSessionModel userSession, UriInfo uriInfo,
       RealmModel realm) {
 
-    AgentConnectIdentityProviderConfig config = getAgentConnectConfig();
+    var config = getAgentConnectConfig();
 
-    String logoutUrl = config.getLogoutUrl();
+    var logoutUrl = config.getLogoutUrl();
     if (logoutUrl == null || logoutUrl.trim().equals("")) {
       return null;
     }
 
-    String idToken = userSession.getNote(FEDERATED_ID_TOKEN);
+    var idToken = userSession.getNote(FEDERATED_ID_TOKEN);
     if (idToken != null && config.isBackchannelSupported()) {
       backchannelLogout(userSession, idToken);
       return null;
     }
 
-    String sessionId = userSession.getId();
-    UriBuilder logoutUri = UriBuilder.fromUri(logoutUrl).queryParam("state", sessionId);
+    var sessionId = userSession.getId();
+    var logoutUri = UriBuilder.fromUri(logoutUrl).queryParam("state", sessionId);
 
     if (idToken != null) {
       logoutUri.queryParam("id_token_hint", idToken);
     }
-    String redirectUri = RealmsResource.brokerUrl(uriInfo).path(IdentityBrokerService.class, "getEndpoint")
-        .path(OIDCEndpoint.class, "logoutResponse").build(realm.getName(), config.getAlias()).toString();
+    var redirectUri = RealmsResource.brokerUrl(uriInfo).path(IdentityBrokerService.class, "getEndpoint")
+        .path(OIDCEndpoint.class, "logoutResponse")
+        .build(realm.getName(), config.getAlias())
+        .toString();
 
     logoutUri.queryParam("post_logout_redirect_uri", redirectUri);
 
-    return Response.status(Response.Status.FOUND).location(logoutUri.build()).build();
+    return Response.status(Response.Status.FOUND)
+      .location(logoutUri.build())
+      .build();
   }
 
   @Override
   protected boolean verify(JWSInput jws) {
     logger.info("Validating: " + jws.getWireString());
 
-    AgentConnectIdentityProviderConfig config = getAgentConnectConfig();
+    var config = getAgentConnectConfig();
 
     if (!config.isValidateSignature()) {
       return true;
     }
     if (jws.getHeader().getAlgorithm() == Algorithm.HS256) {
-      try (VaultStringSecret vaultStringSecret = session.vault().getStringSecret(getConfig().getClientSecret())) {
-        String clientSecret = vaultStringSecret.get().orElse(getConfig().getClientSecret());
+      try (var vaultStringSecret = session.vault().getStringSecret(getConfig().getClientSecret())) {
+        var clientSecret = vaultStringSecret.get().orElse(getConfig().getClientSecret());
         return HMACProvider.verify(jws, clientSecret.getBytes());
       }
     } else {
       try {
-
-        PublicKey publicKey = getKeysForUse(jwks, JWK.Use.SIG).get(jws.getHeader().getKeyId());
+        var publicKey = getKeysForUse(jwks, JWK.Use.SIG).get(jws.getHeader().getKeyId());
         if (publicKey == null) {
           // Try reloading jwks url
-          initJwks(config);
+          jwks = JWKSUtils.getJsonWebKeySetFrom(config.getJwksUrl(), session);
           publicKey = getKeysForUse(jwks, JWK.Use.SIG).get(jws.getHeader().getKeyId());
-
         }
         if (publicKey != null) {
+          var algorithm = JavaAlgorithm.getJavaAlgorithm(jws.getHeader().getAlgorithm().name());
 
-          Signature verifier;
-
-          String algorithm = JavaAlgorithm.getJavaAlgorithm(jws.getHeader().getAlgorithm().name());
-
-          verifier = Signature.getInstance(algorithm);
+          var verifier = Signature.getInstance(algorithm);
           verifier.initVerify(publicKey);
           verifier.update(jws.getEncodedSignatureInput().getBytes(StandardCharsets.UTF_8));
 
@@ -169,13 +157,13 @@ public class AgentConnectIdentityProvider extends OIDCIdentityProvider
   public BrokeredIdentityContext getFederatedIdentity(String response) {
 
     try {
-      BrokeredIdentityContext federatedIdentity = super.getFederatedIdentity(response);
+      var federatedIdentity = super.getFederatedIdentity(response);
 
-      JsonWebToken idToken = (JsonWebToken) federatedIdentity.getContextData().get(VALIDATED_ID_TOKEN);
-      String acrClaim = (String) idToken.getOtherClaims().get(ACR_CLAIM_NAME);
+      var idToken = (JsonWebToken) federatedIdentity.getContextData().get(VALIDATED_ID_TOKEN);
+      var acrClaim = (String) idToken.getOtherClaims().get(ACR_CLAIM_NAME);
 
-      EidasLevel fcReturnedEidasLevel = EidasLevel.getOrDefault(acrClaim, null);
-      EidasLevel expectedEidasLevel = getAgentConnectConfig().getEidasLevel();
+      var fcReturnedEidasLevel = EidasLevel.getOrDefault(acrClaim, null);
+      var expectedEidasLevel = getAgentConnectConfig().getEidasLevel();
 
       if (fcReturnedEidasLevel == null) {
         throw new IdentityBrokerException("The returned eIDAS level cannot be retrieved");
@@ -215,13 +203,13 @@ public class AgentConnectIdentityProvider extends OIDCIdentityProvider
 
       if (state == null && config.isIgnoreAbsentStateParameterLogout()) {
         logger.warn("using usersession from cookie");
-        AuthenticationManager.AuthResult authResult = AuthenticationManager.authenticateIdentityCookie(session, realm,
+        var authResult = AuthenticationManager.authenticateIdentityCookie(session, realm,
             false);
         if (authResult == null) {
           return noValidUserSession();
         }
 
-        UserSessionModel userSession = authResult.getSession();
+        var userSession = authResult.getSession();
         return AuthenticationManager.finishBrowserLogout(session, realm, userSession, session.getContext().getUri(),
             clientConnection, headers);
       } else if (state == null) {
@@ -231,7 +219,7 @@ public class AgentConnectIdentityProvider extends OIDCIdentityProvider
         return ErrorPage.error(session, null, Response.Status.BAD_REQUEST, Messages.IDENTITY_PROVIDER_UNEXPECTED_ERROR);
       }
 
-      UserSessionModel userSession = session.sessions().getUserSession(realm, state);
+      var userSession = session.sessions().getUserSession(realm, state);
       if (userSession == null) {
         return noValidUserSession();
       } else if (userSession.getState() != UserSessionModel.State.LOGGING_OUT) {
@@ -263,8 +251,8 @@ public class AgentConnectIdentityProvider extends OIDCIdentityProvider
   public static Map<String, PublicKey> getKeysForUse(JSONWebKeySet keySet, JWK.Use requestedUse) {
     Map<String, PublicKey> result = new HashMap<>();
 
-    for (JWK jwk : keySet.getKeys()) {
-      JWKParser parser = JWKParser.create(jwk);
+    for (var jwk : keySet.getKeys()) {
+      var parser = JWKParser.create(jwk);
       logger.info("Parsing " + jwk.getKeyId());
       if (jwk.getPublicKeyUse() != null && jwk.getPublicKeyUse().equals(requestedUse.asString())
           && parser.isKeyTypeSupported(jwk.getKeyType())) {

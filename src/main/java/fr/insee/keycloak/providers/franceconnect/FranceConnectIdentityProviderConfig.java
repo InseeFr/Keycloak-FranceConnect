@@ -20,7 +20,7 @@ class FranceConnectIdentityProviderConfig extends OIDCIdentityProviderConfig {
   }
 
   private void initialize() {
-    Environment franceConnectEnvironment =
+    var franceConnectEnvironment =
         Environment.getOrDefault(
             getConfig().get(Environment.ENVIRONMENT_PROPERTY_NAME), DEFAULT_FC_ENVIRONMENT);
 
@@ -52,7 +52,7 @@ class FranceConnectIdentityProviderConfig extends OIDCIdentityProviderConfig {
     }
 
     static EidasLevel getOrDefault(String eidasLevelName, EidasLevel defaultEidasLevel) {
-      for (EidasLevel eidasLevel : EidasLevel.values()) {
+      for (var eidasLevel : EidasLevel.values()) {
         if (eidasLevel.name().equalsIgnoreCase(eidasLevelName)) {
           return eidasLevel;
         }
@@ -66,8 +66,7 @@ class FranceConnectIdentityProviderConfig extends OIDCIdentityProviderConfig {
     INTEGRATION_V1("https://fcp.integ01.dev-franceconnect.fr", 1),
     PRODUCTION_V1("https://app.franceconnect.gouv.fr", 1),
     INTEGRATION_V2("https://auth.integ01.dev-franceconnect.fr", 2),
-    PRODUCTION_V2("https://auth.franceconnect.gouv.fr", 2),
-    ;
+    PRODUCTION_V2("https://auth.franceconnect.gouv.fr", 2);
 
     static final String ENVIRONMENT_PROPERTY_NAME = "fc_environment";
 
@@ -98,7 +97,7 @@ class FranceConnectIdentityProviderConfig extends OIDCIdentityProviderConfig {
     }
 
     static Environment getOrDefault(String environmentName, Environment defaultEnvironment) {
-      for (Environment environment : Environment.values()) {
+      for (var environment : Environment.values()) {
         if (environment.name().equalsIgnoreCase(environmentName)) {
           return environment;
         }
