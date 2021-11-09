@@ -38,12 +38,14 @@ public class FranceConnectIdentityProvider extends AbstractBaseIdentityProvider<
 
   public FranceConnectIdentityProvider(KeycloakSession session, FranceConnectIdentityProviderConfig config) {
     super(
-      session, config,
-      !EIDAS1.equals(config.getEidasLevel()) ? Utils.getJsonWebKeySetFrom(config.getJwksUrl(), session) : null
+        session, config,
+        !EIDAS1.equals(config.getEidasLevel()) ? Utils.getJsonWebKeySetFrom(config.getJwksUrl(), session) : null
     );
   }
 
-  /** France connect requires nonce to be exactly 64 char long, so...yes */
+  /**
+   * France connect requires nonce to be exactly 64 char long, so...yes
+   */
   @Override
   protected UriBuilder createAuthorizationUrl(AuthenticationRequest request) {
     var config = getConfig();
@@ -89,7 +91,7 @@ public class FranceConnectIdentityProvider extends AbstractBaseIdentityProvider<
 
         if (accessToken != null) {
           var response = executeRequest(userInfoUrl,
-                  SimpleHttp.doGet(userInfoUrl, session).header("Authorization", "Bearer " + accessToken));
+              SimpleHttp.doGet(userInfoUrl, session).header("Authorization", "Bearer " + accessToken));
           var contentType = response.getFirstHeader(HttpHeaders.CONTENT_TYPE);
           MediaType contentMediaType;
           try {
@@ -99,7 +101,7 @@ public class FranceConnectIdentityProvider extends AbstractBaseIdentityProvider<
           }
           if (contentMediaType == null || contentMediaType.isWildcardSubtype() || contentMediaType.isWildcardType()) {
             throw new RuntimeException(
-                    "Unsupported content-type [" + contentType + "] in response from [" + userInfoUrl + "].");
+                "Unsupported content-type [" + contentType + "] in response from [" + userInfoUrl + "].");
           }
           JsonNode userInfo;
 
@@ -112,7 +114,7 @@ public class FranceConnectIdentityProvider extends AbstractBaseIdentityProvider<
                   userInfo = getJsonFromJWT(response.asString());
                 } catch (IdentityBrokerException e) {
                   throw new RuntimeException(
-                          "Failed to verify signature of userinfo response from [" + userInfoUrl + "].", e);
+                      "Failed to verify signature of userinfo response from [" + userInfoUrl + "].", e);
                 }
                 break;
               case EIDAS2:
@@ -124,7 +126,7 @@ public class FranceConnectIdentityProvider extends AbstractBaseIdentityProvider<
                     userInfo = getJsonFromJWT(decryptedContent);
                   } catch (IdentityBrokerException e) {
                     throw new RuntimeException(
-                            "Failed to verify signature of userinfo response from [" + userInfoUrl + "].", e);
+                        "Failed to verify signature of userinfo response from [" + userInfoUrl + "].", e);
                   }
                   break;
                 } catch (JWEException e) {
@@ -162,8 +164,8 @@ public class FranceConnectIdentityProvider extends AbstractBaseIdentityProvider<
 
     var emailOptional = Optional.ofNullable(email);
     preferredUsername = Optional.ofNullable(preferredUsername)
-          .or(() -> emailOptional)
-          .orElse(id);
+        .or(() -> emailOptional)
+        .orElse(id);
     identity.setUsername(preferredUsername);
 
     if (tokenResponse != null && tokenResponse.getSessionState() != null) {
