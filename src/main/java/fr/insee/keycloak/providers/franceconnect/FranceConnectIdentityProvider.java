@@ -39,7 +39,7 @@ public class FranceConnectIdentityProvider extends AbstractBaseIdentityProvider<
   public FranceConnectIdentityProvider(KeycloakSession session, FranceConnectIdentityProviderConfig config) {
     super(
         session, config,
-        !EIDAS1.equals(config.getEidasLevel()) ? Utils.getJsonWebKeySetFrom(config.getJwksUrl(), session) : null
+        EIDAS1.equals(config.getEidasLevel()) ? null : Utils.getJsonWebKeySetFrom(config.getJwksUrl(), session)
     );
   }
 
