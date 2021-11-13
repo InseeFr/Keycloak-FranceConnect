@@ -1,39 +1,27 @@
 package fr.insee.keycloak.providers.agentconnect;
 
-import org.keycloak.broker.oidc.OIDCIdentityProviderConfig;
+import fr.insee.keycloak.providers.common.Utils;
+
+import java.util.Properties;
 
 enum ACEnvironment {
-  INTEGRATION_RIE("https://fca.integ02.agentconnect.rie.gouv.fr", 2),
-  PRODUCTION_RIE("", 1),
-  INTEGRATION_INTERNET("https://fca.integ01.dev-agentconnect.fr", 2),
-  PRODUCTION_INTERNET("", 2);
+
+  INTEGRATION_RIE("agent-connect.integration.rie"),
+  PRODUCTION_RIE("agent-connect.production.rie"),
+  INTEGRATION_INTERNET("agent-connect.integration.internet"),
+  PRODUCTION_INTERNET("agent-connect.production.internet");
 
   static final String ENVIRONMENT_PROPERTY_NAME = "fc_environment";
+  private static final Properties PROPERTIES = Utils.loadProperties("agent-connect.properties");
 
-  private final String baseUrl;
+  private final String propertyPrefix;
 
-  private final int version;
-
-  ACEnvironment(String baseUrl, int version) {
-    this.baseUrl = baseUrl;
-    this.version = version;
+  ACEnvironment(String propertyPrefix) {
+    this.propertyPrefix = propertyPrefix;
   }
 
-  void configureUrls(OIDCIdentityProviderConfig config) {
-    if (version == 1) {
-      config.setAuthorizationUrl(baseUrl + "/api/v1/authorize");
-      config.setTokenUrl(baseUrl + "/api/v1/token");
-      config.setUserInfoUrl(baseUrl + "/api/v1/userinfo");
-      config.setLogoutUrl(baseUrl + "/api/v1/logout");
-    } else if (version == 2) {
-      config.setAuthorizationUrl(baseUrl + "/api/v2/authorize");
-      config.setTokenUrl(baseUrl + "/api/v2/token");
-      config.setUserInfoUrl(baseUrl + "/api/v2/userinfo");
-      config.setLogoutUrl(baseUrl + "/api/v2/session/end");
-      config.setIssuer(baseUrl + "/api/v2");
-      config.setJwksUrl(baseUrl + "/api/v2/jwks");
-      config.setUseJwksUrl(true);
-    }
+  public String getProperty(String key) {
+    return PROPERTIES.getProperty(propertyPrefix + "." + key);
   }
 
   static ACEnvironment getOrDefault(String environmentName, ACEnvironment defaultEnvironment) {

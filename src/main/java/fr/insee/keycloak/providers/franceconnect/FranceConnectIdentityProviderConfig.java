@@ -9,22 +9,19 @@ class FranceConnectIdentityProviderConfig extends AbstractBaseProviderConfig {
 
   FranceConnectIdentityProviderConfig(IdentityProviderModel identityProviderModel) {
     super(identityProviderModel);
-    initialize();
   }
 
   FranceConnectIdentityProviderConfig() {
     super();
-    initialize();
   }
 
-  private void initialize() {
-    var franceConnectEnvironment =
-        FCEnvironment.getOrDefault(
-            getConfig().get(FCEnvironment.ENVIRONMENT_PROPERTY_NAME), DEFAULT_FC_ENVIRONMENT);
+  @Override
+  protected String getEnvironmentProperty(String key) {
+    var franceConnectEnvironment = FCEnvironment.getOrDefault(
+        getConfig().get(FCEnvironment.ENVIRONMENT_PROPERTY_NAME),
+        DEFAULT_FC_ENVIRONMENT
+    );
 
-    franceConnectEnvironment.configureUrls(this);
-
-    this.setValidateSignature(true);
-    this.setBackchannelSupported(false);
+    return franceConnectEnvironment.getProperty(key);
   }
 }

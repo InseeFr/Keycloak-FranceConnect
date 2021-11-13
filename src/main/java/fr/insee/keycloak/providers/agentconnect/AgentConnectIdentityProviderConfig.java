@@ -5,26 +5,24 @@ import org.keycloak.models.IdentityProviderModel;
 
 class AgentConnectIdentityProviderConfig extends AbstractBaseProviderConfig {
 
-  private static final ACEnvironment DEFAULT_FC_ENVIRONMENT = ACEnvironment.INTEGRATION_INTERNET;
+  private static final ACEnvironment DEFAULT_AC_ENVIRONMENT = ACEnvironment.INTEGRATION_INTERNET;
 
   AgentConnectIdentityProviderConfig(IdentityProviderModel identityProviderModel) {
     super(identityProviderModel);
-    initialize();
   }
 
   AgentConnectIdentityProviderConfig() {
     super();
-    initialize();
   }
 
-  private void initialize() {
-    var agentConnectEnvironment =
-        ACEnvironment.getOrDefault(
-            getConfig().get(ACEnvironment.ENVIRONMENT_PROPERTY_NAME), DEFAULT_FC_ENVIRONMENT);
+  @Override
+  protected String getEnvironmentProperty(String key) {
 
-    agentConnectEnvironment.configureUrls(this);
+    var agentConnectEnvironment = ACEnvironment.getOrDefault(
+        getConfig().get(ACEnvironment.ENVIRONMENT_PROPERTY_NAME),
+        DEFAULT_AC_ENVIRONMENT
+    );
 
-    this.setValidateSignature(true);
-    this.setBackchannelSupported(false);
+    return agentConnectEnvironment.getProperty(key);
   }
 }

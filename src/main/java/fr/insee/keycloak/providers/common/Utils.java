@@ -6,12 +6,23 @@ import org.keycloak.models.KeycloakSession;
 import org.keycloak.protocol.oidc.utils.JWKSHttpUtils;
 
 import java.io.IOException;
+import java.util.Properties;
 
 public final class Utils {
 
   private static final Logger logger = Logger.getLogger(Utils.class);
 
   private Utils() {
+  }
+
+  public static Properties loadProperties(String propertiesFile) {
+    var properties = new Properties();
+    try (var stream = Utils.class.getClassLoader().getResourceAsStream(propertiesFile)) {
+      properties.load(stream);
+      return properties;
+    } catch (IOException ex) {
+      throw new IllegalStateException("Cannot load properties from file " + propertiesFile, ex);
+    }
   }
 
   public static JSONWebKeySet getJsonWebKeySetFrom(String jwksUrl, KeycloakSession session) {
