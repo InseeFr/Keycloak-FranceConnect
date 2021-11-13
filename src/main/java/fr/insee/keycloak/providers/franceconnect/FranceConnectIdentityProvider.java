@@ -58,6 +58,8 @@ public class FranceConnectIdentityProvider extends AbstractBaseIdentityProvider<
     uriBuilder.replaceQueryParam(OIDCLoginProtocol.NONCE_PARAM, nonce);
     uriBuilder.queryParam("acr_values", config.getEidasLevel());
 
+    logger.debugv("FC Authorization Url: {0}", uriBuilder.build().toString());
+
     return uriBuilder;
   }
 
