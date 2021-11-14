@@ -3,6 +3,7 @@ package fr.insee.keycloak.providers.franceconnect;
 import com.fasterxml.jackson.databind.JsonNode;
 import fr.insee.keycloak.providers.common.AbstractBaseIdentityProvider;
 import fr.insee.keycloak.providers.common.Utils;
+import org.keycloak.OAuth2Constants;
 import org.keycloak.broker.oidc.mappers.AbstractJsonUserAttributeMapper;
 import org.keycloak.broker.provider.AuthenticationRequest;
 import org.keycloak.broker.provider.BrokeredIdentityContext;
@@ -49,14 +50,14 @@ public class FranceConnectIdentityProvider extends AbstractBaseIdentityProvider<
   @Override
   protected UriBuilder createAuthorizationUrl(AuthenticationRequest request) {
     var config = getConfig();
-
-    var uriBuilder = super.createAuthorizationUrl(request);
-    var nonce = DatatypeConverter.printHexBinary(KeycloakModelUtils.generateSecret(32));
     var authenticationSession = request.getAuthenticationSession();
 
+    authenticationSession.setClientNote(OAuth2Constants.ACR_VALUES, config.getEidasLevel().toString());
+    var uriBuilder = super.createAuthorizationUrl(request);
+
+    var nonce = DatatypeConverter.printHexBinary(KeycloakModelUtils.generateSecret(32));
     authenticationSession.setClientNote(BROKER_NONCE_PARAM, nonce);
     uriBuilder.replaceQueryParam(OIDCLoginProtocol.NONCE_PARAM, nonce);
-    uriBuilder.queryParam("acr_values", config.getEidasLevel());
 
     logger.debugv("FC Authorization Url: {0}", uriBuilder.build().toString());
 
@@ -68,11 +69,12 @@ public class FranceConnectIdentityProvider extends AbstractBaseIdentityProvider<
     var ignoreAudience = false;
     var eidasLevel = getConfig().getEidasLevel();
 
-    if (EIDAS1.equals(eidasLevel)) {
-      return validateToken(encodedToken, ignoreAudience);
+    var token = encodedToken;
+    if (!EIDAS1.equals(eidasLevel)) {
+      token = decryptJWE(encodedToken);
     }
 
-    return decryptAndValidateToken(encodedToken, ignoreAudience);
+    return validateToken(token, ignoreAudience);
   }
 
   @Override
@@ -116,8 +118,6 @@ public class FranceConnectIdentityProvider extends AbstractBaseIdentityProvider<
               var eidasLevel = getConfig().getEidasLevel();
               var jwt = EIDAS1.equals(eidasLevel) ? response.asString() : decryptJWE(response.asString());
               userInfo = getJsonFromJWT(jwt);
-            } catch (JWEException ex) {
-              throw new IdentityBrokerException("Invalid token", ex);
             } catch (IdentityBrokerException ex) {
               throw new RuntimeException("Failed to verify signature of userinfo response from [" + userInfoUrl + "].", ex);
             }
@@ -167,30 +167,24 @@ public class FranceConnectIdentityProvider extends AbstractBaseIdentityProvider<
     return identity;
   }
 
-  private String decryptJWE(String encryptedJWE) throws JWEException {
-    var jwe = new JWE(encryptedJWE);
-    var kid = jwe.getHeader().getKeyId();
-
-    // finding the key from all the realms keys
-    var key = session.keys()
-        .getKeysStream(session.getContext().getRealm())
-        .filter(k -> k.getKid().equalsIgnoreCase(kid))
-        .findFirst()
-        .map(KeyWrapper::getPrivateKey)
-        .orElseThrow(() -> new IdentityBrokerException("No key found for kid" + kid));
-
-    logger.debug("Found corresponding secret key for kid " + kid);
-    jwe.getKeyStorage().setDecryptionKey(key);
-
-    return new String(jwe.verifyAndDecodeJwe().getContent());
-  }
-
-  private JsonWebToken decryptAndValidateToken(String encodedToken, boolean ignoreAudience) {
+  private String decryptJWE(String encryptedJWE) {
     try {
-      var decryptedContent = decryptJWE(encodedToken);
-      return validateToken(decryptedContent, ignoreAudience);
-    } catch (JWEException e) {
-      throw new IdentityBrokerException("Invalid token", e);
+      var jwe = new JWE(encryptedJWE);
+      var kid = jwe.getHeader().getKeyId();
+
+      // Finding the key from all the realms keys
+      var key = session.keys()
+          .getKeysStream(session.getContext().getRealm())
+          .filter(k -> k.getKid().equalsIgnoreCase(kid))
+          .findFirst()
+          .map(KeyWrapper::getPrivateKey)
+          .orElseThrow(() -> new IdentityBrokerException("No key found for kid " + kid));
+
+      logger.debug("Found corresponding secret key for kid " + kid);
+      jwe.getKeyStorage().setDecryptionKey(key);
+      return new String(jwe.verifyAndDecodeJwe().getContent());
+    } catch (JWEException ex) {
+      throw new IdentityBrokerException("Invalid token", ex);
     }
   }
 

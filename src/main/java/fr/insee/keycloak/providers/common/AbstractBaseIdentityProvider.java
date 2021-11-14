@@ -82,7 +82,8 @@ public abstract class AbstractBaseIdentityProvider<T extends AbstractBaseProvide
     if (idToken != null) {
       logoutUri.queryParam("id_token_hint", idToken);
     }
-    var redirectUri = RealmsResource.brokerUrl(uriInfo).path(IdentityBrokerService.class, "getEndpoint")
+    var redirectUri = RealmsResource.brokerUrl(uriInfo)
+        .path(IdentityBrokerService.class, "getEndpoint")
         .path(OIDCEndpoint.class, "logoutResponse")
         .build(realm.getName(), config.getAlias())
         .toString();
@@ -131,11 +132,12 @@ public abstract class AbstractBaseIdentityProvider<T extends AbstractBaseProvide
       verifier.initVerify(publicKey);
       verifier.update(jws.getEncodedSignatureInput().getBytes(StandardCharsets.UTF_8));
 
+      var signature = jws.getSignature();
       if (algorithm.endsWith("ECDSA")) {
-        return verifier.verify(transcodeSignatureToDER(jws.getSignature()));
+        signature = transcodeSignatureToDER(signature);
       }
 
-      return verifier.verify(jws.getSignature());
+      return verifier.verify(signature);
     } catch (Exception ex) {
       logger.error("Signature verification failed", ex);
       return false;
