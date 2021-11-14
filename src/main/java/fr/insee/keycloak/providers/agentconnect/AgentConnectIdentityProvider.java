@@ -2,6 +2,7 @@ package fr.insee.keycloak.providers.agentconnect;
 
 import fr.insee.keycloak.providers.common.AbstractBaseIdentityProvider;
 import fr.insee.keycloak.providers.common.Utils;
+import org.keycloak.OAuth2Constants;
 import org.keycloak.broker.provider.AuthenticationRequest;
 import org.keycloak.models.KeycloakSession;
 
@@ -18,7 +19,8 @@ public class AgentConnectIdentityProvider extends AbstractBaseIdentityProvider<A
 
     var config = getConfig();
 
-    var uriBuilder = super.createAuthorizationUrl(request).queryParam("acr_values", config.getEidasLevel());
+    request.getAuthenticationSession().setClientNote(OAuth2Constants.ACR_VALUES, config.getEidasLevel().toString());
+    var uriBuilder = super.createAuthorizationUrl(request);
 
     logger.debugv("AgentConnect Authorization Url: {0}", uriBuilder.build().toString());
 
