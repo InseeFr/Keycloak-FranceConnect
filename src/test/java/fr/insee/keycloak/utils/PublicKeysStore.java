@@ -8,6 +8,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Represents the response of JWKS url call
+ */
 public final class PublicKeysStore {
 
   private final List<String> keys = new ArrayList<>();
