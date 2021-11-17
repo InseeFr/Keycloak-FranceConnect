@@ -11,7 +11,7 @@ import java.util.Map;
 import java.util.Set;
 
 /**
- *
+ * Creates a fake implementation of AuthenticationSessionModel with clientNotes map
  */
 public final class MockAuthenticationSessionModel implements AuthenticationSessionModel {
 
