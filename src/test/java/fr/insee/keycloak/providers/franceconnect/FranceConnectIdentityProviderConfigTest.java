@@ -5,7 +5,7 @@ import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator.ReplaceUnderscores;
 import org.junit.jupiter.api.Test;
 
-import static fr.insee.keycloak.providers.franceconnect.FCFixture.givenConfigForIntegrationAndEidasLevel2;
+import static fr.insee.keycloak.providers.franceconnect.FCFixture.givenConfigForIntegrationV2AndEidasLevel2;
 import static fr.insee.keycloak.providers.franceconnect.FCFixture.givenConfigWithSelectedEnvAndSelectedEidasLevel;
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -35,7 +35,7 @@ class FranceConnectIdentityProviderConfigTest {
 
   @Test
   void should_initialize_config_with_url_properties_corresponding_to_selected_environment_from_admin_interface() {
-    var config = givenConfigForIntegrationAndEidasLevel2();
+    var config = givenConfigForIntegrationV2AndEidasLevel2();
 
     assertThat(config.getAuthorizationUrl()).isNotNull().endsWith("/authorize");
     assertThat(config.getTokenUrl()).isNotNull().endsWith("/token");
@@ -48,21 +48,21 @@ class FranceConnectIdentityProviderConfigTest {
 
   @Test
   void should_initialize_config_with_selected_ignoreAbsentStateParameterLogout_from_admin_interface() {
-    var config = givenConfigForIntegrationAndEidasLevel2();
+    var config = givenConfigForIntegrationV2AndEidasLevel2();
 
     assertThat(config.isIgnoreAbsentStateParameterLogout()).isFalse();
   }
 
   @Test
   void should_initialize_config_with_signature_validation() {
-    var config = givenConfigForIntegrationAndEidasLevel2();
+    var config = givenConfigForIntegrationV2AndEidasLevel2();
 
     assertThat(config.isValidateSignature()).isTrue();
   }
 
   @Test
   void should_initialize_config_without_backchannel_support() {
-    var config = givenConfigForIntegrationAndEidasLevel2();
+    var config = givenConfigForIntegrationV2AndEidasLevel2();
 
     assertThat(config.isBackchannelSupported()).isFalse();
   }

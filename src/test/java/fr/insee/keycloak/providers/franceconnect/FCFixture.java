@@ -62,7 +62,11 @@ final class FCFixture {
       .claim("email", "john.doe@gmail.com")
       .build();
 
-  static FranceConnectIdentityProviderConfig givenConfigForIntegrationAndEidasLevel2() {
+  static FranceConnectIdentityProviderConfig givenConfigForIntegrationV1AndEidasLevel2() {
+    return givenConfigWithSelectedEnvAndSelectedEidasLevel("integration_v1", "eidas2");
+  }
+
+  static FranceConnectIdentityProviderConfig givenConfigForIntegrationV2AndEidasLevel2() {
     return givenConfigWithSelectedEnvAndSelectedEidasLevel("integration_v2", "eidas2");
   }
 

@@ -5,8 +5,11 @@ import com.nimbusds.jose.jwk.RSAKey;
 import fr.insee.keycloak.providers.common.EidasLevel;
 import fr.insee.keycloak.utils.*;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator.ReplaceUnderscores;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 import org.keycloak.broker.provider.IdentityBrokerException;
 import org.keycloak.connections.httpclient.HttpClientProvider;
 import org.keycloak.crypto.KeyWrapper;
@@ -46,7 +49,7 @@ class FranceConnectIdentityProviderTest {
 
   @BeforeEach
   void setup() throws IOException {
-    config = givenConfigForIntegrationAndEidasLevel2();
+    config = givenConfigForIntegrationV2AndEidasLevel2();
     publicKeysStore = new PublicKeysStore();
 
     httpClientProvider = mock(HttpClientProvider.class);
@@ -57,6 +60,19 @@ class FranceConnectIdentityProviderTest {
     session = givenKeycloakSession(httpClientProvider, httpClient);
 
     provider = new FranceConnectIdentityProvider(session, config);
+  }
+
+  @Test
+  void should_load_jwks_from_jwks_url_when_configuration_supports_jwks() throws IOException {
+    verify(httpClientProvider, times(1)).get(config.getJwksUrl());
+
+    var noJWKSSupportsConfig = givenConfigForIntegrationV1AndEidasLevel2();
+    var httpClientProvider = mock(HttpClientProvider.class);
+    var session = givenKeycloakSession(httpClientProvider, httpClient);
+
+    var provider = new FranceConnectIdentityProvider(session, noJWKSSupportsConfig);
+
+    verify(httpClientProvider, never()).get(anyString());
   }
 
   @Nested
