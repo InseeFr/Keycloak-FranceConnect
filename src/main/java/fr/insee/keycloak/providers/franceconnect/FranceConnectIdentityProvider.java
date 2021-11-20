@@ -40,8 +40,12 @@ public class FranceConnectIdentityProvider extends AbstractBaseIdentityProvider<
   public FranceConnectIdentityProvider(KeycloakSession session, FranceConnectIdentityProviderConfig config) {
     super(
         session, config,
-        EIDAS1.equals(config.getEidasLevel()) ? null : Utils.getJsonWebKeySetFrom(config.getJwksUrl(), session)
+        useJwks(config) ? Utils.getJsonWebKeySetFrom(config.getJwksUrl(), session) : null
     );
+  }
+
+  private static boolean useJwks(FranceConnectIdentityProviderConfig config) {
+    return config.isUseJwksUrl() && config.getJwksUrl() != null;
   }
 
   /**
@@ -67,12 +71,7 @@ public class FranceConnectIdentityProvider extends AbstractBaseIdentityProvider<
   @Override
   public JsonWebToken validateToken(String encodedToken) {
     var ignoreAudience = false;
-    var eidasLevel = getConfig().getEidasLevel();
-
-    var token = encodedToken;
-    if (!EIDAS1.equals(eidasLevel)) {
-      token = decryptJWE(encodedToken);
-    }
+    var token = isJWETokenFormatRequired(getConfig()) ? decryptJWE(encodedToken) : encodedToken;
 
     return validateToken(token, ignoreAudience);
   }
@@ -115,8 +114,10 @@ public class FranceConnectIdentityProvider extends AbstractBaseIdentityProvider<
             userInfo = response.asJson();
           } else if (APPLICATION_JWT_TYPE.isCompatible(contentMediaType)) {
             try {
-              var eidasLevel = getConfig().getEidasLevel();
-              var jwt = EIDAS1.equals(eidasLevel) ? response.asString() : decryptJWE(response.asString());
+              var jwt = isJWETokenFormatRequired(getConfig())
+                  ? decryptJWE(response.asString())
+                  : response.asString();
+
               userInfo = getJsonFromJWT(jwt);
             } catch (IdentityBrokerException ex) {
               throw new RuntimeException("Failed to verify signature of userinfo response from [" + userInfoUrl + "].", ex);
@@ -165,6 +166,11 @@ public class FranceConnectIdentityProvider extends AbstractBaseIdentityProvider<
     }
 
     return identity;
+  }
+
+  private boolean isJWETokenFormatRequired(FranceConnectIdentityProviderConfig config) {
+    var eidasLevel = config.getEidasLevel();
+    return !EIDAS1.equals(eidasLevel) && useJwks(config);
   }
 
   private String decryptJWE(String encryptedJWE) {
