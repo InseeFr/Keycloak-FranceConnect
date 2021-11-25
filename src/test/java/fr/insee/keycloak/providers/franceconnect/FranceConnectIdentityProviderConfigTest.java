@@ -1,57 +1,56 @@
 package fr.insee.keycloak.providers.franceconnect;
 
+import static fr.insee.keycloak.providers.franceconnect.FCFixture.givenConfigForIntegrationV2AndEidasLevel2;
+import static fr.insee.keycloak.providers.franceconnect.FCFixture.givenConfigWithSelectedEnvAndSelectedEidasLevel;
+import static fr.insee.keycloak.providers.franceconnect.FranceConnectIdentityProviderFactory.FC_PROVIDER_MAPPERS;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+
 import fr.insee.keycloak.providers.common.EidasLevel;
 import org.junit.jupiter.api.DisplayNameGeneration;
 import org.junit.jupiter.api.DisplayNameGenerator.ReplaceUnderscores;
 import org.junit.jupiter.api.Test;
 import org.keycloak.models.RealmModel;
 
-import static fr.insee.keycloak.providers.franceconnect.FCFixture.givenConfigForIntegrationV2AndEidasLevel2;
-import static fr.insee.keycloak.providers.franceconnect.FCFixture.givenConfigWithSelectedEnvAndSelectedEidasLevel;
-import static fr.insee.keycloak.providers.franceconnect.FranceConnectIdentityProviderFactory.FC_PROVIDER_MAPPERS;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-
 @DisplayNameGeneration(ReplaceUnderscores.class)
 class FranceConnectIdentityProviderConfigTest {
 
   @Test
   void should_initialize_config_with_selected_eidas_level_from_admin_interface() {
-    var config = givenConfigWithSelectedEnvAndSelectedEidasLevel(
-        "integration_v1", "eidas1"
-    );
+    var config = givenConfigWithSelectedEnvAndSelectedEidasLevel("integration_v1", "eidas1");
 
     assertThat(config.getEidasLevel()).isEqualTo(EidasLevel.EIDAS1);
 
-    config = givenConfigWithSelectedEnvAndSelectedEidasLevel(
-        "integration_v1", "eidas2"
-    );
+    config = givenConfigWithSelectedEnvAndSelectedEidasLevel("integration_v1", "eidas2");
 
     assertThat(config.getEidasLevel()).isEqualTo(EidasLevel.EIDAS2);
 
-    config = givenConfigWithSelectedEnvAndSelectedEidasLevel(
-        "integration_v1", "eidas3"
-    );
+    config = givenConfigWithSelectedEnvAndSelectedEidasLevel("integration_v1", "eidas3");
 
     assertThat(config.getEidasLevel()).isEqualTo(EidasLevel.EIDAS3);
   }
 
   @Test
-  void should_initialize_config_with_url_properties_corresponding_to_selected_environment_from_admin_interface() {
+  void
+      should_initialize_config_with_url_properties_corresponding_to_selected_environment_from_admin_interface() {
     var config = givenConfigForIntegrationV2AndEidasLevel2();
 
     assertThat(config.getAuthorizationUrl()).isNotNull().endsWith("/authorize");
     assertThat(config.getTokenUrl()).isNotNull().endsWith("/token");
     assertThat(config.getUserInfoUrl()).isNotNull().endsWith("/userinfo");
-    assertThat(config.getLogoutUrl()).isNotNull().endsWith("/logout");
+    assertThat(config.getLogoutUrl()).isNotNull().endsWith("/session/end");
     assertThat(config.getIssuer()).isNotNull();
     assertThat(config.isUseJwksUrl()).isTrue();
     assertThat(config.getJwksUrl()).endsWith("/jwks");
   }
 
   @Test
-  void should_initialize_config_with_selected_ignoreAbsentStateParameterLogout_from_admin_interface() {
+  void
+      should_initialize_config_with_selected_ignoreAbsentStateParameterLogout_from_admin_interface() {
     var config = givenConfigForIntegrationV2AndEidasLevel2();
 
     assertThat(config.isIgnoreAbsentStateParameterLogout()).isFalse();
