@@ -1,11 +1,18 @@
 package fr.insee.keycloak.providers.common;
 
+import fr.insee.keycloak.mappers.FranceConnectUserAttributeMapper;
 import org.jboss.logging.Logger;
+import org.keycloak.broker.oidc.mappers.AbstractClaimMapper;
+import org.keycloak.broker.oidc.mappers.UserAttributeMapper;
+import org.keycloak.broker.provider.HardcodedAttributeMapper;
 import org.keycloak.jose.jwk.JSONWebKeySet;
+import org.keycloak.models.IdentityProviderMapperModel;
+import org.keycloak.models.IdentityProviderMapperSyncMode;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.protocol.oidc.utils.JWKSHttpUtils;
 
 import java.io.IOException;
+import java.util.HashMap;
 import java.util.Properties;
 
 public final class Utils {
@@ -13,6 +20,37 @@ public final class Utils {
   private static final Logger logger = Logger.getLogger(Utils.class);
 
   private Utils() {
+  }
+
+  public static IdentityProviderMapperModel createUserAttributeMapper(String providerId, String mapperName,
+                                                                      String claimAttributeName, String userAttributeName) {
+    var mapper = new IdentityProviderMapperModel();
+
+    mapper.setName(mapperName);
+    mapper.setIdentityProviderMapper(FranceConnectUserAttributeMapper.MAPPER_NAME);
+    mapper.setIdentityProviderAlias(providerId);
+    mapper.setConfig(new HashMap<>());
+    mapper.setSyncMode(IdentityProviderMapperSyncMode.INHERIT);
+    mapper.getConfig().put(AbstractClaimMapper.CLAIM, claimAttributeName);
+    mapper.getConfig().put(UserAttributeMapper.USER_ATTRIBUTE, userAttributeName);
+
+    return mapper;
+  }
+
+  public static IdentityProviderMapperModel createHardcodedAttributeMapper(String providerId, String mapperName,
+                                                                           String attributeName, String attributeValue) {
+
+    var mapper = new IdentityProviderMapperModel();
+
+    mapper.setName(mapperName);
+    mapper.setIdentityProviderMapper(HardcodedAttributeMapper.PROVIDER_ID);
+    mapper.setIdentityProviderAlias(providerId);
+    mapper.setConfig(new HashMap<>());
+    mapper.setSyncMode(IdentityProviderMapperSyncMode.INHERIT);
+    mapper.getConfig().put(HardcodedAttributeMapper.ATTRIBUTE, attributeName);
+    mapper.getConfig().put(HardcodedAttributeMapper.ATTRIBUTE_VALUE, attributeValue);
+
+    return mapper;
   }
 
   public static Properties loadProperties(String propertiesFile) {

@@ -1,11 +1,15 @@
 package fr.insee.keycloak.providers.franceconnect;
 
 import fr.insee.keycloak.providers.common.AbstractBaseProviderConfig;
+import org.keycloak.models.IdentityProviderMapperModel;
 import org.keycloak.models.IdentityProviderModel;
 
-class FranceConnectIdentityProviderConfig extends AbstractBaseProviderConfig {
+import java.util.List;
 
-  private static final FCEnvironment DEFAULT_FC_ENVIRONMENT = FCEnvironment.INTEGRATION_V1;
+import static fr.insee.keycloak.providers.franceconnect.FranceConnectIdentityProviderFactory.DEFAULT_FC_ENVIRONMENT;
+import static fr.insee.keycloak.providers.franceconnect.FranceConnectIdentityProviderFactory.FC_PROVIDER_MAPPERS;
+
+class FranceConnectIdentityProviderConfig extends AbstractBaseProviderConfig {
 
   FranceConnectIdentityProviderConfig(IdentityProviderModel identityProviderModel) {
     super(identityProviderModel);
@@ -23,5 +27,10 @@ class FranceConnectIdentityProviderConfig extends AbstractBaseProviderConfig {
     );
 
     return franceConnectEnvironment.getProperty(key);
+  }
+
+  @Override
+  protected List<IdentityProviderMapperModel> getDefaultMappers() {
+    return FC_PROVIDER_MAPPERS;
   }
 }

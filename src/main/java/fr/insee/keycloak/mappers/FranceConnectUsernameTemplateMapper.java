@@ -6,7 +6,7 @@ import org.keycloak.broker.oidc.mappers.UsernameTemplateMapper;
 
 public class FranceConnectUsernameTemplateMapper extends UsernameTemplateMapper {
 
-  private static final String MAPPER_NAME = "franceconnect-username-template-mapper";
+  public static final String MAPPER_NAME = "franceconnect-username-template-mapper";
 
   public static final String[] COMPATIBLE_PROVIDERS =
       new String[]{
