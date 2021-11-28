@@ -6,7 +6,7 @@ import org.keycloak.broker.oidc.mappers.UserAttributeMapper;
 
 public class FranceConnectUserAttributeMapper extends UserAttributeMapper {
 
-  private static final String MAPPER_NAME = "franceconnect-user-attribute-mapper";
+  public static final String MAPPER_NAME = "franceconnect-user-attribute-mapper";
 
   public static final String[] COMPATIBLE_PROVIDERS =
       new String[]{

@@ -1,11 +1,15 @@
 package fr.insee.keycloak.providers.agentconnect;
 
 import fr.insee.keycloak.providers.common.AbstractBaseProviderConfig;
+import org.keycloak.models.IdentityProviderMapperModel;
 import org.keycloak.models.IdentityProviderModel;
 
-class AgentConnectIdentityProviderConfig extends AbstractBaseProviderConfig {
+import java.util.List;
 
-  private static final ACEnvironment DEFAULT_AC_ENVIRONMENT = ACEnvironment.INTEGRATION_INTERNET;
+import static fr.insee.keycloak.providers.agentconnect.AgentConnectIdentityProviderFactory.AC_PROVIDER_MAPPERS;
+import static fr.insee.keycloak.providers.agentconnect.AgentConnectIdentityProviderFactory.DEFAULT_AC_ENVIRONMENT;
+
+class AgentConnectIdentityProviderConfig extends AbstractBaseProviderConfig {
 
   AgentConnectIdentityProviderConfig(IdentityProviderModel identityProviderModel) {
     super(identityProviderModel);
@@ -24,5 +28,10 @@ class AgentConnectIdentityProviderConfig extends AbstractBaseProviderConfig {
     );
 
     return agentConnectEnvironment.getProperty(key);
+  }
+
+  @Override
+  protected List<IdentityProviderMapperModel> getDefaultMappers() {
+    return AC_PROVIDER_MAPPERS;
   }
 }
