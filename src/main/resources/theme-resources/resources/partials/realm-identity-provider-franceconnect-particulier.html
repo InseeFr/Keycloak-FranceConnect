@@ -107,6 +107,7 @@
 
                 <div class="col-md-6">
                     <input class="form-control" id="defaultScope" type="text"
+                        ng-init="identityProvider.config.defaultScope = identityProvider.config.defaultScope || 'openid identite_pivot'"
                         ng-model="identityProvider.config.defaultScope">
                 </div>
 

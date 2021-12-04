@@ -19,7 +19,7 @@
                 <div class="col-md-6">
                     <div>
                         <select class="form-control" id="fcEnvironment"
-                                ng-init="identityProvider.config.fc_environment = identityProvider.config.fc_environment || 'integration'"
+                                ng-init="identityProvider.config.fc_environment = identityProvider.config.fc_environment || 'integration_rie'"
                                 ng-model="identityProvider.config.fc_environment">
                             <option value="integration_rie">{{:: 'agentconnect.fc_environment.integration_rie' | translate}}</option>
                             <option value="integration_internet">{{:: 'agentconnect.fc_environment.integration_internet' | translate}}</option>
@@ -95,7 +95,9 @@
                 <label class="col-md-2 control-label" for="defaultScope">{{:: 'default-scopes' | translate}} </label>
 
                 <div class="col-md-6">
-                    <input class="form-control" id="defaultScope" type="text" ng-model="identityProvider.config.defaultScope">
+                    <input class="form-control" id="defaultScope" type="text"
+                           ng-init="identityProvider.config.defaultScope = identityProvider.config.defaultScope || 'openid identite_pivot'"
+                           ng-model="identityProvider.config.defaultScope">
                 </div>
 
                 <div class="col-sm-4">
