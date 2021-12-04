@@ -24,7 +24,7 @@
 
 Cette extension pour [Keycloak](https://www.keycloak.org) ajoute un fournisseur d'identité permettant d'utiliser les services proposés par [France Connect](https://franceconnect.gouv.fr/).
 
-[![Build Status](https://travis-ci.org/inseefr/Keycloak-FranceConnect.svg?branch=master)](https://travis-ci.org/inseefr/Keycloak-FranceConnect)
+[![CI Badge](https://github.com/InseeFr/Keycloak-FranceConnect/actions/workflows/ci.yml/badge.svg)](https://github.com/InseeFr/Keycloak-FranceConnect/actions/workflows/ci.yml)
 
 
 Pour toutes questions sur l'utilisation de cette extension, n'hésitez pas à ouvrir une [discussion](https://github.com/InseeFr/Keycloak-FranceConnect/discussions).
@@ -40,7 +40,7 @@ Pour toutes questions sur l'utilisation de cette extension, n'hésitez pas à ou
 
 ## Compatibilité
 
-- La version 4.0.0 est compatible avec Keycloak `15.0.0` et supérieur/
+- La version 4.0.0 est compatible avec Keycloak `15.0.0` et supérieur.
 - La version 2.1 jusqu'à 3.0.0 est compatible avec Keycloak `9.0.2` et supérieur.
 - La version 2.0 est compatible avec Keycloak `8.0.1` jusqu'à `9.0.0`.
 
@@ -48,8 +48,9 @@ Pour toutes questions sur l'utilisation de cette extension, n'hésitez pas à ou
 
 Si vous utilisez déjà une ancienne version de l'extension, il est préférable de supprimer votre configuration afin d'éviter tout conflit possible.
 
+* 2.x/3.x -> 4.x : Supprimer votre configuration de fournisseur d'identité afin que le plugin puisse générer automatiquement les mappers lors de la sauvegarde de la configuration et qu'il n'y ait aucun conflit.
+* 1.x -> 2.x : Vérifiez que votre fournisseur d'identité existe et que l'environnement France Connect sélectionné est celui désiré.
 * 1.x -> 1.4 : Vous devez ajouter le niveau eIDAS dans la configuration du fournisseur d'identité.
-* 1.x -> 2.0+ : Vérifiez que votre fournisseur d'identité existe et que l'environnement France Connect sélectionné est celui désiré.
 
 ## Installation
 
@@ -90,6 +91,7 @@ Vous trouverez également l'url de redirection qu'il faudra enregistrer sur le p
 #### Mappers
 
 Une fois la configuration validée, vous pouvez ajouter des mappers afin de récupérer les attributs à partir [des claims fournis par France Connect](https://partenaires.franceconnect.gouv.fr/fcp/fournisseur-service).
+Les principaux mappers sont ajoutés automatiquement lors de la création du fournisseur d'identité.
 
 Exemples de mappers :
 * Name : `lastName`, Mapper Type : `Attribute Importer`, Claim : `family_name`, User Attribute Name : `lastName`
@@ -146,6 +148,7 @@ Vous trouverez également l'url de redirection qu'il faudra enregistrer sur le p
 ##### Mappers
 
 Une fois la configuration validée, vous pouvez ajouter des mappers afin de récupérer les attributs à partir [des claims fournis par France Connect](https://github.com/france-connect/Documentation-AgentConnect/blob/main/doc-fs.md#les-donn%C3%A9es-agent).
+Les principaux mappers sont ajoutés automatiquement lors de la création du fournisseur d'identité.
 
 Exemples de mappers :
 * Name : `lastName`, Mapper Type : `Attribute Importer`, Claim : `family_name`, User Attribute Name : `lastName`
