@@ -9,7 +9,7 @@ import java.util.List;
 import static fr.insee.keycloak.providers.agentconnect.AgentConnectIdentityProviderFactory.AC_PROVIDER_MAPPERS;
 import static fr.insee.keycloak.providers.agentconnect.AgentConnectIdentityProviderFactory.DEFAULT_AC_ENVIRONMENT;
 
-class AgentConnectIdentityProviderConfig extends AbstractBaseProviderConfig {
+final class AgentConnectIdentityProviderConfig extends AbstractBaseProviderConfig {
 
   AgentConnectIdentityProviderConfig(IdentityProviderModel identityProviderModel) {
     super(identityProviderModel);

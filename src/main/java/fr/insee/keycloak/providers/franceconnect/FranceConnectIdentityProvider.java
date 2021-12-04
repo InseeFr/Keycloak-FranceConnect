@@ -32,12 +32,12 @@ import java.util.Optional;
 import static fr.insee.keycloak.providers.common.EidasLevel.EIDAS1;
 import static javax.ws.rs.core.Response.Status.OK;
 
-public class FranceConnectIdentityProvider extends AbstractBaseIdentityProvider<FranceConnectIdentityProviderConfig> {
+final class FranceConnectIdentityProvider extends AbstractBaseIdentityProvider<FranceConnectIdentityProviderConfig> {
 
   private static final String BROKER_NONCE_PARAM = "BROKER_NONCE";
   private static final MediaType APPLICATION_JWT_TYPE = MediaType.valueOf("application/jwt");
 
-  public FranceConnectIdentityProvider(KeycloakSession session, FranceConnectIdentityProviderConfig config) {
+  FranceConnectIdentityProvider(KeycloakSession session, FranceConnectIdentityProviderConfig config) {
     super(
         session, config,
         useJwks(config) ? Utils.getJsonWebKeySetFrom(config.getJwksUrl(), session) : null

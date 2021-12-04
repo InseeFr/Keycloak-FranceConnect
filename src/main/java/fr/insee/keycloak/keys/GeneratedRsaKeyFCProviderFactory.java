@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * @author <a href="mailto:sthorger@redhat.com">Stian Thorgersen</a>
  */
-public class GeneratedRsaKeyFCProviderFactory extends GeneratedRsaKeyProviderFactory {
+public final class GeneratedRsaKeyFCProviderFactory extends GeneratedRsaKeyProviderFactory {
 
   public static final String ID = "rsa-generated-fc+";
 

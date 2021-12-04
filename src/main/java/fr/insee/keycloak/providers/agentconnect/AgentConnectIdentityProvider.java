@@ -8,9 +8,9 @@ import org.keycloak.models.KeycloakSession;
 
 import javax.ws.rs.core.UriBuilder;
 
-public class AgentConnectIdentityProvider extends AbstractBaseIdentityProvider<AgentConnectIdentityProviderConfig> {
+final class AgentConnectIdentityProvider extends AbstractBaseIdentityProvider<AgentConnectIdentityProviderConfig> {
 
-  public AgentConnectIdentityProvider(KeycloakSession session, AgentConnectIdentityProviderConfig config) {
+  AgentConnectIdentityProvider(KeycloakSession session, AgentConnectIdentityProviderConfig config) {
     super(session, config, Utils.getJsonWebKeySetFrom(config.getJwksUrl(), session));
   }
 

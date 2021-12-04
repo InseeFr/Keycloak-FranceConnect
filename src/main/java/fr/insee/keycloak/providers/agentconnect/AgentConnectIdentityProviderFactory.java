@@ -11,7 +11,7 @@ import java.util.List;
 import static fr.insee.keycloak.providers.common.Utils.createHardcodedAttributeMapper;
 import static fr.insee.keycloak.providers.common.Utils.createUserAttributeMapper;
 
-public class AgentConnectIdentityProviderFactory
+public final class AgentConnectIdentityProviderFactory
     extends AbstractIdentityProviderFactory<AgentConnectIdentityProvider>
     implements SocialIdentityProviderFactory<AgentConnectIdentityProvider> {
 

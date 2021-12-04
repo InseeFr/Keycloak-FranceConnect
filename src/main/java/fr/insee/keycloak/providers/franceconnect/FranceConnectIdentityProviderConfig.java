@@ -9,7 +9,7 @@ import java.util.List;
 import static fr.insee.keycloak.providers.franceconnect.FranceConnectIdentityProviderFactory.DEFAULT_FC_ENVIRONMENT;
 import static fr.insee.keycloak.providers.franceconnect.FranceConnectIdentityProviderFactory.FC_PROVIDER_MAPPERS;
 
-class FranceConnectIdentityProviderConfig extends AbstractBaseProviderConfig {
+final class FranceConnectIdentityProviderConfig extends AbstractBaseProviderConfig {
 
   FranceConnectIdentityProviderConfig(IdentityProviderModel identityProviderModel) {
     super(identityProviderModel);
