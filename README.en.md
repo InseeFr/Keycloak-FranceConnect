@@ -15,7 +15,7 @@
 
 This [Keycloak](https://www.keycloak.org) plugin adds an identity provider allowing to use [France Connect](https://franceconnect.gouv.fr/) services.
 
-[![Build Status](https://travis-ci.org/inseefr/Keycloak-FranceConnect.svg?branch=master)](https://travis-ci.org/inseefr/Keycloak-FranceConnect)
+[![CI Badge](https://github.com/InseeFr/Keycloak-FranceConnect/actions/workflows/ci.yml/badge.svg)](https://github.com/InseeFr/Keycloak-FranceConnect/actions/workflows/ci.yml)
 
 ## Features
 
@@ -26,15 +26,17 @@ This [Keycloak](https://www.keycloak.org) plugin adds an identity provider allow
 
 ## Compatibility
 
-* The version 2.1 and above of this plugin is compatible with Keycloak `9.0.2` and higher.
+* The version 4.0.0 and above of this plugin is compatible with Keycloak `15.0.0` and higher. 
+* The version 2.1 up to 3.0.0 of this plugin is compatible with Keycloak `9.0.2` and higher.
 * The version 2.0 of this plugin is compatible with Keycloak `8.0.1` until `9.0.2`.
 
 ## Migration
 
 If you are already using an older version of the plugin, it's better to delete your configuration to avoid any conflict.
 
+* 2.x/3.x -> 4.x : Delete your identity provider configuration so that the plugin can automatically generate the mappers when saving the configuration and that there are no conflict.
+* 1.x -> 2.x: Check that your identity provider still exists and that the selected France Connect environment is good
 * 1.x -> 1.4: You will need to configure the new eIDAS level in the configuration
-* 1.x -> 2.0+: Check that your identity provider still exists and that the selected France Connect environment is good
 
 ## Installation
 
@@ -74,6 +76,7 @@ You will also find the redirect uri you will need to enter on the France Connect
 #### Mappers
 
 Once the configuration validated, you can add the mappers needed to retrieve the attributes you want from [claims provided by France Connect](https://partenaires.franceconnect.gouv.fr/fcp/fournisseur-service).
+The main mappers are automatically added when creating the identity provider.
 
 Mappers examples:
 * Name : `lastName`, Mapper Type : `Attribute Importer`, Claim : `family_name`, User Attribute Name : `lastName`
