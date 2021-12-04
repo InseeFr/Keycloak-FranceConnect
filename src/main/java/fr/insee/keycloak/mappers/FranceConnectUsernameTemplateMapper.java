@@ -4,11 +4,11 @@ import fr.insee.keycloak.providers.agentconnect.AgentConnectIdentityProviderFact
 import fr.insee.keycloak.providers.franceconnect.FranceConnectIdentityProviderFactory;
 import org.keycloak.broker.oidc.mappers.UsernameTemplateMapper;
 
-public class FranceConnectUsernameTemplateMapper extends UsernameTemplateMapper {
+public final class FranceConnectUsernameTemplateMapper extends UsernameTemplateMapper {
 
   public static final String MAPPER_NAME = "franceconnect-username-template-mapper";
 
-  public static final String[] COMPATIBLE_PROVIDERS =
+  private static final String[] COMPATIBLE_PROVIDERS =
       new String[]{
           AgentConnectIdentityProviderFactory.AC_PROVIDER_ID,
           FranceConnectIdentityProviderFactory.FC_PROVIDER_ID
