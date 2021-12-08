@@ -24,6 +24,7 @@ import org.keycloak.jose.jwe.JWEException;
 import org.keycloak.jose.jws.JWSInput;
 import org.keycloak.jose.jws.JWSInputException;
 import org.keycloak.models.KeycloakSession;
+import org.keycloak.models.UserSessionModel;
 import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.representations.AccessTokenResponse;
 import org.keycloak.representations.IDToken;
@@ -65,6 +66,12 @@ final class FranceConnectIdentityProvider
     logger.debugv("FC Authorization Url: {0}", uriBuilder.build().toString());
 
     return uriBuilder;
+  }
+
+  @Override
+  public String getIdTokenForLogout(UserSessionModel userSession) {
+    var idToken = super.getIdTokenForLogout(userSession);
+    return isJWETokenFormatRequired(getConfig()) ? decryptJWE(idToken) : idToken;
   }
 
   @Override
