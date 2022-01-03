@@ -1,6 +1,11 @@
 package fr.insee.keycloak.providers.common;
 
 import fr.insee.keycloak.mappers.FranceConnectUserAttributeMapper;
+import java.io.IOException;
+import java.security.SecureRandom;
+import java.util.HashMap;
+import java.util.Properties;
+import java.util.Random;
 import org.jboss.logging.Logger;
 import org.keycloak.broker.oidc.mappers.AbstractClaimMapper;
 import org.keycloak.broker.oidc.mappers.UserAttributeMapper;
@@ -11,19 +16,16 @@ import org.keycloak.models.IdentityProviderMapperSyncMode;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.protocol.oidc.utils.JWKSHttpUtils;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Properties;
-
 public final class Utils {
 
   private static final Logger logger = Logger.getLogger(Utils.class);
 
-  private Utils() {
-  }
+  private static ThreadLocal<Random> random = ThreadLocal.withInitial(() -> new SecureRandom());
 
-  public static IdentityProviderMapperModel createUserAttributeMapper(String providerId, String mapperName,
-                                                                      String claimAttributeName, String userAttributeName) {
+  private Utils() {}
+
+  public static IdentityProviderMapperModel createUserAttributeMapper(
+      String providerId, String mapperName, String claimAttributeName, String userAttributeName) {
     var mapper = new IdentityProviderMapperModel();
 
     mapper.setName(mapperName);
@@ -37,8 +39,8 @@ public final class Utils {
     return mapper;
   }
 
-  public static IdentityProviderMapperModel createHardcodedAttributeMapper(String providerId, String mapperName,
-                                                                           String attributeName, String attributeValue) {
+  public static IdentityProviderMapperModel createHardcodedAttributeMapper(
+      String providerId, String mapperName, String attributeName, String attributeValue) {
 
     var mapper = new IdentityProviderMapperModel();
 
@@ -139,5 +141,15 @@ public final class Utils {
     System.arraycopy(jwsSignature, 2 * rawLen - k, derSignature, (offset + l) - k, k);
 
     return derSignature;
+  }
+
+  public static byte[] generateRandomBytes(int length) {
+    if (length < 1) {
+      throw new IllegalArgumentException();
+    }
+
+    byte[] buf = new byte[length];
+    random.get().nextBytes(buf);
+    return buf;
   }
 }

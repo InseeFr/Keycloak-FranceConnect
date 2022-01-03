@@ -1,8 +1,17 @@
 package fr.insee.keycloak.providers.franceconnect;
 
+import static fr.insee.keycloak.providers.common.EidasLevel.EIDAS1;
+import static javax.ws.rs.core.Response.Status.OK;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import fr.insee.keycloak.providers.common.AbstractBaseIdentityProvider;
 import fr.insee.keycloak.providers.common.Utils;
+import java.io.IOException;
+import java.util.Optional;
+import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
+import javax.ws.rs.core.UriBuilder;
+import javax.xml.bind.DatatypeConverter;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.broker.oidc.mappers.AbstractJsonUserAttributeMapper;
 import org.keycloak.broker.provider.AuthenticationRequest;
@@ -15,51 +24,41 @@ import org.keycloak.jose.jwe.JWEException;
 import org.keycloak.jose.jws.JWSInput;
 import org.keycloak.jose.jws.JWSInputException;
 import org.keycloak.models.KeycloakSession;
-import org.keycloak.models.utils.KeycloakModelUtils;
 import org.keycloak.protocol.oidc.OIDCLoginProtocol;
 import org.keycloak.representations.AccessTokenResponse;
 import org.keycloak.representations.IDToken;
 import org.keycloak.representations.JsonWebToken;
 import org.keycloak.util.JsonSerialization;
 
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.UriBuilder;
-import javax.xml.bind.DatatypeConverter;
-import java.io.IOException;
-import java.util.Optional;
-
-import static fr.insee.keycloak.providers.common.EidasLevel.EIDAS1;
-import static javax.ws.rs.core.Response.Status.OK;
-
-final class FranceConnectIdentityProvider extends AbstractBaseIdentityProvider<FranceConnectIdentityProviderConfig> {
+final class FranceConnectIdentityProvider
+    extends AbstractBaseIdentityProvider<FranceConnectIdentityProviderConfig> {
 
   private static final String BROKER_NONCE_PARAM = "BROKER_NONCE";
   private static final MediaType APPLICATION_JWT_TYPE = MediaType.valueOf("application/jwt");
 
-  FranceConnectIdentityProvider(KeycloakSession session, FranceConnectIdentityProviderConfig config) {
+  FranceConnectIdentityProvider(
+      KeycloakSession session, FranceConnectIdentityProviderConfig config) {
     super(
-        session, config,
-        useJwks(config) ? Utils.getJsonWebKeySetFrom(config.getJwksUrl(), session) : null
-    );
+        session,
+        config,
+        useJwks(config) ? Utils.getJsonWebKeySetFrom(config.getJwksUrl(), session) : null);
   }
 
   private static boolean useJwks(FranceConnectIdentityProviderConfig config) {
     return config.isUseJwksUrl() && config.getJwksUrl() != null;
   }
 
-  /**
-   * France connect requires nonce to be exactly 64 char long, so...yes
-   */
+  /** France connect requires nonce to be exactly 64 char long, so...yes */
   @Override
   protected UriBuilder createAuthorizationUrl(AuthenticationRequest request) {
     var config = getConfig();
     var authenticationSession = request.getAuthenticationSession();
 
-    authenticationSession.setClientNote(OAuth2Constants.ACR_VALUES, config.getEidasLevel().toString());
+    authenticationSession.setClientNote(
+        OAuth2Constants.ACR_VALUES, config.getEidasLevel().toString());
     var uriBuilder = super.createAuthorizationUrl(request);
 
-    var nonce = DatatypeConverter.printHexBinary(KeycloakModelUtils.generateSecret(32));
+    var nonce = DatatypeConverter.printHexBinary(Utils.generateRandomBytes(32));
     authenticationSession.setClientNote(BROKER_NONCE_PARAM, nonce);
     uriBuilder.replaceQueryParam(OIDCLoginProtocol.NONCE_PARAM, nonce);
 
@@ -77,8 +76,9 @@ final class FranceConnectIdentityProvider extends AbstractBaseIdentityProvider<F
   }
 
   @Override
-  protected BrokeredIdentityContext extractIdentity(AccessTokenResponse tokenResponse, String accessToken,
-                                                    JsonWebToken idToken) throws IOException {
+  protected BrokeredIdentityContext extractIdentity(
+      AccessTokenResponse tokenResponse, String accessToken, JsonWebToken idToken)
+      throws IOException {
     var id = idToken.getSubject();
     var identity = new BrokeredIdentityContext(id);
 
@@ -93,8 +93,11 @@ final class FranceConnectIdentityProvider extends AbstractBaseIdentityProvider<F
       if (userInfoUrl != null && !userInfoUrl.isEmpty()) {
 
         if (accessToken != null) {
-          var response = executeRequest(userInfoUrl,
-              SimpleHttp.doGet(userInfoUrl, session).header("Authorization", "Bearer " + accessToken));
+          var response =
+              executeRequest(
+                  userInfoUrl,
+                  SimpleHttp.doGet(userInfoUrl, session)
+                      .header("Authorization", "Bearer " + accessToken));
           var contentType = response.getFirstHeader(HttpHeaders.CONTENT_TYPE);
 
           MediaType contentMediaType;
@@ -103,9 +106,15 @@ final class FranceConnectIdentityProvider extends AbstractBaseIdentityProvider<F
           } catch (IllegalArgumentException ex) {
             contentMediaType = null;
           }
-          if (contentMediaType == null || contentMediaType.isWildcardSubtype() || contentMediaType.isWildcardType()) {
+          if (contentMediaType == null
+              || contentMediaType.isWildcardSubtype()
+              || contentMediaType.isWildcardType()) {
             throw new RuntimeException(
-                "Unsupported content-type [" + contentType + "] in response from [" + userInfoUrl + "].");
+                "Unsupported content-type ["
+                    + contentType
+                    + "] in response from ["
+                    + userInfoUrl
+                    + "].");
           }
 
           JsonNode userInfo;
@@ -114,16 +123,24 @@ final class FranceConnectIdentityProvider extends AbstractBaseIdentityProvider<F
             userInfo = response.asJson();
           } else if (APPLICATION_JWT_TYPE.isCompatible(contentMediaType)) {
             try {
-              var jwt = isJWETokenFormatRequired(getConfig())
-                  ? decryptJWE(response.asString())
-                  : response.asString();
+              var jwt =
+                  isJWETokenFormatRequired(getConfig())
+                      ? decryptJWE(response.asString())
+                      : response.asString();
 
               userInfo = getJsonFromJWT(jwt);
             } catch (IdentityBrokerException ex) {
-              throw new RuntimeException("Failed to verify signature of userinfo response from [" + userInfoUrl + "].", ex);
+              throw new RuntimeException(
+                  "Failed to verify signature of userinfo response from [" + userInfoUrl + "].",
+                  ex);
             }
           } else {
-            throw new RuntimeException("Unsupported content-type [" + contentType + "] in response from [" + userInfoUrl + "].");
+            throw new RuntimeException(
+                "Unsupported content-type ["
+                    + contentType
+                    + "] in response from ["
+                    + userInfoUrl
+                    + "].");
           }
 
           id = getJsonProperty(userInfo, "sub");
@@ -132,7 +149,8 @@ final class FranceConnectIdentityProvider extends AbstractBaseIdentityProvider<F
           familyName = getJsonProperty(userInfo, IDToken.FAMILY_NAME);
           preferredUsername = getUsernameFromUserInfo(userInfo);
           email = getJsonProperty(userInfo, "email");
-          AbstractJsonUserAttributeMapper.storeUserProfileForMapper(identity, userInfo, getConfig().getAlias());
+          AbstractJsonUserAttributeMapper.storeUserProfileForMapper(
+              identity, userInfo, getConfig().getAlias());
         }
       }
     }
@@ -151,9 +169,7 @@ final class FranceConnectIdentityProvider extends AbstractBaseIdentityProvider<F
     identity.setBrokerUserId(getConfig().getAlias() + "." + id);
 
     var emailOptional = Optional.ofNullable(email);
-    preferredUsername = Optional.ofNullable(preferredUsername)
-        .or(() -> emailOptional)
-        .orElse(id);
+    preferredUsername = Optional.ofNullable(preferredUsername).or(() -> emailOptional).orElse(id);
     identity.setUsername(preferredUsername);
 
     if (tokenResponse != null && tokenResponse.getSessionState() != null) {
@@ -179,12 +195,14 @@ final class FranceConnectIdentityProvider extends AbstractBaseIdentityProvider<F
       var kid = jwe.getHeader().getKeyId();
 
       // Finding the key from all the realms keys
-      var key = session.keys()
-          .getKeysStream(session.getContext().getRealm())
-          .filter(k -> k.getKid().equalsIgnoreCase(kid))
-          .findFirst()
-          .map(KeyWrapper::getPrivateKey)
-          .orElseThrow(() -> new IdentityBrokerException("No key found for kid " + kid));
+      var key =
+          session
+              .keys()
+              .getKeysStream(session.getContext().getRealm())
+              .filter(k -> k.getKid().equalsIgnoreCase(kid))
+              .findFirst()
+              .map(KeyWrapper::getPrivateKey)
+              .orElseThrow(() -> new IdentityBrokerException("No key found for kid " + kid));
 
       logger.debug("Found corresponding secret key for kid " + kid);
       jwe.getKeyStorage().setDecryptionKey(key);
@@ -198,7 +216,8 @@ final class FranceConnectIdentityProvider extends AbstractBaseIdentityProvider<F
     var response = request.asResponse();
 
     if (response.getStatus() != OK.getStatusCode()) {
-      throw new IdentityBrokerException("Failed to invoke url [" + url + "]: " + response.asString());
+      throw new IdentityBrokerException(
+          "Failed to invoke url [" + url + "]: " + response.asString());
     }
 
     return response;
