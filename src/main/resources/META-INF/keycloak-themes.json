@@ -1,15 +1,9 @@
 {
   "themes": [
     {
-      "name": "fc-theme",
+      "name": "fc-ac-theme",
       "types": [
         "admin",
-        "login"
-      ]
-    },
-    {
-      "name": "iron-theme",
-      "types": [
         "login"
       ]
     }
