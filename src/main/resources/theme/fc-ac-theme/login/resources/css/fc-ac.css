@@ -483,3 +483,37 @@ a#social-franceconnect-particulier:hover {
 a#social-franceconnect-particulier span {
     display:none;
 }
+
+a.zocial.agentconnect {
+  background: url(../img/AgentConnect-blue-btn.png) no-repeat left top;
+  height: 70px;
+  width: auto;
+  padding-top: 60px;
+}
+
+a.zocial.agentconnect:hover {
+  background: url(../img/AgentConnect-white-btn.png) no-repeat left top !important;
+  height: 70px;
+  width: auto;
+}
+
+a.zocial.agentconnect span {
+  display:none;
+}
+
+a#social-agentconnect {
+  background: url(../img/AgentConnect-blue-btn.png) no-repeat left top;
+  height: 56px;
+  width: 224px;
+
+}
+
+a#social-agentconnect:hover {
+  background: url(../img/AgentConnect-white-btn.png) no-repeat left top !important;
+  height: 56px;
+  width: 224px;
+}
+
+a#social-agentconnect span {
+  display:none;
+}
