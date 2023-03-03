@@ -1,9 +1,11 @@
 package fr.insee.keycloak.providers.common;
 
 import static fr.insee.keycloak.providers.common.Utils.transcodeSignatureToDER;
+import static org.keycloak.util.JWKSUtils.getKeyWrappersForUse;
 import static org.keycloak.util.JWKSUtils.getKeysForUse;
 
 import java.nio.charset.StandardCharsets;
+import java.security.PublicKey;
 import java.security.Signature;
 import java.util.Optional;
 import javax.ws.rs.GET;
@@ -12,6 +14,8 @@ import javax.ws.rs.QueryParam;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.UriBuilder;
 import javax.ws.rs.core.UriInfo;
+
+import org.keycloak.broker.oidc.AbstractOAuth2IdentityProvider;
 import org.keycloak.broker.oidc.OIDCIdentityProvider;
 import org.keycloak.broker.oidc.OIDCIdentityProviderConfig;
 import org.keycloak.broker.provider.BrokeredIdentityContext;
@@ -55,7 +59,7 @@ public abstract class AbstractBaseIdentityProvider<T extends AbstractBaseProvide
 
   @Override
   public Object callback(RealmModel realm, AuthenticationCallback callback, EventBuilder event) {
-    return new OIDCEndpoint(callback, realm, event, getConfig());
+    return new OIDCEndpoint(callback, realm, event, this ,getConfig());
   }
 
   @Override
@@ -117,13 +121,13 @@ public abstract class AbstractBaseIdentityProvider<T extends AbstractBaseProvide
 
     try {
       var publicKey =
-          Optional.ofNullable(getKeysForUse(jwks, JWK.Use.SIG).get(jws.getHeader().getKeyId()))
+          Optional.ofNullable(getKeyWrappersForUse(jwks, JWK.Use.SIG).getKeyByKidAndAlg(jws.getHeader().getKeyId(),jws.getHeader().getAlgorithm().name()))
               .or(
                   () -> {
                     // Try reloading jwks url
                     jwks = Utils.getJsonWebKeySetFrom(config.getJwksUrl(), session);
                     return Optional.ofNullable(
-                        getKeysForUse(jwks, JWK.Use.SIG).get(jws.getHeader().getKeyId()));
+                        getKeyWrappersForUse(jwks, JWK.Use.SIG).getKeyByKidAndAlg(jws.getHeader().getKeyId(),jws.getHeader().getAlgorithm().name()));
                   })
               .orElse(null);
 
@@ -135,7 +139,7 @@ public abstract class AbstractBaseIdentityProvider<T extends AbstractBaseProvide
       var algorithm = JavaAlgorithm.getJavaAlgorithm(jws.getHeader().getAlgorithm().name());
 
       var verifier = Signature.getInstance(algorithm);
-      verifier.initVerify(publicKey);
+      verifier.initVerify((PublicKey) publicKey.getPublicKey());
       verifier.update(jws.getEncodedSignatureInput().getBytes(StandardCharsets.UTF_8));
 
       var signature = jws.getSignature();
@@ -186,8 +190,8 @@ public abstract class AbstractBaseIdentityProvider<T extends AbstractBaseProvide
     private final T config;
 
     public OIDCEndpoint(
-        AuthenticationCallback callback, RealmModel realm, EventBuilder event, T config) {
-      super(callback, realm, event);
+        AuthenticationCallback callback, RealmModel realm, EventBuilder event, AbstractOAuth2IdentityProvider provider, T config) {
+      super(callback, realm, event, provider);
       this.config = config;
     }
 

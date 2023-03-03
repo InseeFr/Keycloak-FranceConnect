@@ -1,5 +1,6 @@
 package fr.insee.keycloak.keys;
 
+import org.keycloak.common.crypto.CryptoIntegration;
 import org.keycloak.keys.AbstractRsaKeyProviderFactory;
 import org.keycloak.keys.Attributes;
 import org.keycloak.keys.GeneratedRsaKeyProviderFactory;
@@ -17,10 +18,7 @@ public final class GeneratedRsaKeyFCProviderFactory extends GeneratedRsaKeyProvi
   private static final ProviderConfigProperty RS_ALGORITHM_PROPERTY = new ProviderConfigProperty("algorithm", "Algorithm",
       "Intended algorithm for the key", ProviderConfigProperty.LIST_TYPE, "RSA-OAEP", "RSA-OAEP");
 
-  private static final List<ProviderConfigProperty> CONFIG_PROPERTIES = AbstractRsaKeyProviderFactory.configurationBuilder()
-      .property(Attributes.KEY_SIZE_PROPERTY)
-      .property(Attributes.KEY_USE_PROPERTY)
-      .build();
+  private static List<ProviderConfigProperty> configProperties;
 
   @Override
   public String getId() {
@@ -29,9 +27,16 @@ public final class GeneratedRsaKeyFCProviderFactory extends GeneratedRsaKeyProvi
 
   @Override
   public List<ProviderConfigProperty> getConfigProperties() {
-    CONFIG_PROPERTIES.removeIf(p -> p.getName().equals("algorithm"));
-    CONFIG_PROPERTIES.add(RS_ALGORITHM_PROPERTY);
+    // Add ECDSA Provider
+    // load org.keycloak.crypto.def.DefaultCryptoProvider
+    CryptoIntegration.init(GeneratedRsaKeyFCProviderFactory.class.getClassLoader());
+    configProperties = AbstractRsaKeyProviderFactory.configurationBuilder()
+      .property(Attributes.KEY_SIZE_PROPERTY.get())
+        .property(Attributes.KEY_USE_PROPERTY)
+        .build();
+    configProperties.removeIf(p -> p.getName().equals("algorithm"));
+    configProperties.add(RS_ALGORITHM_PROPERTY);
 
-    return CONFIG_PROPERTIES;
+    return configProperties;
   }
 }
