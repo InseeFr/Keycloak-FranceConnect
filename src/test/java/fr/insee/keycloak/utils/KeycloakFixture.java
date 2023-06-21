@@ -1,11 +1,12 @@
 package fr.insee.keycloak.utils;
 
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.jboss.resteasy.spi.HttpRequest;
 import org.keycloak.broker.provider.AuthenticationRequest;
 import org.keycloak.broker.provider.util.IdentityBrokerState;
+import org.keycloak.common.crypto.CryptoIntegration;
 import org.keycloak.connections.httpclient.HttpClientProvider;
+import org.keycloak.crypto.def.DefaultCryptoProvider;
+import org.keycloak.http.HttpRequest;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.services.DefaultKeycloakSession;
@@ -65,7 +66,8 @@ public final class KeycloakFixture {
         .thenAnswer(answer -> DefaultVaultStringSecret.forString(Optional.ofNullable(answer.getArgument(0, String.class))));
 
     // Add ECDSA Provider
-    Security.addProvider(new BouncyCastleProvider());
+    // load org.keycloak.crypto.def.DefaultCryptoProvider
+    CryptoIntegration.init(KeycloakFixture.class.getClassLoader());
 
     return session;
   }

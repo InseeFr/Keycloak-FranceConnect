@@ -56,7 +56,9 @@ class FranceConnectIdentityProviderTest {
     httpClient = mock(CloseableHttpClient.class);
 
     when(httpClientProvider.get(config.getJwksUrl()))
-        .thenAnswer(answer -> new ByteArrayInputStream(publicKeysStore.toJsonByteArray()));
+        .thenAnswer(
+            answer -> new ByteArrayInputStream(publicKeysStore.toJsonByteArray())
+        );
     session = givenKeycloakSession(httpClientProvider, httpClient);
 
     provider = new FranceConnectIdentityProvider(session, config);
@@ -214,20 +216,21 @@ class FranceConnectIdentityProviderTest {
       when(keyManager.getKeysStream(any()))
           .thenAnswer(answer -> Stream.of(keyWrapper));
 
-      var httpResponse = ClosableHttpResponse.from(
-          Map.of(HttpHeaders.CONTENT_TYPE, "application/jwt"),
-          givenAnRSAOAEPJWE(
-              rsaKey,
-              givenAnECDSASignedJWTWithRegisteredKidInJWKS("USERINFO-ECDSA-KID", USERINFO_JWT, publicKeysStore)
-          )
-      );
-
-      when(httpClient.execute(any()))
-          .thenAnswer(answer -> httpResponse);
     }
 
     @Test
-    void should_extract_information_from_JWE_userinfo_endpoint_response_for_eidas2_and_eidas3_levels() {
+    void should_extract_information_from_JWE_userinfo_endpoint_response_for_eidas2_and_eidas3_levels() throws IOException {
+
+      var httpResponse = ClosableHttpResponse.from(
+          Map.of(HttpHeaders.CONTENT_TYPE, "application/jwt"),
+             givenAnRSAOAEPJWE(
+                rsaKey,
+                 givenAnECDSASignedJWTWithRegisteredKidInJWKS("USERINFO-ECDSA-KID", USERINFO_JWT, publicKeysStore)
+             )
+         );
+      when(httpClient.execute(any()))
+          .thenAnswer(answer -> httpResponse);
+
       var kid = "ECDSA-KID";
       var opaqueAccessToken = "2b3ea2e8-2d11-49a4-a369-5fb98d9d5315";
       var jweIdToken = givenAnRSAOAEPJWEForAnECDSASignedEidas2JWTWithRegisteredKidInJWKS(kid, publicKeysStore, rsaKey);
@@ -245,7 +248,18 @@ class FranceConnectIdentityProviderTest {
     }
 
     @Test
-    void id_token_acr_claim_should_match_with_selected_eidas_level_from_admin_interface() {
+    void id_token_acr_claim_should_match_with_selected_eidas_level_from_admin_interface() throws IOException {
+
+      var httpResponse = ClosableHttpResponse.from(
+          Map.of(HttpHeaders.CONTENT_TYPE, "application/jwt"),
+          givenAnRSAOAEPJWE(
+              rsaKey,
+              givenAnECDSASignedJWTWithRegisteredKidInJWKS("USERINFO-ECDSA-KID", USERINFO_JWT, publicKeysStore)
+          )
+      );
+      when(httpClient.execute(any()))
+          .thenAnswer(answer -> httpResponse);
+
       var kid = "ECDSA-KID";
       var opaqueAccessToken = "2b3ea2e8-2d11-49a4-a369-5fb98d9d5315";
       var jweIdToken = givenAnRSAOAEPJWEForAnECDSASignedEidas2JWTWithRegisteredKidInJWKS(kid, publicKeysStore, rsaKey);
@@ -316,7 +330,18 @@ class FranceConnectIdentityProviderTest {
     }
 
     @Test
-    void should_throw_exception_when_id_token_acr_claim_does_not_match_with_the_selected_eidas_level_from_admin_interface() {
+    void should_throw_exception_when_id_token_acr_claim_does_not_match_with_the_selected_eidas_level_from_admin_interface() throws IOException {
+
+      var httpResponse = ClosableHttpResponse.from(
+          Map.of(HttpHeaders.CONTENT_TYPE, "application/jwt"),
+          givenAnRSAOAEPJWE(
+              rsaKey,
+              givenAnECDSASignedJWTWithRegisteredKidInJWKS("USERINFO-ECDSA-KID", USERINFO_JWT, publicKeysStore)
+          )
+      );
+      when(httpClient.execute(any()))
+          .thenAnswer(answer -> httpResponse);
+
       var kid = "ECDSA-KID";
       var opaqueAccessToken = "2b3ea2e8-2d11-49a4-a369-5fb98d9d5315";
       var jweIdTokenWithEidas1 = givenAnRSAOAEPJWE(
@@ -332,7 +357,18 @@ class FranceConnectIdentityProviderTest {
     }
 
     @Test
-    void should_throw_exception_when_id_token_does_not_contains_acr_claim() {
+    void should_throw_exception_when_id_token_does_not_contains_acr_claim() throws IOException {
+
+      var httpResponse = ClosableHttpResponse.from(
+          Map.of(HttpHeaders.CONTENT_TYPE, "application/jwt"),
+          givenAnRSAOAEPJWE(
+              rsaKey,
+              givenAnECDSASignedJWTWithRegisteredKidInJWKS("USERINFO-ECDSA-KID", USERINFO_JWT, publicKeysStore)
+          )
+      );
+      when(httpClient.execute(any()))
+          .thenAnswer(answer -> httpResponse);
+
       var kid = "ECDSA-KID";
       var opaqueAccessToken = "2b3ea2e8-2d11-49a4-a369-5fb98d9d5315";
       var jweIdTokenWithoutEidasLevel = givenAnRSAOAEPJWE(
@@ -348,7 +384,18 @@ class FranceConnectIdentityProviderTest {
     }
 
     @Test
-    void should_throw_exception_when_id_token_contains_acr_claim_who_does_not_match_with_a_supported_eidas_level() {
+    void should_throw_exception_when_id_token_contains_acr_claim_who_does_not_match_with_a_supported_eidas_level() throws IOException {
+
+      var httpResponse = ClosableHttpResponse.from(
+          Map.of(HttpHeaders.CONTENT_TYPE, "application/jwt"),
+          givenAnRSAOAEPJWE(
+              rsaKey,
+              givenAnECDSASignedJWTWithRegisteredKidInJWKS("USERINFO-ECDSA-KID", USERINFO_JWT, publicKeysStore)
+          )
+      );
+      when(httpClient.execute(any()))
+          .thenAnswer(answer -> httpResponse);
+
       var kid = "ECDSA-KID";
       var opaqueAccessToken = "2b3ea2e8-2d11-49a4-a369-5fb98d9d5315";
       var jweIdTokenWithoutEidasLevel = givenAnRSAOAEPJWE(
