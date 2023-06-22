@@ -5,8 +5,6 @@ public enum EidasLevel {
   EIDAS2,
   EIDAS3;
 
-  public static final String EIDAS_LEVEL_PROPERTY_NAME = "eidas_values";
-
   @Override
   public String toString() {
     return name().toLowerCase();

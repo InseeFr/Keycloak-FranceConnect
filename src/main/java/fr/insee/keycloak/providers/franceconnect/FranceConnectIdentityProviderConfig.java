@@ -1,34 +1,34 @@
 package fr.insee.keycloak.providers.franceconnect;
 
-import static fr.insee.keycloak.providers.franceconnect.FranceConnectIdentityProviderFactory.DEFAULT_FC_ENVIRONMENT;
-import static fr.insee.keycloak.providers.franceconnect.FranceConnectIdentityProviderFactory.FC_PROVIDER_MAPPERS;
-
 import fr.insee.keycloak.providers.common.AbstractBaseProviderConfig;
 import java.util.List;
 import org.keycloak.models.IdentityProviderMapperModel;
 import org.keycloak.models.IdentityProviderModel;
 
+import static fr.insee.keycloak.providers.common.Utils.createHardcodedAttributeMapper;
+import static fr.insee.keycloak.providers.common.Utils.createUserAttributeMapper;
+
 final class FranceConnectIdentityProviderConfig extends AbstractBaseProviderConfig {
 
-  FranceConnectIdentityProviderConfig(IdentityProviderModel identityProviderModel) {
+  private final String providerID;
+
+  FranceConnectIdentityProviderConfig(IdentityProviderModel identityProviderModel,String providerId) {
     super(identityProviderModel);
+    this.providerID=providerId;
   }
 
-  FranceConnectIdentityProviderConfig() {
+  FranceConnectIdentityProviderConfig(String providerId) {
     super();
-  }
-
-  @Override
-  protected String getEnvironmentProperty(String key) {
-    var franceConnectEnvironment =
-        FCEnvironment.getOrDefault(
-            getConfig().get(FCEnvironment.ENVIRONMENT_PROPERTY_NAME), DEFAULT_FC_ENVIRONMENT);
-
-    return franceConnectEnvironment.getProperty(key);
+    this.providerID=providerId;
   }
 
   @Override
   protected List<IdentityProviderMapperModel> getDefaultMappers() {
-    return FC_PROVIDER_MAPPERS;
+    return List.of(
+        createUserAttributeMapper(providerID, "lastName", "family_name", "lastName"),
+        createUserAttributeMapper(providerID, "firstName", "given_name", "firstName"),
+        createUserAttributeMapper(providerID, "email", "email", "email"),
+        createHardcodedAttributeMapper(providerID, "provider", "provider", "FC")
+    );
   }
 }

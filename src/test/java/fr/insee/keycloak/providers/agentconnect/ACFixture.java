@@ -61,19 +61,16 @@ final class ACFixture {
   private ACFixture() {
   }
 
-  static AgentConnectIdentityProviderConfig givenConfigForIntegrationAndEidasLevel2() {
-    return givenConfigWithSelectedEnvAndSelectedEidasLevel("integration_rie", "eidas2");
-  }
-
-  static AgentConnectIdentityProviderConfig givenConfigWithSelectedEnvAndSelectedEidasLevel(String environmentName, String eidasLevelName) {
+  static AgentConnectIdentityProviderConfig givenConfig() {
     var model = new IdentityProviderModel();
-    model.getConfig().put(ACEnvironment.ENVIRONMENT_PROPERTY_NAME, environmentName);
-    model.getConfig().put(EidasLevel.EIDAS_LEVEL_PROPERTY_NAME, eidasLevelName);
-    model.getConfig().put("ignoreAbsentStateParameterLogout", "false");
+    //model.getConfig().put("ignoreAbsentStateParameterLogout", "false");
     model.getConfig().put("clientId", CLIENT_ID);
     model.getConfig().put("clientSecret", CLIENT_SECRET);
+    model.getConfig().put("jwksUrl","https://url.de.agent.connect/api/v2/jwks");
+    model.getConfig().put("authorizationUrl","https://url.de.agent.connect/api/v2/authorize");
+    model.getConfig().put("userInfoUrl","https://url.de.agent.connect/api/v2/userinfo");
 
-    return new AgentConnectIdentityProviderConfig(model);
+    return new AgentConnectIdentityProviderConfig(model,"provider_id");
   }
 
   static String givenAnHMACSignedEidas2JWT() {

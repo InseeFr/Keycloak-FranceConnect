@@ -44,12 +44,13 @@ class FranceConnectIdentityProviderTest {
   private KeycloakSession session;
 
   private FranceConnectIdentityProviderConfig config;
-  private FranceConnectIdentityProvider provider;
+  private FranceConnectIdentityProviderEidas1 providerEidas1;
+  private FranceConnectIdentityProviderEidas2 providerEidas2;
   private PublicKeysStore publicKeysStore;
 
   @BeforeEach
   void setup() throws IOException {
-    config = givenConfigForIntegrationV2AndEidasLevel2();
+    config = givenConfig();
     publicKeysStore = new PublicKeysStore();
 
     httpClientProvider = mock(HttpClientProvider.class);
@@ -61,18 +62,21 @@ class FranceConnectIdentityProviderTest {
         );
     session = givenKeycloakSession(httpClientProvider, httpClient);
 
-    provider = new FranceConnectIdentityProvider(session, config);
+    providerEidas1 = new FranceConnectIdentityProviderEidas1(session, config);
+    providerEidas2 = new FranceConnectIdentityProviderEidas2(session, config);
   }
 
   @Test
   void should_load_jwks_from_jwks_url_when_configuration_supports_jwks() throws IOException {
-    verify(httpClientProvider, times(1)).get(config.getJwksUrl());
+    // because of 2 providers eidas1 and eidas2 in tests cases
+    verify(httpClientProvider, times(2)).get(config.getJwksUrl());
 
-    var noJWKSSupportsConfig = givenConfigForIntegrationV1AndEidasLevel2();
+    var noJWKSSupportsConfig = givenConfig();
+    noJWKSSupportsConfig.setUseJwksUrl(false);
     var httpClientProvider = mock(HttpClientProvider.class);
     var session = givenKeycloakSession(httpClientProvider, httpClient);
 
-    var provider = new FranceConnectIdentityProvider(session, noJWKSSupportsConfig);
+    var provider = new FranceConnectIdentityProviderEidas2(session, noJWKSSupportsConfig);
 
     verify(httpClientProvider, never()).get(anyString());
   }
@@ -84,7 +88,7 @@ class FranceConnectIdentityProviderTest {
     void should_create_authorization_url_with_eidas_level_as_acr_values_query_param() {
       var request = givenAuthenticationRequest(session);
 
-      var authorizationUrl = provider.createAuthorizationUrl(request).build();
+      var authorizationUrl = providerEidas2.createAuthorizationUrl(request).build();
       var queryParams = TestUtils.uriQueryStringToMap(authorizationUrl);
 
       assertThat(authorizationUrl.toString()).startsWith(config.getAuthorizationUrl());
@@ -102,7 +106,7 @@ class FranceConnectIdentityProviderTest {
     void should_create_authorization_url_with_nonce_query_param_having_exactly_64_chars() {
       var request = givenAuthenticationRequest(session);
 
-      var authorizationUrl = provider.createAuthorizationUrl(request).build();
+      var authorizationUrl = providerEidas2.createAuthorizationUrl(request).build();
       var queryParams = TestUtils.uriQueryStringToMap(authorizationUrl);
 
       assertThat(authorizationUrl.toString()).startsWith(config.getAuthorizationUrl());
@@ -135,10 +139,8 @@ class FranceConnectIdentityProviderTest {
 
     @Test
     void should_validate_hs256_signed_token_for_eidas1_level() {
-      // Change current selected eidas level in config
-      config.getConfig().put(EidasLevel.EIDAS_LEVEL_PROPERTY_NAME, "eidas1");
 
-      var token = provider.validateToken(givenAnHMACSignedEidas1JWT());
+      var token = providerEidas1.validateToken(givenAnHMACSignedEidas1JWT());
 
       assertThat(token).isNotNull();
       assertThat(token.getSubject()).isEqualTo("fakeSub");
@@ -149,17 +151,15 @@ class FranceConnectIdentityProviderTest {
 
     @Test
     void should_search_in_vault_for_secret_key_on_hs256_token_validation() {
-      // Change current selected eidas level in config
-      config.getConfig().put(EidasLevel.EIDAS_LEVEL_PROPERTY_NAME, "eidas1");
 
-      provider.validateToken(givenAnHMACSignedEidas1JWT());
+      providerEidas1.validateToken(givenAnHMACSignedEidas1JWT());
 
       verify(session.vault(), Mockito.atLeastOnce()).getStringSecret(anyString());
     }
 
     @Test
     void should_validate_rsa_oaep_encrypted_token_for_eidas2_and_eidas3_levels() {
-      var token = provider.validateToken(
+      var token = providerEidas2.validateToken(
           givenAnRSAOAEPJWEForAnECDSASignedEidas2JWTWithRegisteredKidInJWKS("ECDSA-KID", publicKeysStore, rsaKey)
       );
 
@@ -176,7 +176,7 @@ class FranceConnectIdentityProviderTest {
           "ECDSA-KID", publicKeysStore, generateRSA256Key("unknownKidInKeyManager")
       );
 
-      assertThatThrownBy(() -> provider.validateToken(jwe))
+      assertThatThrownBy(() -> providerEidas2.validateToken(jwe))
           .isInstanceOf(IdentityBrokerException.class)
           .hasMessage("No key found for kid unknownKidInKeyManager");
     }
@@ -188,7 +188,7 @@ class FranceConnectIdentityProviderTest {
           givenAnES256SignedJWTWithUnknownKidInJWKS()
       );
 
-      assertThatThrownBy(() -> provider.validateToken(jwe))
+      assertThatThrownBy(() -> providerEidas2.validateToken(jwe))
           .isInstanceOf(IdentityBrokerException.class)
           .hasMessage("token signature validation failed");
     }
@@ -237,7 +237,7 @@ class FranceConnectIdentityProviderTest {
 
       var tokenEndpointResponse = generateTokenEndpointResponse(opaqueAccessToken, jweIdToken);
 
-      var brokeredIdentityContext = provider.getFederatedIdentity(tokenEndpointResponse);
+      var brokeredIdentityContext = providerEidas2.getFederatedIdentity(tokenEndpointResponse);
 
       assertThat(brokeredIdentityContext).isNotNull();
       assertThat(brokeredIdentityContext.getEmail()).isEqualTo("john.doe@gmail.com");
@@ -266,20 +266,18 @@ class FranceConnectIdentityProviderTest {
 
       var tokenEndpointResponse = generateTokenEndpointResponse(opaqueAccessToken, jweIdToken);
 
-      var brokeredIdentityContext = provider.getFederatedIdentity(tokenEndpointResponse);
+      var brokeredIdentityContext = providerEidas2.getFederatedIdentity(tokenEndpointResponse);
 
       assertThat(brokeredIdentityContext).isNotNull();
 
       var idToken = (JsonWebToken) brokeredIdentityContext.getContextData().get(VALIDATED_ID_TOKEN);
       var acrClaim = (String) idToken.getOtherClaims().get("acr");
 
-      assertThat(acrClaim).isEqualTo(config.getEidasLevel().toString());
+      assertThat(acrClaim).isEqualTo(EidasLevel.EIDAS2.toString());
     }
 
     @Test
     void should_extract_information_from_JWT_userinfo_endpoint_response_for_eidas1() throws IOException {
-      // Change current selected eidas level in config
-      config.getConfig().put(EidasLevel.EIDAS_LEVEL_PROPERTY_NAME, "eidas1");
 
       var httpResponse = ClosableHttpResponse.from(
           Map.of(HttpHeaders.CONTENT_TYPE, "application/jwt"),
@@ -294,7 +292,7 @@ class FranceConnectIdentityProviderTest {
 
       var tokenEndpointResponse = generateTokenEndpointResponse(opaqueAccessToken, jweIdToken);
 
-      var brokeredIdentityContext = provider.getFederatedIdentity(tokenEndpointResponse);
+      var brokeredIdentityContext = providerEidas1.getFederatedIdentity(tokenEndpointResponse);
 
       assertThat(brokeredIdentityContext).isNotNull();
       assertThat(brokeredIdentityContext.getEmail()).isEqualTo("john.doe@gmail.com");
@@ -319,7 +317,7 @@ class FranceConnectIdentityProviderTest {
 
       var tokenEndpointResponse = generateTokenEndpointResponse(opaqueAccessToken, jweIdToken);
 
-      var brokeredIdentityContext = provider.getFederatedIdentity(tokenEndpointResponse);
+      var brokeredIdentityContext = providerEidas2.getFederatedIdentity(tokenEndpointResponse);
 
       assertThat(brokeredIdentityContext).isNotNull();
       assertThat(brokeredIdentityContext.getEmail()).isEqualTo("john.doe@gmail.com");
@@ -351,7 +349,7 @@ class FranceConnectIdentityProviderTest {
 
       var tokenEndpointResponse = generateTokenEndpointResponse(opaqueAccessToken, jweIdTokenWithEidas1);
 
-      assertThatThrownBy(() -> provider.getFederatedIdentity(tokenEndpointResponse))
+      assertThatThrownBy(() -> providerEidas2.getFederatedIdentity(tokenEndpointResponse))
           .isInstanceOf(IdentityBrokerException.class)
           .hasMessage("The returned eIDAS level is insufficient");
     }
@@ -378,7 +376,7 @@ class FranceConnectIdentityProviderTest {
 
       var tokenEndpointResponse = generateTokenEndpointResponse(opaqueAccessToken, jweIdTokenWithoutEidasLevel);
 
-      assertThatThrownBy(() -> provider.getFederatedIdentity(tokenEndpointResponse))
+      assertThatThrownBy(() -> providerEidas2.getFederatedIdentity(tokenEndpointResponse))
           .isInstanceOf(IdentityBrokerException.class)
           .hasMessage("The returned eIDAS level cannot be retrieved");
     }
@@ -405,7 +403,7 @@ class FranceConnectIdentityProviderTest {
 
       var tokenEndpointResponse = generateTokenEndpointResponse(opaqueAccessToken, jweIdTokenWithoutEidasLevel);
 
-      assertThatThrownBy(() -> provider.getFederatedIdentity(tokenEndpointResponse))
+      assertThatThrownBy(() -> providerEidas2.getFederatedIdentity(tokenEndpointResponse))
           .isInstanceOf(IdentityBrokerException.class)
           .hasMessage("The returned eIDAS level cannot be retrieved");
     }

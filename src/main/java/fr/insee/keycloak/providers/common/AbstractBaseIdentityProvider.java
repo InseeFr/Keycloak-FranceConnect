@@ -47,10 +47,12 @@ public abstract class AbstractBaseIdentityProvider<T extends AbstractBaseProvide
 
   protected JSONWebKeySet jwks;
 
-  protected AbstractBaseIdentityProvider(KeycloakSession session, T config, JSONWebKeySet jwks) {
+  protected AbstractBaseIdentityProvider(KeycloakSession session, OIDCIdentityProviderConfig config, JSONWebKeySet jwks) {
     super(session, config);
     this.jwks = jwks;
   }
+
+  protected abstract EidasLevel getEidasLevel();
 
   @Override
   public T getConfig() {
@@ -164,7 +166,7 @@ public abstract class AbstractBaseIdentityProvider<T extends AbstractBaseProvide
       var acrClaim = (String) idToken.getOtherClaims().get(ACR_CLAIM_NAME);
 
       var fcReturnedEidasLevel = EidasLevel.getOrDefault(acrClaim, null);
-      var expectedEidasLevel = getConfig().getEidasLevel();
+      var expectedEidasLevel = getEidasLevel();
 
       if (fcReturnedEidasLevel == null) {
         throw new IdentityBrokerException("The returned eIDAS level cannot be retrieved");
@@ -187,10 +189,10 @@ public abstract class AbstractBaseIdentityProvider<T extends AbstractBaseProvide
 
   protected class OIDCEndpoint extends Endpoint {
 
-    private final T config;
+    private final AbstractBaseProviderConfig config;
 
     public OIDCEndpoint(
-        AuthenticationCallback callback, RealmModel realm, EventBuilder event, AbstractOAuth2IdentityProvider provider, T config) {
+        AuthenticationCallback callback, RealmModel realm, EventBuilder event, AbstractOAuth2IdentityProvider provider, AbstractBaseProviderConfig config) {
       super(callback, realm, event, provider);
       this.config = config;
     }

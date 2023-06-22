@@ -40,14 +40,17 @@ Pour toutes questions sur l'utilisation de cette extension, n'hésitez pas à ou
 
 ## Compatibilité
 
-**ATTENTION**
-A partir de la version 19 et de l'usage de la nouvelle interface graphique d'administration de Keycloak, il n'est plus possible de paramétrer correctement cette extension via ihm. Cela étant la version fourni permet de conserver la fonctionalité du plugin s'il a été configuré dans une version précedente, les manipulation de configuration devant se faire manuellement en sql si nécessaire.
-Une version est en cours de développement pour rétablir la configuration du plugin, elle nécessitera des changements disruptifs dans l'usage de ce plugin.
 
-- La version 5.0.0 est compatible avec Keycloak `21.0.0` et supérieur.
+- La version 6.0.0 est compatible avec Keycloak `21.0.0` et supérieur.
+- [MODE COMPATIBILITE] La version 5.0.0 est compatible avec Keycloak `21.0.0` et supérieur.
 - La version 4.0.0 est compatible avec Keycloak `15.0.0` jusqu'à `20.0.0`.
 - La version 2.1 jusqu'à 3.0.0 est compatible avec Keycloak `9.0.2` et supérieur.
 - La version 2.0 est compatible avec Keycloak `8.0.1` jusqu'à `9.0.0`.
+
+**ATTENTION version 5.0.0**
+A partir de la version 19 et de l'usage de la nouvelle interface graphique d'administration de Keycloak, il n'est plus possible de paramétrer correctement cette extension via ihm. Cela étant la version 5.0.0 permet de conserver la fonctionalité du plugin s'il a été configuré dans une version précedente, les manipulation de configuration devant se faire manuellement en sql si nécessaire.
+La version 6.0.0 corrige ce problème pour rétablir la configuration du plugin, mais nécessite des changements disruptifs dans l'usage de ce plugin.
+
 
 ## Migration
 
@@ -79,6 +82,10 @@ $ mvn clean install wildfly:deploy
 Vous devez créer un [compte France Connect](https://franceconnect.gouv.fr/partenaires) afin de récupérer les informations nécessaires à la configuration de cette extension (clientId, clientSecret, configuration de l'url de redirection autorisée, ...). 
 
 Il existe 2 environnements de connexion, `Integration` et `Production`. La demande d'un compte permettant l'accès à l'environnement d'Intégration s'effectue par email au service support de France Connect.
+
+Les urls sont :
+- En integration : https://auth.integ01.dev-franceconnect.fr/api/v2/.well-known/openid-configuration
+- En production :=https://auth.franceconnect.gouv.fr/api/v2/
 
 #### Configuration
 
@@ -136,6 +143,12 @@ La version 3.0 de cette extension ajoute le support pour AgentConnect pour l'aut
 De la même façon que pour France Connect il vous faudra demander la création d'un compte sur agent connect.
 
 Il existe 2 environnements de connexion, `Integration` et `Production`. La demande d'un compte permettant l'accès à l'environnement d'Intégration s'effectue par email au service support d'Agent Connect.
+
+Les urls sont :
+- En integration RIE : https://fca.integ02.agentconnect.rie.gouv.fr/api/v2/.well-known/openid-configuration
+- En production RIE : https://auth.agentconnect.rie.gouv.fr/api/v2/.well-known/openid-configuration
+- En integration internet : https://fca.integ01.dev-agentconnect.fr/api/v2/.well-known/openid-configuration
+- En production internet : https://auth.agentconnect.gouv.fr/api/v2/.well-known/openid-configuration
 
 #### Configuration
 

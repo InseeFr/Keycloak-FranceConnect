@@ -1,5 +1,6 @@
 package fr.insee.keycloak.providers.franceconnect;
 
+import org.keycloak.broker.oidc.OIDCIdentityProviderConfig;
 import org.keycloak.broker.provider.AbstractIdentityProviderFactory;
 import org.keycloak.broker.social.SocialIdentityProviderFactory;
 import org.keycloak.models.IdentityProviderMapperModel;
@@ -11,14 +12,12 @@ import java.util.List;
 import static fr.insee.keycloak.providers.common.Utils.createHardcodedAttributeMapper;
 import static fr.insee.keycloak.providers.common.Utils.createUserAttributeMapper;
 
-public final class FranceConnectIdentityProviderFactory
-    extends AbstractIdentityProviderFactory<FranceConnectIdentityProvider>
-    implements SocialIdentityProviderFactory<FranceConnectIdentityProvider> {
+public final class FranceConnectIdentityProviderEidas2Factory
+    extends AbstractIdentityProviderFactory<FranceConnectIdentityProviderEidas2>
+    implements SocialIdentityProviderFactory<FranceConnectIdentityProviderEidas2> {
 
-  public static final String FC_PROVIDER_ID = "franceconnect-particulier";
-  public static final String FC_PROVIDER_NAME = "France Connect Particulier";
-
-  static final FCEnvironment DEFAULT_FC_ENVIRONMENT = FCEnvironment.INTEGRATION_V1;
+  public static final String FC_PROVIDER_ID = "franceconnect-particulier-eidas2";
+  public static final String FC_PROVIDER_NAME = "France Connect Particulier Eidas2";
 
   static final List<IdentityProviderMapperModel> FC_PROVIDER_MAPPERS = List.of(
       createUserAttributeMapper(FC_PROVIDER_ID, "lastName", "family_name", "lastName"),
@@ -38,12 +37,12 @@ public final class FranceConnectIdentityProviderFactory
   }
 
   @Override
-  public FranceConnectIdentityProvider create(KeycloakSession session, IdentityProviderModel model) {
-    return new FranceConnectIdentityProvider(session, new FranceConnectIdentityProviderConfig(model));
+  public FranceConnectIdentityProviderEidas2 create(KeycloakSession session, IdentityProviderModel model) {
+    return new FranceConnectIdentityProviderEidas2(session, new FranceConnectIdentityProviderConfig(model,FC_PROVIDER_ID));
   }
 
   @Override
-  public FranceConnectIdentityProviderConfig createConfig() {
-    return new FranceConnectIdentityProviderConfig();
+  public OIDCIdentityProviderConfig createConfig() {
+    return new FranceConnectIdentityProviderConfig(FC_PROVIDER_ID);
   }
 }
