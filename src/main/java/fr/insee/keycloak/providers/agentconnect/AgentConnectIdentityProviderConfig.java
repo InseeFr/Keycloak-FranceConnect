@@ -6,32 +6,26 @@ import org.keycloak.models.IdentityProviderModel;
 
 import java.util.List;
 
-import static fr.insee.keycloak.providers.agentconnect.AgentConnectIdentityProviderFactory.AC_PROVIDER_MAPPERS;
-import static fr.insee.keycloak.providers.agentconnect.AgentConnectIdentityProviderFactory.DEFAULT_AC_ENVIRONMENT;
+import static fr.insee.keycloak.providers.common.Utils.createHardcodedAttributeMapper;
+import static fr.insee.keycloak.providers.common.Utils.createUserAttributeMapper;
 
 final class AgentConnectIdentityProviderConfig extends AbstractBaseProviderConfig {
 
-  AgentConnectIdentityProviderConfig(IdentityProviderModel identityProviderModel) {
-    super(identityProviderModel);
+  AgentConnectIdentityProviderConfig(IdentityProviderModel identityProviderModel, ACEnvironment acEnvironment, String providerId) {
+    super(identityProviderModel, acEnvironment, providerId);
   }
 
-  AgentConnectIdentityProviderConfig() {
-    super();
-  }
-
-  @Override
-  protected String getEnvironmentProperty(String key) {
-
-    var agentConnectEnvironment = ACEnvironment.getOrDefault(
-        getConfig().get(ACEnvironment.ENVIRONMENT_PROPERTY_NAME),
-        DEFAULT_AC_ENVIRONMENT
-    );
-
-    return agentConnectEnvironment.getProperty(key);
+  AgentConnectIdentityProviderConfig(ACEnvironment acEnvironment, String providerId) {
+    super(acEnvironment, providerId);
   }
 
   @Override
   protected List<IdentityProviderMapperModel> getDefaultMappers() {
-    return AC_PROVIDER_MAPPERS;
+    return List.of(
+        createUserAttributeMapper(providerID, "lastName", "family_name", "lastName"),
+        createUserAttributeMapper(providerID, "firstName", "given_name", "firstName"),
+        createUserAttributeMapper(providerID, "email", "email", "email"),
+        createHardcodedAttributeMapper(providerID, "provider", "provider", "AC")
+    );
   }
 }

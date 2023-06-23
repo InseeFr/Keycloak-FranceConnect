@@ -5,6 +5,7 @@ import org.keycloak.models.IdentityProviderMapperModel;
 import org.keycloak.models.IdentityProviderModel;
 import org.keycloak.models.RealmModel;
 
+import java.security.Provider;
 import java.util.List;
 
 import static java.util.Collections.emptyList;
@@ -13,17 +14,26 @@ public abstract class AbstractBaseProviderConfig extends OIDCIdentityProviderCon
 
   private static final String IS_CONFIG_CREATED_PROPERTY = "isCreated";
 
-  protected AbstractBaseProviderConfig(IdentityProviderModel identityProviderModel) {
+  protected final String providerID;
+  protected final Environment environment;
+
+  protected AbstractBaseProviderConfig(IdentityProviderModel identityProviderModel,Environment environment, String providerID) {
     super(identityProviderModel);
+    this.providerID = providerID;
+    this.environment = environment;
     initialize();
   }
 
-  protected AbstractBaseProviderConfig() {
+  protected AbstractBaseProviderConfig(Environment environment, String providerID) {
     super();
+    this.providerID = providerID;
+    this.environment = environment;
     initialize();
   }
 
-  protected abstract String getEnvironmentProperty(String key);
+  protected String getEnvironmentProperty(String key){
+    return environment.getProperty(key);
+  }
 
   protected void initialize() {
     configureUrlsFromEnvironment();
@@ -55,7 +65,9 @@ public abstract class AbstractBaseProviderConfig extends OIDCIdentityProviderCon
   }
 
   public boolean isIgnoreAbsentStateParameterLogout() {
-    return Boolean.parseBoolean(getConfig().get("ignoreAbsentStateParameterLogout"));
+    // TODO still useful ??
+    //return Boolean.parseBoolean(getConfig().get("ignoreAbsentStateParameterLogout"));
+    return false;
   }
 
   @Override
@@ -66,13 +78,6 @@ public abstract class AbstractBaseProviderConfig extends OIDCIdentityProviderCon
       getDefaultMappers().forEach(realm::addIdentityProviderMapper);
       getConfig().put(IS_CONFIG_CREATED_PROPERTY, "true");
     }
-  }
-
-  public EidasLevel getEidasLevel() {
-    return EidasLevel.getOrDefault(
-        getConfig().get(EidasLevel.EIDAS_LEVEL_PROPERTY_NAME),
-        getDefaultEidasLevel()
-    );
   }
 
   private boolean isCreated() {

@@ -5,6 +5,7 @@ import static javax.ws.rs.core.Response.Status.OK;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import fr.insee.keycloak.providers.common.AbstractBaseIdentityProvider;
+import fr.insee.keycloak.providers.common.EidasLevel;
 import fr.insee.keycloak.providers.common.Utils;
 import java.io.IOException;
 import java.util.Optional;
@@ -38,11 +39,11 @@ final class FranceConnectIdentityProvider
   private static final MediaType APPLICATION_JWT_TYPE = MediaType.valueOf("application/jwt");
 
   FranceConnectIdentityProvider(
-      KeycloakSession session, FranceConnectIdentityProviderConfig config) {
+      KeycloakSession session, FranceConnectIdentityProviderConfig config, EidasLevel eidasLevel) {
     super(
         session,
         config,
-        useJwks(config) ? Utils.getJsonWebKeySetFrom(config.getJwksUrl(), session) : null);
+        useJwks(config) ? Utils.getJsonWebKeySetFrom(config.getJwksUrl(), session) : null, eidasLevel);
   }
 
   private static boolean useJwks(FranceConnectIdentityProviderConfig config) {
@@ -56,7 +57,7 @@ final class FranceConnectIdentityProvider
     var authenticationSession = request.getAuthenticationSession();
 
     authenticationSession.setClientNote(
-        OAuth2Constants.ACR_VALUES, config.getEidasLevel().toString());
+        OAuth2Constants.ACR_VALUES, eidasLevel.toString());
     var uriBuilder = super.createAuthorizationUrl(request);
 
     var nonce = DatatypeConverter.printHexBinary(Utils.generateRandomBytes(32));
@@ -192,7 +193,6 @@ final class FranceConnectIdentityProvider
   }
 
   private boolean isJWETokenFormatRequired(FranceConnectIdentityProviderConfig config) {
-    var eidasLevel = config.getEidasLevel();
     return !EIDAS1.equals(eidasLevel) && useJwks(config);
   }
 
