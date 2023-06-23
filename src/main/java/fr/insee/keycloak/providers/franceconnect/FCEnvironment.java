@@ -1,17 +1,17 @@
 package fr.insee.keycloak.providers.franceconnect;
 
+import fr.insee.keycloak.providers.common.Environment;
 import fr.insee.keycloak.providers.common.Utils;
 
 import java.util.Properties;
 
-enum FCEnvironment {
+enum FCEnvironment implements Environment {
 
   INTEGRATION_V1("france-connect.integration.v1"),
   PRODUCTION_V1("france-connect.production.v1"),
   INTEGRATION_V2("france-connect.integration.v2"),
   PRODUCTION_V2("france-connect.production.v2");
 
-  static final String ENVIRONMENT_PROPERTY_NAME = "fc_environment";
   private static final Properties PROPERTIES = Utils.loadProperties("france-connect.properties");
 
   private final String propertyPrefix;
@@ -20,6 +20,7 @@ enum FCEnvironment {
     this.propertyPrefix = propertyPrefix;
   }
 
+  @Override
   public String getProperty(String key) {
     return PROPERTIES.getProperty(propertyPrefix + "." + key);
   }

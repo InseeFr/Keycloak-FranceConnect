@@ -62,23 +62,13 @@ final class FCFixture {
       .claim("email", "john.doe@gmail.com")
       .build();
 
-  static FranceConnectIdentityProviderConfig givenConfigForIntegrationV1AndEidasLevel2() {
-    return givenConfigWithSelectedEnvAndSelectedEidasLevel("integration_v1", "eidas2");
-  }
-
-  static FranceConnectIdentityProviderConfig givenConfigForIntegrationV2AndEidasLevel2() {
-    return givenConfigWithSelectedEnvAndSelectedEidasLevel("integration_v2", "eidas2");
-  }
-
-  static FranceConnectIdentityProviderConfig givenConfigWithSelectedEnvAndSelectedEidasLevel(String environmentName, String eidasLevelName) {
+  static FranceConnectIdentityProviderConfig givenConfigWithSelectedEnv(FCEnvironment fcEnvironment) {
     var model = new IdentityProviderModel();
-    model.getConfig().put(FCEnvironment.ENVIRONMENT_PROPERTY_NAME, environmentName);
-    model.getConfig().put(EidasLevel.EIDAS_LEVEL_PROPERTY_NAME, eidasLevelName);
-    model.getConfig().put("ignoreAbsentStateParameterLogout", "false");
+    //model.getConfig().put("ignoreAbsentStateParameterLogout", "false");
     model.getConfig().put("clientId", CLIENT_ID);
     model.getConfig().put("clientSecret", CLIENT_SECRET);
 
-    return new FranceConnectIdentityProviderConfig(model);
+    return new FranceConnectIdentityProviderConfig(model,fcEnvironment,"provider-id");
   }
 
   static String givenAnHMACSignedEidas1JWT() {

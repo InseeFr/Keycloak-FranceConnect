@@ -450,70 +450,82 @@ a.zocial  {
 }
 
 
-a.zocial.franceconnect-particulier {
+a.zocial.franceconnect-particulier-integration-v2-eidas1,
+a.zocial.franceconnect-particulier-integration-v1-eidas1,
+a.zocial.franceconnect-particulier-production-v2-eidas1 {
     background: url(https://partenaires.franceconnect.gouv.fr/images/fc_bouton_alt2_v2.png) no-repeat left top;
     height: 70px;
     width: auto;
     padding-top: 60px;
 }
 
-a.zocial.franceconnect-particulier:hover {
+a.zocial.franceconnect-particulier-integration-v2-eidas1:hover,
+a.zocial.franceconnect-particulier-integration-v1-eidas1:hover,
+a.zocial.franceconnect-particulier-production-v2-eidas1:hover {
     background: url(https://partenaires.franceconnect.gouv.fr/images/fc_bouton_alt3_v2.png) no-repeat left top !important;
     height: 70px;
     width: auto;
 }
 
-a.zocial.franceconnect-particulier span {
+a.zocial.franceconnect-particulier-integration-v2-eidas1,
+a.zocial.franceconnect-particulier-integration-v1-eidas1,
+a.zocial.franceconnect-particulier-production-v2-eidas1 span {
     display:none;
 }
 
-a#social-franceconnect-particulier {
+a#social-franceconnect-particulier-integration-v2-eidas1,
+a#social-franceconnect-particulier-integration-v1-eidas1,
+a#social-franceconnect-particulier-production-v2-eidas1 {
     background: url(https://partenaires.franceconnect.gouv.fr/images/fc_bouton_alt2_v2.png) no-repeat left top;
     height: 56px;
     width: 224px;
    
 }
 
-a#social-franceconnect-particulier:hover {
+a#social-franceconnect-particulier-integration-v2-eidas1:hover,
+a#social-franceconnect-particulier-integration-v1-eidas1:hover,
+a#social-franceconnect-particulier-production-v2-eidas1:hover {
     background: url(https://partenaires.franceconnect.gouv.fr/images/fc_bouton_alt3_v2.png) no-repeat left top !important;
     height: 56px;
     width: 224px;
 }
 
-a#social-franceconnect-particulier span {
+a#social-franceconnect-particulier-integration-v2-eidas1,
+a#social-franceconnect-particulier-integration-v1-eidas1,
+a#social-franceconnect-particulier-production-v2-eidas1 span {
     display:none;
 }
 
-a.zocial.agentconnect {
+a.zocial.agentconnect-integration-rie-eidas1 {
   background: url(../img/AgentConnect-blue-btn.png) no-repeat left top;
   height: 70px;
   width: auto;
   padding-top: 60px;
 }
 
-a.zocial.agentconnect:hover {
+a.zocial.agentconnect-integration-rie-eidas1:hover {
   background: url(../img/AgentConnect-white-btn.png) no-repeat left top !important;
   height: 70px;
   width: auto;
 }
 
-a.zocial.agentconnect span {
+a.zocial.agentconnect-integration-rie-eidas1 span {
   display:none;
 }
 
-a#social-agentconnect {
+a#social-agentconnect-integration-rie-eidas1 {
   background: url(../img/AgentConnect-blue-btn.png) no-repeat left top;
   height: 56px;
   width: 224px;
 
 }
 
-a#social-agentconnect:hover {
+a#social-agentconnect-integration-rie-eidas1:hover {
   background: url(../img/AgentConnect-white-btn.png) no-repeat left top !important;
   height: 56px;
   width: 224px;
 }
 
-a#social-agentconnect span {
+a#social-agentconnect-integration-rie-eidas1 span {
   display:none;
 }

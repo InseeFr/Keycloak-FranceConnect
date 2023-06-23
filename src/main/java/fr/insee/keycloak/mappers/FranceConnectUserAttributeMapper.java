@@ -1,7 +1,7 @@
 package fr.insee.keycloak.mappers;
 
-import fr.insee.keycloak.providers.agentconnect.AgentConnectIdentityProviderFactory;
-import fr.insee.keycloak.providers.franceconnect.FranceConnectIdentityProviderFactory;
+import fr.insee.keycloak.providers.agentconnect.AgentConnectIntegrationRieEidas1IdentityProviderFactory;
+import fr.insee.keycloak.providers.franceconnect.FranceConnectIntegrationV1Eidas1IdentityProviderFactory;
 import org.keycloak.broker.oidc.mappers.UserAttributeMapper;
 
 public final class FranceConnectUserAttributeMapper extends UserAttributeMapper {
@@ -10,8 +10,8 @@ public final class FranceConnectUserAttributeMapper extends UserAttributeMapper 
 
   private static final String[] COMPATIBLE_PROVIDERS =
       new String[]{
-          AgentConnectIdentityProviderFactory.AC_PROVIDER_ID,
-          FranceConnectIdentityProviderFactory.FC_PROVIDER_ID
+          AgentConnectIntegrationRieEidas1IdentityProviderFactory.AC_PROVIDER_ID,
+          FranceConnectIntegrationV1Eidas1IdentityProviderFactory.FC_PROVIDER_ID
       };
 
   @Override

@@ -1,17 +1,17 @@
 package fr.insee.keycloak.providers.agentconnect;
 
+import fr.insee.keycloak.providers.common.Environment;
 import fr.insee.keycloak.providers.common.Utils;
 
 import java.util.Properties;
 
-enum ACEnvironment {
+enum ACEnvironment implements Environment {
 
   INTEGRATION_RIE("agent-connect.integration.rie"),
   PRODUCTION_RIE("agent-connect.production.rie"),
   INTEGRATION_INTERNET("agent-connect.integration.internet"),
   PRODUCTION_INTERNET("agent-connect.production.internet");
 
-  static final String ENVIRONMENT_PROPERTY_NAME = "fc_environment";
   private static final Properties PROPERTIES = Utils.loadProperties("agent-connect.properties");
 
   private final String propertyPrefix;
@@ -20,6 +20,7 @@ enum ACEnvironment {
     this.propertyPrefix = propertyPrefix;
   }
 
+  @Override
   public String getProperty(String key) {
     return PROPERTIES.getProperty(propertyPrefix + "." + key);
   }

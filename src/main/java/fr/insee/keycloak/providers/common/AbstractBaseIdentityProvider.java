@@ -47,9 +47,12 @@ public abstract class AbstractBaseIdentityProvider<T extends AbstractBaseProvide
 
   protected JSONWebKeySet jwks;
 
-  protected AbstractBaseIdentityProvider(KeycloakSession session, T config, JSONWebKeySet jwks) {
+  protected final EidasLevel eidasLevel;
+
+  protected AbstractBaseIdentityProvider(KeycloakSession session, T config, JSONWebKeySet jwks, EidasLevel eidasLevel) {
     super(session, config);
     this.jwks = jwks;
+    this.eidasLevel = eidasLevel;
   }
 
   @Override
@@ -164,7 +167,7 @@ public abstract class AbstractBaseIdentityProvider<T extends AbstractBaseProvide
       var acrClaim = (String) idToken.getOtherClaims().get(ACR_CLAIM_NAME);
 
       var fcReturnedEidasLevel = EidasLevel.getOrDefault(acrClaim, null);
-      var expectedEidasLevel = getConfig().getEidasLevel();
+      var expectedEidasLevel = eidasLevel;
 
       if (fcReturnedEidasLevel == null) {
         throw new IdentityBrokerException("The returned eIDAS level cannot be retrieved");

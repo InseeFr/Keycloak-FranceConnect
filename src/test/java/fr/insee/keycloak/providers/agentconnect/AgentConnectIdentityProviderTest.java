@@ -38,12 +38,13 @@ class AgentConnectIdentityProviderTest {
   private KeycloakSession session;
 
   private AgentConnectIdentityProviderConfig config;
-  private AgentConnectIdentityProvider provider;
+  private AgentConnectIdentityProvider providerEidas1;
+  private AgentConnectIdentityProvider providerEidas2;
   private PublicKeysStore publicKeysStore;
 
   @BeforeEach
   void setup() throws IOException {
-    config = givenConfigForIntegrationAndEidasLevel2();
+    config = givenConfigWithSelectedEnv(ACEnvironment.INTEGRATION_RIE);
     publicKeysStore = new PublicKeysStore();
 
     httpClientProvider = mock(HttpClientProvider.class);
@@ -53,7 +54,8 @@ class AgentConnectIdentityProviderTest {
         .thenAnswer(answer -> new ByteArrayInputStream(publicKeysStore.toJsonByteArray()));
     session = givenKeycloakSession(httpClientProvider, httpClient);
 
-    provider = new AgentConnectIdentityProvider(session, config);
+    providerEidas1 = new AgentConnectIdentityProvider(session, config,EidasLevel.EIDAS1);
+    providerEidas2 = new AgentConnectIdentityProvider(session, config,EidasLevel.EIDAS2);
   }
 
   @Nested
@@ -63,7 +65,7 @@ class AgentConnectIdentityProviderTest {
     void should_create_authorization_url_with_eidas_level_as_acr_values_query_param() {
       var request = givenAuthenticationRequest(session);
 
-      var authorizationUrl = provider.createAuthorizationUrl(request).build();
+      var authorizationUrl = providerEidas2.createAuthorizationUrl(request).build();
       var queryParams = TestUtils.uriQueryStringToMap(authorizationUrl);
 
       assertThat(authorizationUrl.toString()).startsWith(config.getAuthorizationUrl());
@@ -83,7 +85,7 @@ class AgentConnectIdentityProviderTest {
 
     @Test
     void should_validate_hs256_signed_token() {
-      var token = provider.validateToken(givenAnHMACSignedEidas2JWT());
+      var token = providerEidas2.validateToken(givenAnHMACSignedEidas2JWT());
 
       assertThat(token).isNotNull();
       assertThat(token.getSubject()).isEqualTo("fakeSub");
@@ -94,14 +96,14 @@ class AgentConnectIdentityProviderTest {
 
     @Test
     void should_search_in_vault_for_secret_key_on_hs256_token_validation() {
-      provider.validateToken(givenAnHMACSignedEidas2JWT());
+      providerEidas2.validateToken(givenAnHMACSignedEidas2JWT());
 
       verify(session.vault(), Mockito.atLeastOnce()).getStringSecret(anyString());
     }
 
     @Test
     void should_throw_exception_when_no_public_key_found_in_json_web_key_set_for_asymmetric_signed_jwt() {
-      assertThatThrownBy(() -> provider.validateToken(givenAnRSASignedJWTWithUnknownKidInJWKS()))
+      assertThatThrownBy(() -> providerEidas2.validateToken(givenAnRSASignedJWTWithUnknownKidInJWKS()))
           .isInstanceOf(IdentityBrokerException.class)
           .hasMessage("token signature validation failed");
     }
@@ -110,7 +112,7 @@ class AgentConnectIdentityProviderTest {
     void should_validate_rs256_signed_token() {
       var kid = "RSA-KID";
       // JWKS Reload should find the publicKey added by the givenAnRSA method
-      var token = provider.validateToken(givenAnRSASignedEidas2JWTWithRegisteredKidInJWKS(kid, publicKeysStore));
+      var token = providerEidas2.validateToken(givenAnRSASignedEidas2JWTWithRegisteredKidInJWKS(kid, publicKeysStore));
 
       assertThat(token).isNotNull();
       assertThat(token.getSubject()).isEqualTo("fakeSub");
@@ -123,7 +125,7 @@ class AgentConnectIdentityProviderTest {
     void should_validate_es256_signed_token() {
       var kid = "ECDSA-KID";
       // JWKS Reload should find the publicKey added by the givenAnECDSA method
-      var token = provider.validateToken(givenAnECDSASignedEidas2JWTWithRegisteredKidInJWKS(kid, publicKeysStore));
+      var token = providerEidas2.validateToken(givenAnECDSASignedEidas2JWTWithRegisteredKidInJWKS(kid, publicKeysStore));
 
       assertThat(token).isNotNull();
       assertThat(token.getSubject()).isEqualTo("fakeSub");
@@ -155,7 +157,7 @@ class AgentConnectIdentityProviderTest {
 
       var tokenEndpointResponse = generateTokenEndpointResponse(opaqueAccessToken, signedIdToken);
 
-      var brokeredIdentityContext = provider.getFederatedIdentity(tokenEndpointResponse);
+      var brokeredIdentityContext = providerEidas2.getFederatedIdentity(tokenEndpointResponse);
 
       assertThat(brokeredIdentityContext).isNotNull();
       assertThat(brokeredIdentityContext.getEmail()).isEqualTo("john.doe@gmail.com");
@@ -173,7 +175,7 @@ class AgentConnectIdentityProviderTest {
 
       var tokenEndpointResponse = generateTokenEndpointResponse(opaqueAccessToken, signedIdTokenWithEidas1);
 
-      assertThatThrownBy(() -> provider.getFederatedIdentity(tokenEndpointResponse))
+      assertThatThrownBy(() -> providerEidas2.getFederatedIdentity(tokenEndpointResponse))
           .isInstanceOf(IdentityBrokerException.class)
           .hasMessage("The returned eIDAS level is insufficient");
     }
@@ -186,7 +188,7 @@ class AgentConnectIdentityProviderTest {
 
       var tokenEndpointResponse = generateTokenEndpointResponse(opaqueAccessToken, signedIdTokenWithoutEidasLevel);
 
-      assertThatThrownBy(() -> provider.getFederatedIdentity(tokenEndpointResponse))
+      assertThatThrownBy(() -> providerEidas2.getFederatedIdentity(tokenEndpointResponse))
           .isInstanceOf(IdentityBrokerException.class)
           .hasMessage("The returned eIDAS level cannot be retrieved");
     }
@@ -199,7 +201,7 @@ class AgentConnectIdentityProviderTest {
 
       var tokenEndpointResponse = generateTokenEndpointResponse(opaqueAccessToken, signedIdTokenWithoutEidasLevel);
 
-      assertThatThrownBy(() -> provider.getFederatedIdentity(tokenEndpointResponse))
+      assertThatThrownBy(() -> providerEidas2.getFederatedIdentity(tokenEndpointResponse))
           .isInstanceOf(IdentityBrokerException.class)
           .hasMessage("The returned eIDAS level cannot be retrieved");
     }
