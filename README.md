@@ -163,10 +163,8 @@ Exemples de mappers :
 
 ### Thème
 
-Cette extension fournit 2 thèmes :
-* `fc-theme`
-* `iron-theme`
-* `ac-theme` 
+Cette extension fournit 1 thème :
+* `fc-ac-theme`
 
 Utilisez le thème de votre choix (selon le service que vous utilisez), et rendez-vous à l'adresse suivante : `https://<keycloak-url>/auth/realms/<realm>/account`
 
