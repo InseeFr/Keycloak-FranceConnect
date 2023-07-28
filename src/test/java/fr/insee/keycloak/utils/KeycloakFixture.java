@@ -13,7 +13,7 @@ import org.keycloak.services.DefaultKeycloakSession;
 import org.keycloak.vault.DefaultVaultStringSecret;
 import org.keycloak.vault.VaultTranscriber;
 
-import javax.ws.rs.core.UriInfo;
+import jakarta.ws.rs.core.UriInfo;
 import java.security.Security;
 import java.util.Optional;
 

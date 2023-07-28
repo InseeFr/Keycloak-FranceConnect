@@ -1,17 +1,17 @@
 package fr.insee.keycloak.providers.franceconnect;
 
 import static fr.insee.keycloak.providers.common.EidasLevel.EIDAS1;
-import static javax.ws.rs.core.Response.Status.OK;
+import static jakarta.ws.rs.core.Response.Status.OK;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import fr.insee.keycloak.providers.common.AbstractBaseIdentityProvider;
 import fr.insee.keycloak.providers.common.Utils;
 import java.io.IOException;
 import java.util.Optional;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.UriBuilder;
-import javax.xml.bind.DatatypeConverter;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.MediaType;
+import jakarta.ws.rs.core.UriBuilder;
+import jakarta.xml.bind.DatatypeConverter;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.broker.oidc.mappers.AbstractJsonUserAttributeMapper;
 import org.keycloak.broker.provider.AuthenticationRequest;
