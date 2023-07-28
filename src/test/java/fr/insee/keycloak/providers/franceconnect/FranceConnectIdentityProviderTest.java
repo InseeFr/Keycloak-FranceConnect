@@ -19,7 +19,7 @@ import org.keycloak.models.KeycloakSession;
 import org.keycloak.representations.JsonWebToken;
 import org.mockito.Mockito;
 
-import javax.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.HttpHeaders;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.Map;
