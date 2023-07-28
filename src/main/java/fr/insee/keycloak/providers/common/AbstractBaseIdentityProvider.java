@@ -2,18 +2,11 @@ package fr.insee.keycloak.providers.common;
 
 import static fr.insee.keycloak.providers.common.Utils.transcodeSignatureToDER;
 import static org.keycloak.util.JWKSUtils.getKeyWrappersForUse;
-import static org.keycloak.util.JWKSUtils.getKeysForUse;
 
 import java.nio.charset.StandardCharsets;
 import java.security.PublicKey;
 import java.security.Signature;
 import java.util.Optional;
-import javax.ws.rs.GET;
-import javax.ws.rs.Path;
-import javax.ws.rs.QueryParam;
-import javax.ws.rs.core.Response;
-import javax.ws.rs.core.UriBuilder;
-import javax.ws.rs.core.UriInfo;
 
 import org.keycloak.broker.oidc.AbstractOAuth2IdentityProvider;
 import org.keycloak.broker.oidc.OIDCIdentityProvider;
@@ -39,6 +32,13 @@ import org.keycloak.services.managers.AuthenticationManager;
 import org.keycloak.services.messages.Messages;
 import org.keycloak.services.resources.IdentityBrokerService;
 import org.keycloak.services.resources.RealmsResource;
+
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
+import jakarta.ws.rs.QueryParam;
+import jakarta.ws.rs.core.Response;
+import jakarta.ws.rs.core.UriBuilder;
+import jakarta.ws.rs.core.UriInfo;
 
 public abstract class AbstractBaseIdentityProvider<T extends AbstractBaseProviderConfig>
     extends OIDCIdentityProvider implements SocialIdentityProvider<OIDCIdentityProviderConfig> {
