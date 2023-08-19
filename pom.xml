@@ -123,12 +123,6 @@
           <version>${maven.javadoc.plugin.version}</version>
         </plugin>
 
-        <plugin>
-          <groupId>org.wildfly.plugins</groupId>
-          <artifactId>wildfly-maven-plugin</artifactId>
-          <version>${wildfly.maven.plugin.version}</version>
-        </plugin>
-
       </plugins>
     </pluginManagement>
 

@@ -92,9 +92,8 @@ Mappers examples:
 
 #### Theme
 
-This plugin provides 2 themes:
-* `fc-theme`
-* `iron-theme`
+This plugin provides 1 theme:
+* `fc-ac-theme`
 
 Choose your theme and go to the following url: `https://<keycloak-url>/auth/realms/<realm>/account`
 
