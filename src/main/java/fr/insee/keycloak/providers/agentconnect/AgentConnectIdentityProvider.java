@@ -2,7 +2,7 @@ package fr.insee.keycloak.providers.agentconnect;
 
 import fr.insee.keycloak.providers.common.AbstractBaseIdentityProvider;
 import fr.insee.keycloak.providers.common.Utils;
-import javax.ws.rs.core.UriBuilder;
+import jakarta.ws.rs.core.UriBuilder;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.broker.provider.AuthenticationRequest;
 import org.keycloak.models.KeycloakSession;
