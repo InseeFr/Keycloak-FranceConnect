@@ -59,7 +59,7 @@ public abstract class AbstractBaseIdentityProvider<T extends AbstractBaseProvide
 
   @Override
   public Object callback(RealmModel realm, AuthenticationCallback callback, EventBuilder event) {
-    return new OIDCEndpoint(callback, realm, event, this ,getConfig());
+    return new OIDCEndpoint<>(callback, realm, event, this ,getConfig());
   }
 
   @Override
@@ -185,7 +185,7 @@ public abstract class AbstractBaseIdentityProvider<T extends AbstractBaseProvide
     }
   }
 
-  protected class OIDCEndpoint extends Endpoint {
+  protected static class OIDCEndpoint<T extends AbstractBaseProviderConfig> extends Endpoint {
 
     private final T config;
 
