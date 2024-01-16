@@ -4,7 +4,7 @@
 
   <groupId>fr.insee.keycloak</groupId>
   <artifactId>keycloak-franceconnect</artifactId>
-  <version>6.0.0-SNAPSHOT</version>
+  <version>6.1.0-SNAPSHOT</version>
 
   <name>${project.groupId}:${project.artifactId}</name>
   <description>France Connect Openid-Connect Provider for Keycloak</description>
