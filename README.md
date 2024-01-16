@@ -44,7 +44,7 @@ Pour toutes questions sur l'utilisation de cette extension, n'hésitez pas à ou
 A partir de la version 19 et de l'usage de la nouvelle interface graphique d'administration de Keycloak, il n'est plus possible de paramétrer correctement cette extension via ihm. Cela étant la version fourni permet de conserver la fonctionalité du plugin s'il a été configuré dans une version précedente, les manipulation de configuration devant se faire manuellement en sql si nécessaire.
 Une version est en cours de développement pour rétablir la configuration du plugin, elle nécessitera des changements disruptifs dans l'usage de ce plugin.
 
-- La version 6.0.0 est compatible avec Keycloak `22.0.0` et supérieur.
+- La version 6.1.0 est compatible avec Keycloak `22.0.0` et supérieur.
 - La version 5.0.0 est compatible avec Keycloak `21.x.y`.
 - La version 4.0.0 est compatible avec Keycloak `15.0.0` jusqu'à `20.0.0`.
 - La version 2.1 jusqu'à 3.0.0 est compatible avec Keycloak `9.0.2` jusqu'à `15.0.0`.
