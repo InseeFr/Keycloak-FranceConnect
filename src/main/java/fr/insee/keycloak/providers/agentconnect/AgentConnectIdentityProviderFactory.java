@@ -5,6 +5,7 @@ import org.keycloak.broker.social.SocialIdentityProviderFactory;
 import org.keycloak.models.IdentityProviderMapperModel;
 import org.keycloak.models.IdentityProviderModel;
 import org.keycloak.models.KeycloakSession;
+import org.keycloak.provider.ProviderConfigProperty;
 
 import java.util.List;
 
@@ -45,5 +46,10 @@ public final class AgentConnectIdentityProviderFactory
   @Override
   public AgentConnectIdentityProviderConfig createConfig() {
     return new AgentConnectIdentityProviderConfig();
+  }
+
+  @Override
+  public List<ProviderConfigProperty> getConfigProperties() {
+    return AgentConnectIdentityProviderConfig.getConfigProperties();
   }
 }

@@ -5,6 +5,7 @@ import org.keycloak.broker.social.SocialIdentityProviderFactory;
 import org.keycloak.models.IdentityProviderMapperModel;
 import org.keycloak.models.IdentityProviderModel;
 import org.keycloak.models.KeycloakSession;
+import org.keycloak.provider.ProviderConfigProperty;
 
 import java.util.List;
 
@@ -45,5 +46,10 @@ public final class FranceConnectIdentityProviderFactory
   @Override
   public FranceConnectIdentityProviderConfig createConfig() {
     return new FranceConnectIdentityProviderConfig();
+  }
+
+  @Override
+  public List<ProviderConfigProperty> getConfigProperties() {
+    return FranceConnectIdentityProviderConfig.getConfigProperties();
   }
 }
