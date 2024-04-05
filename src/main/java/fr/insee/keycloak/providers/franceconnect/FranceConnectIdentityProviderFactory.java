@@ -1,13 +1,17 @@
 package fr.insee.keycloak.providers.franceconnect;
 
+import fr.insee.keycloak.providers.common.EidasLevel;
 import org.keycloak.broker.provider.AbstractIdentityProviderFactory;
 import org.keycloak.broker.social.SocialIdentityProviderFactory;
 import org.keycloak.models.IdentityProviderMapperModel;
 import org.keycloak.models.IdentityProviderModel;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.provider.ProviderConfigProperty;
+import org.keycloak.provider.ProviderConfigurationBuilder;
 
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static fr.insee.keycloak.providers.common.Utils.createHardcodedAttributeMapper;
 import static fr.insee.keycloak.providers.common.Utils.createUserAttributeMapper;
@@ -50,6 +54,29 @@ public final class FranceConnectIdentityProviderFactory
 
   @Override
   public List<ProviderConfigProperty> getConfigProperties() {
-    return FranceConnectIdentityProviderConfig.getConfigProperties();
+    List<String> environments = Stream.of(FCEnvironment.values())
+        .map(Enum::name)
+        .collect(Collectors.toList());
+
+    List<String> eidasLevels = Stream.of(EidasLevel.values())
+        .map(Enum::name)
+        .collect(Collectors.toList());
+
+    return ProviderConfigurationBuilder.create()
+        .property().name(FCEnvironment.ENVIRONMENT_PROPERTY_NAME)
+        .label("Environnement FranceConnect")
+        .helpText("Permet de choisir l'environnement FranceConnect. Effet : change les urls vers FranceConnect.")
+        .type(ProviderConfigProperty.LIST_TYPE)
+        .options(environments)
+        .defaultValue(DEFAULT_FC_ENVIRONMENT)
+        .add()
+        .property().name(EidasLevel.EIDAS_LEVEL_PROPERTY_NAME)
+        .label("Niveau de garantie eIDAS")
+        .helpText("Permet de fixer le niveau de garantie du compte utilisateur souhaité. Effet : désactive des fournisseurs d'identités (FI) sur la page de login FranceConnect.")
+        .type(ProviderConfigProperty.LIST_TYPE)
+        .options(eidasLevels)
+        .defaultValue(EidasLevel.EIDAS1)
+        .add()
+        .build();
   }
 }
