@@ -40,13 +40,10 @@ Pour toutes questions sur l'utilisation de cette extension, n'hésitez pas à ou
 
 ## Compatibilité
 
-**ATTENTION**
-A partir de la version 19 et de l'usage de la nouvelle interface graphique d'administration de Keycloak, il n'est plus possible de paramétrer correctement cette extension via ihm. Cela étant la version fourni permet de conserver la fonctionalité du plugin s'il a été configuré dans une version précedente, les manipulation de configuration devant se faire manuellement en sql si nécessaire.
-Une version est en cours de développement pour rétablir la configuration du plugin, elle nécessitera des changements disruptifs dans l'usage de ce plugin.
-
-- La version 6.1.0 est compatible avec Keycloak `22.0.0` et supérieur.
-- La version 5.0.0 est compatible avec Keycloak `21.x.y`.
-- La version 4.0.0 est compatible avec Keycloak `15.0.0` jusqu'à `20.0.0`.
+- La version 6.2.0 est compatible avec Keycloak `24.0.0` et supérieur. L'ihm d'administration est fonctionnelle.
+- La version 6.1.0 est compatible avec Keycloak `22.0.0` et supérieur. (non configurable par ihm)
+- La version 5.0.0 est compatible avec Keycloak `21.x.y`. (non configurable par ihm)
+- La version 4.0.0 est compatible avec Keycloak `15.0.0` jusqu'à `20.0.0`. (non configurable par ihm à partir de keycloak 19)
 - La version 2.1 jusqu'à 3.0.0 est compatible avec Keycloak `9.0.2` jusqu'à `15.0.0`.
 - La version 2.0 est compatible avec Keycloak `8.0.1` jusqu'à `9.0.0`.
 
@@ -80,6 +77,8 @@ $ mvn clean install wildfly:deploy
 Vous devez créer un [compte France Connect](https://franceconnect.gouv.fr/partenaires) afin de récupérer les informations nécessaires à la configuration de cette extension (clientId, clientSecret, configuration de l'url de redirection autorisée, ...). 
 
 Il existe 2 environnements de connexion, `Integration` et `Production`. La demande d'un compte permettant l'accès à l'environnement d'Intégration s'effectue par email au service support de France Connect.
+
+Le compte partenaire France Connect est configurable via https://partenaires.franceconnect.gouv.fr
 
 #### Configuration
 

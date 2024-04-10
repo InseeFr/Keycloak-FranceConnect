@@ -3,7 +3,6 @@
     {
       "name": "fc-ac-theme",
       "types": [
-        "admin",
         "login"
       ]
     }
