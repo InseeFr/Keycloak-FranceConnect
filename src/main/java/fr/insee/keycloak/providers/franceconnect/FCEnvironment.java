@@ -9,7 +9,8 @@ enum FCEnvironment {
   INTEGRATION_V1("france-connect.integration.v1"),
   PRODUCTION_V1("france-connect.production.v1"),
   INTEGRATION_V2("france-connect.integration.v2"),
-  PRODUCTION_V2("france-connect.production.v2");
+  PRODUCTION_V2("france-connect.production.v2"),
+  INTEGRATION_V3("france-connect.integration.v3");
 
   static final String ENVIRONMENT_PROPERTY_NAME = "fc_environment";
   private static final Properties PROPERTIES = Utils.loadProperties("france-connect.properties");
