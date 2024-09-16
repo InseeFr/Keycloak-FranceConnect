@@ -57,6 +57,19 @@ $ mvn clean install wildfly:deploy
 
 ## How to use it
 
+### Environments
+
+Up until version 6.2.0, the extension provided the so-called V1 and V2 environments, which correspond respectively to the historical FranceConnect "standard" and the FranceConnect Plus.
+
+With the addition of the FranceConnect standard V2 and to clear up any ambiguities, the configurations are now named `STANDARD_V2` and `PLUS_V2`, while the previous ones will remain available for a few versions to allow for migration. Since the standard V1 offering will be discontinued in 2025, it will not be included in the new naming conventions.
+
+Each offering is available in both INTEGRATION and PRODUCTION, resulting in the following:
+
+- `INTEGRATION_V1` and `PRODUCTION_V1` : Historical FranceConnect standard "V1", which will be discontinued in 2025
+- `INTEGRATION_V2` and `PRODUCTION_V2` : FranceConnect Plus under its old naming, maintained for backward compatibility
+- `INTEGRATION_STANDARD_V2` and `PRODUCTION_STANDARD_V2` : FranceConnect standard V2
+- `INTEGRATION_PLUS_V2` and `PRODUCTION_PLUS_V2` : FranceConnect Plus
+
 ### Requirements
 
 You must have a [France Connect account](https://franceconnect.gouv.fr/partenaires) to retrieve plugin configuration information (clientId, clientSecret, authorized redirect uri, ...)
