@@ -72,6 +72,21 @@ $ mvn clean install wildfly:deploy
 ## Utilisation
 
 ### France Connect
+
+#### Environnements
+
+Jusqu'en version 6.2.0, l'extension propose les environnement dits `V1` et `V2` qui correspondent réellement respectivement à l'offre FranceConnect standard "historique" et à l'offre FranceConnect Plus.
+
+Suite à l'ajout de l'offre FranceConnect standard V2 et afin de lever les ambiguités, les configurations se nomment désormais `STANDARD_V2` et `PLUS_V2`, les anciens restant pendant quelques versions le temps d'effectuer la migration.
+L'offre standard V1 devant s'arrêter en 2025, elle ne sera pas reprise dans les nouveaux nommages.
+
+Chaque offre est proposée en `INTEGRATION` et en `PRODUCTION`, ce qui donne donc :
+
+- `INTEGRATION_V1` et `PRODUCTION_V1` : Offre historique FranceConnect standard "V1" devant s'arrêter en 2025
+- `INTEGRATION_V2` et `PRODUCTION_V2` : Offre FranceConnect Plus dans son ancien nommage, maintenu pour retro compatibilité
+- `INTEGRATION_STANDARD_V2` et `PRODUCTION_STANDARD_V2` : Offre FranceConnect standard V2
+- `INTEGRATION_PLUS_V2` et `PRODUCTION_PLUS_V2` : Offre FranceConnect Plus
+
 #### Prérequis
 
 Vous devez créer un [compte France Connect](https://franceconnect.gouv.fr/partenaires) afin de récupérer les informations nécessaires à la configuration de cette extension (clientId, clientSecret, configuration de l'url de redirection autorisée, ...). 
