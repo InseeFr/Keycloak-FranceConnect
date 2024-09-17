@@ -26,8 +26,9 @@ This [Keycloak](https://www.keycloak.org) plugin adds an identity provider allow
 
 ## Compatibility
 
-* The version 6.2.0 of this plugin is compatible with Keycloak `24.0.0` and higher. It's configurable with UI.
-* The version 6.1.0 of this plugin is compatible with Keycloak `22.0.0` and higher. (not configurable with UI)
+* The version 7.0.0 of this plugin is compatible with Keycloak `25.0.0` and higher.
+* The version 6.2.0 of this plugin is compatible with Keycloak `24.x.y`. It's configurable with UI.
+* The version 6.1.0 of this plugin is compatible with Keycloak `22.0.0` until `24.x.y`. (not configurable with UI)
 * The version 5.0.0 of this plugin is compatible with Keycloak `21.x.y`. (not configurable with UI)
 * The version 4.0.0 of this plugin is compatible with Keycloak `15.0.0` until `20.0.0`. (not configurable with UI starting keycloak 19)
 * The version 2.1 up to 3.0.0 of this plugin is compatible with Keycloak `9.0.2` until `15.0.0`.

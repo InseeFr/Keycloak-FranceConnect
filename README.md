@@ -40,8 +40,9 @@ Pour toutes questions sur l'utilisation de cette extension, n'hésitez pas à ou
 
 ## Compatibilité
 
-- La version 6.2.0 est compatible avec Keycloak `24.0.0` et supérieur. L'ihm d'administration est fonctionnelle.
-- La version 6.1.0 est compatible avec Keycloak `22.0.0` et supérieur. (non configurable par ihm)
+- La version 7.0.0 est compatible avec Keycloak `25.0.0` et supérieur. 
+- La version 6.2.0 est compatible avec Keycloak `24.x.y`. L'ihm d'administration est fonctionnelle.
+- La version 6.1.0 est compatible avec Keycloak `22.0.0` jusqu'à `24.x.y`. (non configurable par ihm)
 - La version 5.0.0 est compatible avec Keycloak `21.x.y`. (non configurable par ihm)
 - La version 4.0.0 est compatible avec Keycloak `15.0.0` jusqu'à `20.0.0`. (non configurable par ihm à partir de keycloak 19)
 - La version 2.1 jusqu'à 3.0.0 est compatible avec Keycloak `9.0.2` jusqu'à `15.0.0`.
