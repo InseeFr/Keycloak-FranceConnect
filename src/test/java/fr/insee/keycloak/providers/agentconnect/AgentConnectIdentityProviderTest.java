@@ -49,8 +49,9 @@ class AgentConnectIdentityProviderTest {
     httpClientProvider = mock(HttpClientProvider.class);
     httpClient = mock(CloseableHttpClient.class);
 
-    when(httpClientProvider.get(config.getJwksUrl()))
-        .thenAnswer(answer -> new ByteArrayInputStream(publicKeysStore.toJsonByteArray()));
+    when(httpClientProvider.getString(config.getJwksUrl())).
+        thenReturn(publicKeysStore.toJsonFormat());
+    when(httpClientProvider.getMaxConsumedResponseSize()).thenCallRealMethod();
     session = givenKeycloakSession(httpClientProvider, httpClient);
 
     provider = new AgentConnectIdentityProvider(session, config);
@@ -107,10 +108,16 @@ class AgentConnectIdentityProviderTest {
     }
 
     @Test
-    void should_validate_rs256_signed_token() {
+    void should_validate_rs256_signed_token() throws IOException {
       var kid = "RSA-KID";
+      var encodedToken = givenAnRSASignedEidas2JWTWithRegisteredKidInJWKS(kid, publicKeysStore);
+
       // JWKS Reload should find the publicKey added by the givenAnRSA method
-      var token = provider.validateToken(givenAnRSASignedEidas2JWTWithRegisteredKidInJWKS(kid, publicKeysStore));
+      // set request with uptated keystore
+      when(httpClientProvider.getString(config.getJwksUrl())).
+          thenReturn(publicKeysStore.toJsonFormat());
+
+      var token = provider.validateToken(encodedToken);
 
       assertThat(token).isNotNull();
       assertThat(token.getSubject()).isEqualTo("fakeSub");
@@ -120,10 +127,17 @@ class AgentConnectIdentityProviderTest {
     }
 
     @Test
-    void should_validate_es256_signed_token() {
+    void should_validate_es256_signed_token() throws IOException {
       var kid = "ECDSA-KID";
-      // JWKS Reload should find the publicKey added by the givenAnECDSA method
-      var token = provider.validateToken(givenAnECDSASignedEidas2JWTWithRegisteredKidInJWKS(kid, publicKeysStore));
+
+      var encodedToken = givenAnECDSASignedEidas2JWTWithRegisteredKidInJWKS(kid, publicKeysStore);
+
+      // JWKS Reload should find the publicKey added by the givenAnRSA method
+      // set request with uptated keystore
+      when(httpClientProvider.getString(config.getJwksUrl())).
+          thenReturn(publicKeysStore.toJsonFormat());
+
+      var token = provider.validateToken(encodedToken);
 
       assertThat(token).isNotNull();
       assertThat(token.getSubject()).isEqualTo("fakeSub");
@@ -148,10 +162,14 @@ class AgentConnectIdentityProviderTest {
     }
 
     @Test
-    void id_token_acr_claim_should_match_with_selected_eidas_level_from_admin_interface() {
+    void id_token_acr_claim_should_match_with_selected_eidas_level_from_admin_interface() throws IOException {
       var kid = "RSA-KID";
       var opaqueAccessToken = "2b3ea2e8-2d11-49a4-a369-5fb98d9d5315";
       var signedIdToken = givenAnRSASignedEidas2JWTWithRegisteredKidInJWKS(kid, publicKeysStore);
+
+      // set request with uptated keystore
+      when(httpClientProvider.getString(config.getJwksUrl())).
+          thenReturn(publicKeysStore.toJsonFormat());
 
       var tokenEndpointResponse = generateTokenEndpointResponse(opaqueAccessToken, signedIdToken);
 
@@ -166,10 +184,14 @@ class AgentConnectIdentityProviderTest {
     }
 
     @Test
-    void should_throw_exception_when_id_token_acr_claim_does_not_match_with_the_selected_eidas_level_from_admin_interface() {
+    void should_throw_exception_when_id_token_acr_claim_does_not_match_with_the_selected_eidas_level_from_admin_interface() throws IOException {
       var kid = "RSA-KID";
       var opaqueAccessToken = "2b3ea2e8-2d11-49a4-a369-5fb98d9d5315";
       var signedIdTokenWithEidas1 = givenAnRSASignedJWTWithRegisteredKidInJWKS(kid, EIDAS1_JWT, publicKeysStore);
+
+      // set request with uptated keystore
+      when(httpClientProvider.getString(config.getJwksUrl())).
+          thenReturn(publicKeysStore.toJsonFormat());
 
       var tokenEndpointResponse = generateTokenEndpointResponse(opaqueAccessToken, signedIdTokenWithEidas1);
 
@@ -179,10 +201,14 @@ class AgentConnectIdentityProviderTest {
     }
 
     @Test
-    void should_throw_exception_when_id_token_does_not_contains_acr_claim() {
+    void should_throw_exception_when_id_token_does_not_contains_acr_claim() throws IOException {
       var kid = "RSA-KID";
       var opaqueAccessToken = "2b3ea2e8-2d11-49a4-a369-5fb98d9d5315";
       var signedIdTokenWithoutEidasLevel = givenAnRSASignedJWTWithRegisteredKidInJWKS(kid, NO_EIDAS_LEVEL_JWT, publicKeysStore);
+
+      // set request with uptated keystore
+      when(httpClientProvider.getString(config.getJwksUrl())).
+          thenReturn(publicKeysStore.toJsonFormat());
 
       var tokenEndpointResponse = generateTokenEndpointResponse(opaqueAccessToken, signedIdTokenWithoutEidasLevel);
 
@@ -192,10 +218,14 @@ class AgentConnectIdentityProviderTest {
     }
 
     @Test
-    void should_throw_exception_when_id_token_contains_acr_claim_who_does_not_match_with_a_supported_eidas_level() {
+    void should_throw_exception_when_id_token_contains_acr_claim_who_does_not_match_with_a_supported_eidas_level() throws IOException {
       var kid = "RSA-KID";
       var opaqueAccessToken = "2b3ea2e8-2d11-49a4-a369-5fb98d9d5315";
       var signedIdTokenWithoutEidasLevel = givenAnRSASignedJWTWithRegisteredKidInJWKS(kid, UNSUPPORTED_EIDAS_LEVEL_JWT, publicKeysStore);
+
+      // set request with uptated keystore
+      when(httpClientProvider.getString(config.getJwksUrl())).
+          thenReturn(publicKeysStore.toJsonFormat());
 
       var tokenEndpointResponse = generateTokenEndpointResponse(opaqueAccessToken, signedIdTokenWithoutEidasLevel);
 

@@ -55,10 +55,9 @@ class FranceConnectIdentityProviderTest {
     httpClientProvider = mock(HttpClientProvider.class);
     httpClient = mock(CloseableHttpClient.class);
 
-    when(httpClientProvider.get(config.getJwksUrl()))
-        .thenAnswer(
-            answer -> new ByteArrayInputStream(publicKeysStore.toJsonByteArray())
-        );
+    when(httpClientProvider.getString(config.getJwksUrl())).
+        thenReturn(publicKeysStore.toJsonFormat());
+    when(httpClientProvider.getMaxConsumedResponseSize()).thenCallRealMethod();
     session = givenKeycloakSession(httpClientProvider, httpClient);
 
     provider = new FranceConnectIdentityProvider(session, config);
@@ -66,7 +65,7 @@ class FranceConnectIdentityProviderTest {
 
   @Test
   void should_load_jwks_from_jwks_url_when_configuration_supports_jwks() throws IOException {
-    verify(httpClientProvider, times(1)).get(config.getJwksUrl());
+    verify(httpClientProvider, times(1)).getString(config.getJwksUrl());
 
     var noJWKSSupportsConfig = givenConfigForIntegrationV1AndEidasLevel2();
     var httpClientProvider = mock(HttpClientProvider.class);
@@ -158,9 +157,15 @@ class FranceConnectIdentityProviderTest {
     }
 
     @Test
-    void should_validate_rsa_oaep_encrypted_token_for_eidas2_and_eidas3_levels() {
+    void should_validate_rsa_oaep_encrypted_token_for_eidas2_and_eidas3_levels() throws IOException {
+      var encodedToken = givenAnRSAOAEPJWEForAnECDSASignedEidas2JWTWithRegisteredKidInJWKS("ECDSA-KID", publicKeysStore, rsaKey);
+
+      // set request with uptated keystore
+      when(httpClientProvider.getString(config.getJwksUrl())).
+          thenReturn(publicKeysStore.toJsonFormat());
+
       var token = provider.validateToken(
-          givenAnRSAOAEPJWEForAnECDSASignedEidas2JWTWithRegisteredKidInJWKS("ECDSA-KID", publicKeysStore, rsaKey)
+          encodedToken
       );
 
       assertThat(token).isNotNull();
@@ -237,6 +242,10 @@ class FranceConnectIdentityProviderTest {
 
       var tokenEndpointResponse = generateTokenEndpointResponse(opaqueAccessToken, jweIdToken);
 
+      // set request with uptated keystore
+      when(httpClientProvider.getString(config.getJwksUrl())).
+          thenReturn(publicKeysStore.toJsonFormat());
+
       var brokeredIdentityContext = provider.getFederatedIdentity(tokenEndpointResponse);
 
       assertThat(brokeredIdentityContext).isNotNull();
@@ -263,6 +272,10 @@ class FranceConnectIdentityProviderTest {
       var kid = "ECDSA-KID";
       var opaqueAccessToken = "2b3ea2e8-2d11-49a4-a369-5fb98d9d5315";
       var jweIdToken = givenAnRSAOAEPJWEForAnECDSASignedEidas2JWTWithRegisteredKidInJWKS(kid, publicKeysStore, rsaKey);
+
+      // set request with uptated keystore
+      when(httpClientProvider.getString(config.getJwksUrl())).
+          thenReturn(publicKeysStore.toJsonFormat());
 
       var tokenEndpointResponse = generateTokenEndpointResponse(opaqueAccessToken, jweIdToken);
 
@@ -292,6 +305,10 @@ class FranceConnectIdentityProviderTest {
       var opaqueAccessToken = "2b3ea2e8-2d11-49a4-a369-5fb98d9d5315";
       var jweIdToken = SignatureUtils.givenAnECDSASignedJWTWithRegisteredKidInJWKS(kid, EIDAS1_JWT, publicKeysStore);
 
+      // set request with uptated keystore
+      when(httpClientProvider.getString(config.getJwksUrl())).
+          thenReturn(publicKeysStore.toJsonFormat());
+
       var tokenEndpointResponse = generateTokenEndpointResponse(opaqueAccessToken, jweIdToken);
 
       var brokeredIdentityContext = provider.getFederatedIdentity(tokenEndpointResponse);
@@ -316,6 +333,10 @@ class FranceConnectIdentityProviderTest {
       var kid = "ECDSA-KID";
       var opaqueAccessToken = "2b3ea2e8-2d11-49a4-a369-5fb98d9d5315";
       var jweIdToken = givenAnRSAOAEPJWEForAnECDSASignedEidas2JWTWithRegisteredKidInJWKS(kid, publicKeysStore, rsaKey);
+
+      // set request with uptated keystore
+      when(httpClientProvider.getString(config.getJwksUrl())).
+          thenReturn(publicKeysStore.toJsonFormat());
 
       var tokenEndpointResponse = generateTokenEndpointResponse(opaqueAccessToken, jweIdToken);
 
@@ -349,6 +370,10 @@ class FranceConnectIdentityProviderTest {
           givenAnECDSASignedJWTWithRegisteredKidInJWKS(kid, EIDAS1_JWT, publicKeysStore)
       );
 
+      // set request with uptated keystore
+      when(httpClientProvider.getString(config.getJwksUrl())).
+          thenReturn(publicKeysStore.toJsonFormat());
+
       var tokenEndpointResponse = generateTokenEndpointResponse(opaqueAccessToken, jweIdTokenWithEidas1);
 
       assertThatThrownBy(() -> provider.getFederatedIdentity(tokenEndpointResponse))
@@ -369,12 +394,19 @@ class FranceConnectIdentityProviderTest {
       when(httpClient.execute(any()))
           .thenAnswer(answer -> httpResponse);
 
+      // set request with uptated keystore
+      when(httpClientProvider.getString(config.getJwksUrl())).
+          thenReturn(publicKeysStore.toJsonFormat());
+
       var kid = "ECDSA-KID";
       var opaqueAccessToken = "2b3ea2e8-2d11-49a4-a369-5fb98d9d5315";
       var jweIdTokenWithoutEidasLevel = givenAnRSAOAEPJWE(
           rsaKey,
           givenAnECDSASignedJWTWithRegisteredKidInJWKS(kid, NO_EIDAS_LEVEL_JWT, publicKeysStore)
       );
+
+      when(httpClientProvider.getString(config.getJwksUrl())).
+          thenReturn(publicKeysStore.toJsonFormat());
 
       var tokenEndpointResponse = generateTokenEndpointResponse(opaqueAccessToken, jweIdTokenWithoutEidasLevel);
 
@@ -402,6 +434,10 @@ class FranceConnectIdentityProviderTest {
           rsaKey,
           givenAnECDSASignedJWTWithRegisteredKidInJWKS(kid, UNSUPPORTED_EIDAS_LEVEL_JWT, publicKeysStore)
       );
+
+      // set request with uptated keystore
+      when(httpClientProvider.getString(config.getJwksUrl())).
+          thenReturn(publicKeysStore.toJsonFormat());
 
       var tokenEndpointResponse = generateTokenEndpointResponse(opaqueAccessToken, jweIdTokenWithoutEidasLevel);
 
