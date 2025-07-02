@@ -12,6 +12,9 @@ enum FCEnvironment {
   INTEGRATION_V2("france-connect.plus.integration.v2"),
   PRODUCTION_V2("france-connect.plus.production.v2"),
   // FranceConnect V2, called standard in this project to differentiate with "Plus"
+  // Use legacy for old client id created with "demarche simplifiee"
+  INTEGRATION_STANDARD_LEGACY_V2("france-connect.standard.legacy.integration.v2"),
+  // Use this for client id created with the dedicated partner portal
   INTEGRATION_STANDARD_V2("france-connect.standard.integration.v2"),
   PRODUCTION_STANDARD_V2("france-connect.standard.production.v2"),
   // FranceConnect Plus V2

@@ -69,6 +69,7 @@ Each offering is available in both INTEGRATION and PRODUCTION, resulting in the 
 - `INTEGRATION_V1` and `PRODUCTION_V1` : Historical FranceConnect standard "V1", which will be discontinued in 2025
 - `INTEGRATION_V2` and `PRODUCTION_V2` : FranceConnect Plus under its old naming, maintained for backward compatibility
 - `INTEGRATION_STANDARD_V2` and `PRODUCTION_STANDARD_V2` : FranceConnect standard V2
+- `INTEGRATION_STANDARD_LEGACY_V2`: FranceConnect V2, has to be used only when your client id has been created with "Démarche simplifiée" *Deprecated*
 - `INTEGRATION_PLUS_V2` and `PRODUCTION_PLUS_V2` : FranceConnect Plus
 
 ### Requirements
