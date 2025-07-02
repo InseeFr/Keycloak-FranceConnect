@@ -86,6 +86,7 @@ Chaque offre est proposée en `INTEGRATION` et en `PRODUCTION`, ce qui donne don
 - `INTEGRATION_V1` et `PRODUCTION_V1` : Offre historique FranceConnect standard "V1" devant s'arrêter en 2025
 - `INTEGRATION_V2` et `PRODUCTION_V2` : Offre FranceConnect Plus dans son ancien nommage, maintenu pour retro compatibilité
 - `INTEGRATION_STANDARD_V2` et `PRODUCTION_STANDARD_V2` : Offre FranceConnect standard V2
+- `INTEGRATION_STANDARD_LEGACY_V2` : Offre FranceConnect Standard V2, à utiliser uniquement quand le client id a été créé à partir de "Démarche simplifiée" *Déprécié*
 - `INTEGRATION_PLUS_V2` et `PRODUCTION_PLUS_V2` : Offre FranceConnect Plus
 
 #### Prérequis
