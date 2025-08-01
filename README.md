@@ -12,6 +12,7 @@
       - [Prérequis](#prérequis)
       - [Configuration](#configuration)
       - [Mappers](#mappers)
+      - [Reconciliation](#reconciliation)
       - [Particularités de FranceConnect+](#particularités-de-franceconnect)
     - [Agent Connect](#agent-connect)
       - [Prérequis](#prérequis-1)
@@ -37,6 +38,7 @@ Pour toutes questions sur l'utilisation de cette extension, n'hésitez pas à ou
 * Meilleure gestion du logout (contourne https://issues.jboss.org/browse/KEYCLOAK-7209)
 * Provider pour [AgentConnect](https://agentconnect.gouv.fr/)
 * Gestion de FranceConnect+ (niveau EIDAS2 et EIDAS3)
+* [reconciliation automatique]((#reconciliation)) basée sur l'identité pivot
 
 ## Compatibilité
 
@@ -116,9 +118,35 @@ Une fois la configuration validée, vous pouvez ajouter des mappers afin de réc
 Les principaux mappers sont ajoutés automatiquement lors de la création du fournisseur d'identité.
 
 Exemples de mappers :
-* Name : `lastName`, Mapper Type : `Attribute Importer`, Claim : `family_name`, User Attribute Name : `lastName`
 * Name : `firstName`, Mapper Type : `Attribute Importer`, Claim : `given_name`, User Attribute Name : `firstName`
+* Name : `lastName`, Mapper Type : `Attribute Importer`, Claim : `family_name`, User Attribute Name : `lastName`
+* Name : `gender`, Mapper Type : `Attribute Importer`, Claim : `gender`, User Attribute Name : `gender`
+* Name : `birthdate`, Mapper Type : `Attribute Importer`, Claim : `birthdate`, User Attribute Name : `birthdate`
+* Name : `birthplace`, Mapper Type : `Attribute Importer`, Claim : `birthplace`, User Attribute Name : `birthplace`
+* Name : `birthcountry`, Mapper Type : `Attribute Importer`, Claim : `birthcountry`, User Attribute Name : `birthcountry`
 * Name : `email`, Mapper Type : `Attribute Importer`, Claim : `email`, User Attribute Name : `email`
+
+Ces mappers sont créés automatiquement lors de la création de l'_Identity Provider_ "France Connect Particulier".
+
+#### Reconciliation
+
+Comme indiqué dans la [documentation de FranceConnect](https://partenaires.franceconnect.gouv.fr/monprojet/cadrage#Parcoursdereconciliation), la reconciliation entre un compte FranceConnect et un compte local Keycloak peut se faire automatiquement avec les données de l'[identité pivot](https://docs.partenaires.franceconnect.gouv.fr/fi/general/donnees-utilisateur/#l-identite-pivot).
+
+Pour mettre en place la reconciliation automatique :
+* s'assurer d'avoir les informations de l'identité pivot au niveau des utilisateurs existant dans Keycloak
+  * s'il ne manque rien qu'une des données de l'identité pivot, la reconciliation automatique ne pourra pas fonctionner
+* s'assurer que tous les _claims_ correspondant à l'identité pivot sont mappés vers des _attributs utilisateur_ Keycloak
+  * à faire au niveau de l'Identity Provider_ "France Connect Particulier"
+  * ces mappers sont créés automatiquement lors de la création de l'_Identity Provider_ "France Connect Particulier"
+* créer un nouveau flow d'authentification utilisant le step "FranceConnect: automatically link account"
+  * ce step fait le lien entre un compte Keycloak existant et l'identité pivot
+    * si un compte Keycloak correspond à l'identité pivot : la reconciliation est faite
+    * si aucun compte Keycloak correspond : aucune action
+* appliquer ce flow à l'_Identity Provider_ "France Connect Particulier"
+
+La reconciliation manuelle, faisant intervenir l'usager et un _secret_, n'est pas pris en charge par cette extension.
+
+Un utilisateur a toujours la possibilité de réaliser la reconciliation avec son compte FranceConnect depuis la console utilisateur (menu "Sécurité du compte > Comptes liés").
 
 #### Particularités de FranceConnect+
 
