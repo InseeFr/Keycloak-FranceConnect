@@ -23,7 +23,7 @@
   - [Comment contribuer](#comment-contribuer)
 
 
-Cette extension pour [Keycloak](https://www.keycloak.org) ajoute un fournisseur d'identité permettant d'utiliser les services proposés par [France Connect](https://franceconnect.gouv.fr/).
+Cette extension pour [Keycloak](https://www.keycloak.org) ajoute un fournisseur d'identité permettant d'utiliser les services proposés par [France Connect](https://franceconnect.gouv.fr/) et [Proconnect](https://www.proconnect.gouv.fr/).
 
 [![CI Badge](https://github.com/InseeFr/Keycloak-FranceConnect/actions/workflows/ci.yml/badge.svg)](https://github.com/InseeFr/Keycloak-FranceConnect/actions/workflows/ci.yml)
 
@@ -34,7 +34,7 @@ Pour toutes questions sur l'utilisation de cette extension, n'hésitez pas à ou
 
 * Vérification de signature (basée sur le client-secret)
 * Gestion du niveau d'authentification (eIDAS) dans la demande d'autorisation (cf [communication FranceConnect](https://dev.entrouvert.org/issues/34448))
-* Thèmes de connexion permettant l'affichage des boutons France Connect (fc-theme et iron-theme)
+* Thèmes de connexion permettant l'affichage des boutons France Connect (fc-ac-theme)
 * Meilleure gestion du logout (contourne https://issues.jboss.org/browse/KEYCLOAK-7209)
 * Provider pour [AgentConnect](https://agentconnect.gouv.fr/)
 * Gestion de FranceConnect+ (niveau EIDAS2 et EIDAS3)
@@ -63,14 +63,8 @@ Si vous utilisez déjà une ancienne version de l'extension, il est préférable
 L'installation de l'extension est simple et peut-être réalisée sans redémarrage de Keycloak.
 
 * Téléchargez la dernière version de l'extension à partir de la page de [release](https://github.com/InseeFr/Keycloak-FranceConnect/releases)
-* Copiez le fichier JAR dans le dossier `standalone/deployments` de votre serveur Keycloak
+* Copiez le fichier JAR dans le dossier `providers` de votre serveur Keycloak
 * Redémarrez Keycloak (optionnel, le déploiement à chaud devrait fonctionner)
-
-Vous pouvez également cloner le repository Github et effectuer une installation locale avec la commande :
-
-```
-$ mvn clean install wildfly:deploy
-```
 
 ## Utilisation
 
@@ -93,11 +87,9 @@ Chaque offre est proposée en `INTEGRATION` et en `PRODUCTION`, ce qui donne don
 
 #### Prérequis
 
-Vous devez créer un [compte France Connect](https://franceconnect.gouv.fr/partenaires) afin de récupérer les informations nécessaires à la configuration de cette extension (clientId, clientSecret, configuration de l'url de redirection autorisée, ...). 
+La documentation de fournisseur de service FranceConnect est décrite [ici](https://docs.partenaires.franceconnect.gouv.fr/fs/).
 
-Il existe 2 environnements de connexion, `Integration` et `Production`. La demande d'un compte permettant l'accès à l'environnement d'Intégration s'effectue par email au service support de France Connect.
-
-Le compte partenaire France Connect est configurable via https://partenaires.franceconnect.gouv.fr
+Vous devez récupérer un couple client_id et client_secret et configurer les urls de redirection adéquates. Il n'y a pas de configuration commune de test, mais il est aisée de demande sa configuration "bac à sable".
 
 #### Configuration
 
@@ -105,8 +97,8 @@ Suite à l'installation de l'extension, le fournisseur d'identité `France Conne
 
 ![keycloak-fc-conf-provider](/assets/keycloak-fc-conf-provider.png)
 
-Sélectionnez l'environnement désiré, entrez votre clientId, clientSecret, [les scopes](https://partenaires.franceconnect.gouv.fr/fcp/fournisseur-service#identite-pivot) que vous souhaitez demander, le niveau d'authentification eIDAS.
-L'alias configuré par défaut (`france-connect-particulier`) est utilisé par les thèmes `fc-theme` et `iron-theme`. Vous pouvez donc modifier le nom de l'alias si vous n'utilisez pas un de ces thèmes.
+Sélectionnez l'environnement désiré, entrez votre clientId, clientSecret, [les scopes](https://docs.partenaires.franceconnect.gouv.fr/fs/fs-technique/fs-technique-scope-fc/) que vous souhaitez demander, le niveau d'authentification eIDAS.
+L'alias configuré par défaut (`france-connect-particulier`) est utilisé par les thèmes `fc-ac-theme`. Vous pouvez donc modifier le nom de l'alias si vous n'utilisez pas un de ces thèmes.
 
 Vous trouverez également l'url de redirection qu'il faudra enregistrer sur le portail Partenaire de France Connect :
 * endpoint : `https://<keycloak-url>/auth/realms/<realm>/broker/franceconnect-particulier/endpoint` 
@@ -173,22 +165,23 @@ Chiffrement de  l'id_token  (A256GCM / -) |  A256GCM
 Adresse de la clé de chiffrement (pour ouverture des flux) |  https://*<KEYCLOAK_SERVER>*/auth/realms/*<KEYCLOAK_REALM>*/protocol/openid-connect/certs
 
 L'implémentation permettant de déchiffrer les jetons échangés s'appuie sur le travail de l'équipe keycloak autour de FAPI, cela implique que cette extension supporte uniquement Keycloak en verison supérieure à 15.
-### Agent Connect
 
-La version 3.0 de cette extension ajoute le support pour AgentConnect pour l'authentification des agents de la fonction publique d'Etat : https://github.com/france-connect/Documentation-AgentConnect.
+### ProConnect
+
+La version 3.0 de cette extension ajoute le support pour ProConnect (anciennement AgentConnect) pour l'authentification des agents de la fonction publique d'Etat et des comptes professionnels.
 #### Prérequis
 
-De la même façon que pour France Connect il vous faudra demander la création d'un compte sur agent connect.
+De la même façon que pour France Connect il vous faudra demander la création d'un compte sur agent connect via https://partenaires.proconnect.gouv.fr/.
 
-Il existe 2 environnements de connexion, `Integration` et `Production`. La demande d'un compte permettant l'accès à l'environnement d'Intégration s'effectue par email au service support d'Agent Connect.
+Il existe 2 environnements de connexion, `Integration` et `Production`, chacun décliné pour une exposition Internet ou RIE.
 
 #### Configuration
 
 Suite à l'installation de l'extension, le fournisseur d'identité `Agent Connect` est apparu. Une fois ce dernier selectionné, vous arrivez sur la page de configuration suivante :
 
-![keycloak-fc-conf-provider](/assets/keycloak-fc-conf-provider.png)
+![keycloak-fc-conf-provider](/assets/keycloak-ac-conf-provider.png)
 
-Sélectionnez l'environnement désiré, entrez votre clientId, clientSecret, [les scopes](https://github.com/france-connect/Documentation-AgentConnect/blob/main/doc-fs.md#les-donn%C3%A9es-agent) que vous souhaitez demander, le niveau d'authentification eIDAS.
+Sélectionnez l'environnement désiré, entrez votre clientId, clientSecret, [les scopes](https://partenaires.proconnect.gouv.fr/docs/fournisseur-service/scope-claims) que vous souhaitez demander, le niveau d'authentification eIDAS.
 L'alias configuré par défaut (`agentconnect`) est utilisé par le thèmes `ac-theme`. Vous pouvez donc modifier le nom de l'alias si vous n'utilisez pas un de ces thèmes.
 
 Vous trouverez également l'url de redirection qu'il faudra enregistrer sur le portail Partenaire de France Connect :
@@ -197,7 +190,7 @@ Vous trouverez également l'url de redirection qu'il faudra enregistrer sur le p
 
 ##### Mappers
 
-Une fois la configuration validée, vous pouvez ajouter des mappers afin de récupérer les attributs à partir [des claims fournis par France Connect](https://github.com/france-connect/Documentation-AgentConnect/blob/main/doc-fs.md#les-donn%C3%A9es-agent).
+Une fois la configuration validée, vous pouvez ajouter des mappers afin de récupérer les attributs à partir [des claims fournis par ProConnect](https://partenaires.proconnect.gouv.fr/docs/fournisseur-service/scope-claims).
 Les principaux mappers sont ajoutés automatiquement lors de la création du fournisseur d'identité.
 
 Exemples de mappers :
@@ -205,6 +198,11 @@ Exemples de mappers :
 * Name : `firstName`, Mapper Type : `Attribute Importer`, Claim : `given_name`, User Attribute Name : `firstName`
 * Name : `email`, Mapper Type : `Attribute Importer`, Claim : `email`, User Attribute Name : `email`
 
+##### Remarque transition AgentConnect -> ProConnect
+
+Pour éviter les effets de bord, l'essentiel des configurations internes (noms de menu, alias, nom des classes, ...) a conservé le nommage "AgentConnect". Cela étant la compatibilité avec ProConnect est bien prise en charge par l'extension.
+
+Cette situation est pour le moment cohérente avec le maintien des adresses historiques du service d'authentification en https://auth.agentconnect.gouv.fr/ . 
 
 ### Thème
 

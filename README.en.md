@@ -21,7 +21,7 @@ This [Keycloak](https://www.keycloak.org) plugin adds an identity provider allow
 
 * Signature verification (based on client-secret)
 * User account warranty level (eIDAS) required on authorization request (cf [communication FranceConnect](https://dev.entrouvert.org/issues/34448))
-* Login themes with FranceConnect buttons (fc-theme and iron-theme)
+* Login themes with FranceConnect buttons (fc-ac-theme)
 * Better management for logout (https://issues.jboss.org/browse/KEYCLOAK-7209)
 
 ## Compatibility
@@ -47,14 +47,8 @@ If you are already using an older version of the plugin, it's better to delete y
 The plugin installation is simple and can be done without a Keycloak server restart.
 
 * Download the latest release from the [releases page](https://github.com/InseeFr/Keycloak-FranceConnect/releases)
-* Copy the JAR file into the `standalone/deployments` directory in your Keycloak server's root
+* Copy the JAR file into the `providers` directory in your Keycloak server's root
 * Restart Keycloak (optional, hot deployment should work)
-
-You can also clone the Github Repository and install the plugin locally with the following command:
-
-```
-$ mvn clean install wildfly:deploy
-```
 
 ## How to use it
 
@@ -74,11 +68,10 @@ Each offering is available in both INTEGRATION and PRODUCTION, resulting in the 
 
 ### Requirements
 
-You must have a [France Connect account](https://franceconnect.gouv.fr/partenaires) to retrieve plugin configuration information (clientId, clientSecret, authorized redirect uri, ...)
+The official documentation can be found [here](https://docs.partenaires.franceconnect.gouv.fr/fs/).
 
-There are 2 environments, `Integration` and `Production`. The request for an Integration account is made by email to the France Connect support team.
+You need to obtain a client_id and client_secret and to configure redirect URIs. There isn't a standard testing configuration, but you can easily request a sandbox configuration.
 
-France Connect account can be managed at https://partenaires.franceconnect.gouv.fr
 
 ### Configuration
 
@@ -86,8 +79,8 @@ Once the installation is complete, the `France Connect Particulier` identity pro
 
 ![keycloak-fc-conf-provider](/assets/keycloak-fc-conf-provider.png)
 
-Choose the France Connect environment, enter your clientId, clientSecret, requested [scopes](https://partenaires.franceconnect.gouv.fr/fcp/fournisseur-service#identite-pivot), the eIDAS authentication level.  
-The configured alias (`france-connect-particulier`) is used by `fc-theme` and `iron-theme` themes. You can rename this alias if you don't use one of theses themes.
+Choose the France Connect environment, enter your clientId, clientSecret, requested [scopes](https://docs.partenaires.franceconnect.gouv.fr/fs/fs-technique/fs-technique-scope-fc/), the eIDAS authentication level.  
+The configured alias (`france-connect-particulier`) is used by `fc-ac-theme` themes. You can rename this alias if you don't use one of theses themes.
 
 You will also find the redirect uri you will need to enter on the France Connect partner portal:
 * endpoint: `https://<keycloak-url>/auth/realms/<realm>/broker/franceconnect-particulier/endpoint` 
