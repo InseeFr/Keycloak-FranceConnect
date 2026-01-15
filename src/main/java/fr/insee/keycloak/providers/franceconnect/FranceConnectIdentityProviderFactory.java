@@ -3,6 +3,7 @@ package fr.insee.keycloak.providers.franceconnect;
 import fr.insee.keycloak.providers.common.EidasLevel;
 import org.keycloak.broker.provider.AbstractIdentityProviderFactory;
 import org.keycloak.broker.social.SocialIdentityProviderFactory;
+import org.keycloak.models.Constants;
 import org.keycloak.models.IdentityProviderMapperModel;
 import org.keycloak.models.IdentityProviderModel;
 import org.keycloak.models.KeycloakSession;
@@ -72,6 +73,7 @@ public final class FranceConnectIdentityProviderFactory
         .collect(Collectors.toList());
 
     return ProviderConfigurationBuilder.create()
+        // Environment
         .property().name(FCEnvironment.ENVIRONMENT_PROPERTY_NAME)
         .label("Environnement FranceConnect")
         .helpText("Permet de choisir l'environnement FranceConnect. Effet : change les urls vers FranceConnect.")
@@ -79,12 +81,21 @@ public final class FranceConnectIdentityProviderFactory
         .options(environments)
         .defaultValue(DEFAULT_FC_ENVIRONMENT)
         .add()
+        // EIDAS level
         .property().name(EidasLevel.EIDAS_LEVEL_PROPERTY_NAME)
         .label("Niveau de garantie eIDAS")
         .helpText("Permet de fixer le niveau de garantie du compte utilisateur souhaité. Effet : désactive des fournisseurs d'identités (FI) sur la page de login FranceConnect.")
         .type(ProviderConfigProperty.LIST_TYPE)
         .options(eidasLevels)
         .defaultValue(EidasLevel.EIDAS1)
+        .add()
+        // Account linking: claims used for identity check
+        .property().name(IdentitePivot.ACCOUNT_LINKING_CLAIMS_PROPERTY_NAME)
+        .label("Champs pour la réconciliation auto")
+        .helpText("Permet de sélectionner les champs de l'identité pivot utilisés pour la réconciliation automatique.")
+        .type(ProviderConfigProperty.MULTIVALUED_LIST_TYPE)
+        .options(IdentitePivot.DEFAULT_CLAIMS)
+        .defaultValue(String.join(Constants.CFG_DELIMITER, IdentitePivot.DEFAULT_CLAIMS))
         .add()
         .build();
   }

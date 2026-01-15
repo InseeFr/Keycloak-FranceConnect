@@ -2,6 +2,7 @@ package fr.insee.keycloak.providers.franceconnect;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static java.util.Map.entry;
 
@@ -13,6 +14,10 @@ public class IdentitePivot {
   static final public String CLAIM_BIRTHDATE = "birthdate";
   static final public String CLAIM_BIRTHPLACE = "birthplace";
   static final public String CLAIM_BIRTHCOUNTRY = "birthcountry";
+
+  static final public List<String> DEFAULT_CLAIMS = List.of(CLAIM_GIVEN_NAME, CLAIM_FAMILY_NAME, CLAIM_GENDER, CLAIM_BIRTHDATE, CLAIM_BIRTHPLACE, CLAIM_BIRTHCOUNTRY);
+
+  static final String ACCOUNT_LINKING_CLAIMS_PROPERTY_NAME = "fc_account_linking_claims";
 
   // https://www.insee.fr/fr/metadonnees/geographie/pays/99100-france
   static final private String INSEE_CODE_FRANCE = "99100";
@@ -37,20 +42,24 @@ public class IdentitePivot {
     return entry(attributeName, attributeValues.get(0));
   }
 
-  public Map<String, String> toMap() {
-    Map<String, String> attributes = new java.util.HashMap<>(Map.ofEntries(
-        resolve(CLAIM_GIVEN_NAME),
-        resolve(CLAIM_FAMILY_NAME),
-        resolve(CLAIM_GENDER),
-        resolve(CLAIM_BIRTHDATE),
-        resolve(CLAIM_BIRTHCOUNTRY)
-    ));
+  public  Map<String, String> toMap() {
+    return toMap(this.attributeMapping.keySet());
+  }
 
-    // add "birthplace" attribute, only for users not born in France
-    // see description for the "birthplace" claim: https://docs.partenaires.franceconnect.gouv.fr/fi/general/donnees-utilisateur/#l-identite-pivot
-    if (INSEE_CODE_FRANCE.equals(resolve(CLAIM_BIRTHCOUNTRY).getValue())) {
-      Map.Entry<String, String> birthPlace = resolve(CLAIM_BIRTHPLACE);
-      attributes.put(birthPlace.getKey(), birthPlace.getValue());
+  public Map<String, String> toMap(Set<String> claims) {
+    Map<String, String> attributes = new java.util.HashMap<>();
+
+    for (String claim : claims) {
+      if(CLAIM_BIRTHPLACE.equals(claim)) {
+        if (!resolve(CLAIM_BIRTHCOUNTRY).getValue().equals(INSEE_CODE_FRANCE)) {
+          // add "birthplace" attribute only for users born in France
+          // see description for the "birthplace" claim: https://docs.partenaires.franceconnect.gouv.fr/fi/general/donnees-utilisateur/#l-identite-pivot
+          continue;
+        }
+      }
+
+      Map.Entry<String, String> attr = resolve(claim);
+      attributes.put(attr.getKey(), attr.getValue());
     }
 
     return attributes;

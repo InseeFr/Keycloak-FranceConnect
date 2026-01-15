@@ -6,6 +6,7 @@ import org.keycloak.authentication.authenticators.broker.AbstractIdpAuthenticato
 import org.keycloak.authentication.authenticators.broker.util.ExistingUserInfo;
 import org.keycloak.authentication.authenticators.broker.util.SerializedBrokeredIdentityContext;
 import org.keycloak.broker.provider.BrokeredIdentityContext;
+import org.keycloak.models.Constants;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserModel;
@@ -13,9 +14,8 @@ import org.keycloak.models.UserModel;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
-
-import static java.util.Map.entry;
 
 public class FranceConnectAutoLinkAuthenticator extends AbstractIdpAuthenticator {
 
@@ -33,14 +33,17 @@ public class FranceConnectAutoLinkAuthenticator extends AbstractIdpAuthenticator
 
     // IDP mappers: FranceConnect claims → Keycloak user attributes
     Map<String, String> attributeMapping = session.identityProviders().getMappersByAliasStream(brokerCtx.getIdpConfig().getAlias())
-        .filter(m -> m.getConfig().containsKey("claim") && m.getConfig().containsKey("user.attribute"))
-        .map(m -> entry(m.getConfig().get("claim"), m.getConfig().get("user.attribute")))
-        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+      .filter(m -> m.getConfig().containsKey("claim") && m.getConfig().containsKey("user.attribute"))
+      .filter(m -> IdentitePivot.DEFAULT_CLAIMS.contains(m.getConfig().get("claim")))
+      .collect(Collectors.toMap(
+          m -> m.getConfig().get("claim"),
+          m -> m.getConfig().get("user.attribute")
+      ));
 
     // FranceConnect identity
     IdentitePivot identitePivot = new IdentitePivot(attributeMapping, brokerCtx.getAttributes());
 
-    ExistingUserInfo matchingUser = this.checkMatchingUser(context, identitePivot);
+    ExistingUserInfo matchingUser = this.checkMatchingUser(context, brokerCtx, identitePivot);
     if (matchingUser != null) {
       // Found a Keycloak user matching the FranceConnect identity.
       context.getAuthenticationSession().setAuthNote(EXISTING_USER_INFO, matchingUser.serialize());
@@ -57,13 +60,18 @@ public class FranceConnectAutoLinkAuthenticator extends AbstractIdpAuthenticator
   /**
    * {@return Keycloak account matching the FranceConnect identity} {@code null} if no match
    */
-  protected ExistingUserInfo checkMatchingUser(AuthenticationFlowContext context, IdentitePivot identitePivot) {
-    if (identitePivot == null) {
-      return null;
-    }
+  protected ExistingUserInfo checkMatchingUser(AuthenticationFlowContext context, BrokeredIdentityContext brokerCtx, IdentitePivot identitePivot) {
+    KeycloakSession session = context.getSession();
+
+    // FC claims used for account linking
+    Set<String> accountLinkingClaims = Set.of(
+        Constants.CFG_DELIMITER_PATTERN.split(
+            session.identityProviders().getByAlias(brokerCtx.getIdpConfig().getAlias()).getConfig().get(IdentitePivot.ACCOUNT_LINKING_CLAIMS_PROPERTY_NAME)
+        )
+    );
 
     HashMap<String, String> searchParameters = new HashMap<>(Map.of(UserModel.ENABLED, "true", UserModel.EXACT, "true"));
-    searchParameters.putAll(identitePivot.toMap());
+    searchParameters.putAll(identitePivot.toMap(accountLinkingClaims));
 
     List<UserModel> users = context.getSession().users().searchForUserStream(context.getRealm(), searchParameters).toList();
     if (users.isEmpty()) {
