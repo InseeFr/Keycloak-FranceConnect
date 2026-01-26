@@ -72,7 +72,7 @@
 
     <!-- Testing Tools -->
     <junit.jupiter.version>5.10.0</junit.jupiter.version>
-    <assertj.version>3.24.2</assertj.version>
+    <assertj.version>3.27.7</assertj.version>
     <mockito.version>5.4.0</mockito.version>
 
     <!-- Implementation of jakarta.ws.rs.ext.RuntimeDelegate for starting endpoints in tests -->
