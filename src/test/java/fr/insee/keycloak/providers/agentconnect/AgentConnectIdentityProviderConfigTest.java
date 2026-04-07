@@ -8,7 +8,7 @@ import org.keycloak.models.RealmModel;
 
 import static fr.insee.keycloak.providers.agentconnect.ACFixture.givenConfigForIntegrationAndEidasLevel2;
 import static fr.insee.keycloak.providers.agentconnect.ACFixture.givenConfigWithSelectedEnvAndSelectedEidasLevel;
-import static fr.insee.keycloak.providers.agentconnect.AgentConnectIdentityProviderFactory.AC_PROVIDER_MAPPERS;
+import static fr.insee.keycloak.providers.agentconnect.AgentConnectIdentityProviderFactory.getAcProviderMappers;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -78,7 +78,7 @@ class AgentConnectIdentityProviderConfigTest {
 
     unsavedConfig.validate(realm);
 
-    verify(realm, times(AC_PROVIDER_MAPPERS.size())).addIdentityProviderMapper(any());
+    verify(realm, times(getAcProviderMappers().size())).addIdentityProviderMapper(any());
 
     var alreadySavedConfig = givenConfigForIntegrationAndEidasLevel2();
     var unusedRealm = mock(RealmModel.class);
