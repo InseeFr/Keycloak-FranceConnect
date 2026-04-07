@@ -15,35 +15,57 @@ public abstract class AbstractBaseProviderConfig extends OIDCIdentityProviderCon
 
   protected AbstractBaseProviderConfig(IdentityProviderModel identityProviderModel) {
     super(identityProviderModel);
-    initialize();
   }
 
   protected AbstractBaseProviderConfig() {
     super();
-    initialize();
   }
 
   protected abstract String getEnvironmentProperty(String key);
 
-  protected void initialize() {
-    configureUrlsFromEnvironment();
-
-    setValidateSignature(true);
-    setBackchannelSupported(false);
+  @Override
+  public String getAuthorizationUrl() {
+    return getEnvironmentProperty("authorization.url");
   }
 
-  protected void configureUrlsFromEnvironment() {
-    setAuthorizationUrl(getEnvironmentProperty("authorization.url"));
-    setTokenUrl(getEnvironmentProperty("token.url"));
-    setUserInfoUrl(getEnvironmentProperty("userinfo.url"));
-    setLogoutUrl(getEnvironmentProperty("logout.url"));
-    setIssuer(getEnvironmentProperty("issuer.url"));
+  @Override
+  public String getTokenUrl() {
+    return getEnvironmentProperty("token.url");
+  }
 
-    var useJwks = getEnvironmentProperty("use.jwks.url");
-    if (useJwks != null) {
-      setJwksUrl(getEnvironmentProperty("jwks.url"));
-      setUseJwksUrl(Boolean.parseBoolean(useJwks));
-    }
+  @Override
+  public String getUserInfoUrl() {
+    return getEnvironmentProperty("userinfo.url");
+  }
+
+  @Override
+  public String getLogoutUrl() {
+    return getEnvironmentProperty("logout.url");
+  }
+
+  @Override
+  public String getIssuer() {
+    return getEnvironmentProperty("issuer.url");
+  }
+
+  @Override
+  public boolean isUseJwksUrl() {
+    return Boolean.parseBoolean(getEnvironmentProperty("use.jwks.url"));
+  }
+
+  @Override
+  public String getJwksUrl() {
+   return getEnvironmentProperty("jwks.url");
+  }
+
+  @Override
+  public boolean isValidateSignature() {
+    return true;
+  }
+
+  @Override
+  public boolean isBackchannelSupported() {
+    return false;
   }
 
   protected EidasLevel getDefaultEidasLevel() {
