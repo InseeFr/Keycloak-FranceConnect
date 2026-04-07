@@ -26,21 +26,23 @@ public final class FranceConnectIdentityProviderFactory
 
   static final FCEnvironment DEFAULT_FC_ENVIRONMENT = FCEnvironment.INTEGRATION_STANDARD_V2;
 
-  static final List<IdentityProviderMapperModel> FC_PROVIDER_MAPPERS = List.of(
-      // https://docs.partenaires.franceconnect.gouv.fr/fi/general/donnees-utilisateur/#l-identite-pivot
-      createUserAttributeMapper(FC_PROVIDER_ID, "firstName", IdentitePivot.CLAIM_GIVEN_NAME, "firstName"),
-      createUserAttributeMapper(FC_PROVIDER_ID, "lastName", IdentitePivot.CLAIM_FAMILY_NAME, "lastName"),
-      createUserAttributeMapper(FC_PROVIDER_ID, "gender", IdentitePivot.CLAIM_GENDER, "gender"),
-      createUserAttributeMapper(FC_PROVIDER_ID, "birthdate", IdentitePivot.CLAIM_BIRTHDATE, "birthdate"),
-      createUserAttributeMapper(FC_PROVIDER_ID, "birthplace", IdentitePivot.CLAIM_BIRTHPLACE, "birthplace"),
-      createUserAttributeMapper(FC_PROVIDER_ID, "birthcountry", IdentitePivot.CLAIM_BIRTHCOUNTRY, "birthcountry"),
+  static List<IdentityProviderMapperModel> getFcProviderMappers() {
+    return List.of(
+        // https://docs.partenaires.franceconnect.gouv.fr/fi/general/donnees-utilisateur/#l-identite-pivot
+        createUserAttributeMapper(FC_PROVIDER_ID, "firstName", IdentitePivot.CLAIM_GIVEN_NAME, "firstName"),
+        createUserAttributeMapper(FC_PROVIDER_ID, "lastName", IdentitePivot.CLAIM_FAMILY_NAME, "lastName"),
+        createUserAttributeMapper(FC_PROVIDER_ID, "gender", IdentitePivot.CLAIM_GENDER, "gender"),
+        createUserAttributeMapper(FC_PROVIDER_ID, "birthdate", IdentitePivot.CLAIM_BIRTHDATE, "birthdate"),
+        createUserAttributeMapper(FC_PROVIDER_ID, "birthplace", IdentitePivot.CLAIM_BIRTHPLACE, "birthplace"),
+        createUserAttributeMapper(FC_PROVIDER_ID, "birthcountry", IdentitePivot.CLAIM_BIRTHCOUNTRY, "birthcountry"),
 
-      // https://docs.partenaires.franceconnect.gouv.fr/fi/general/donnees-utilisateur/#les-donnees-complementaires
-      createUserAttributeMapper(FC_PROVIDER_ID, "email", "email", "email"),
+        // https://docs.partenaires.franceconnect.gouv.fr/fi/general/donnees-utilisateur/#les-donnees-complementaires
+        createUserAttributeMapper(FC_PROVIDER_ID, "email", "email", "email"),
 
-      // hardcoded
-      createHardcodedAttributeMapper(FC_PROVIDER_ID, "provider", "provider", "FC")
-  );
+        // hardcoded
+        createHardcodedAttributeMapper(FC_PROVIDER_ID, "provider", "provider", "FC")
+    );
+  }
 
   @Override
   public String getName() {

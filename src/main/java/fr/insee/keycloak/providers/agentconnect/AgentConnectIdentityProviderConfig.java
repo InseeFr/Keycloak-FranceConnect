@@ -6,7 +6,7 @@ import org.keycloak.models.IdentityProviderModel;
 
 import java.util.List;
 
-import static fr.insee.keycloak.providers.agentconnect.AgentConnectIdentityProviderFactory.AC_PROVIDER_MAPPERS;
+import static fr.insee.keycloak.providers.agentconnect.AgentConnectIdentityProviderFactory.getAcProviderMappers;
 import static fr.insee.keycloak.providers.agentconnect.AgentConnectIdentityProviderFactory.DEFAULT_AC_ENVIRONMENT;
 
 final class AgentConnectIdentityProviderConfig extends AbstractBaseProviderConfig {
@@ -32,6 +32,6 @@ final class AgentConnectIdentityProviderConfig extends AbstractBaseProviderConfi
 
   @Override
   protected List<IdentityProviderMapperModel> getDefaultMappers() {
-    return AC_PROVIDER_MAPPERS;
+    return getAcProviderMappers();
   }
 }
