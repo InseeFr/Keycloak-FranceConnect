@@ -25,12 +25,14 @@ public final class AgentConnectIdentityProviderFactory
 
   static final ACEnvironment DEFAULT_AC_ENVIRONMENT = ACEnvironment.INTEGRATION_INTERNET;
 
-  static final List<IdentityProviderMapperModel> AC_PROVIDER_MAPPERS = List.of(
-      createUserAttributeMapper(AC_PROVIDER_ID, "lastName", "family_name", "lastName"),
-      createUserAttributeMapper(AC_PROVIDER_ID, "firstName", "given_name", "firstName"),
-      createUserAttributeMapper(AC_PROVIDER_ID, "email", "email", "email"),
-      createHardcodedAttributeMapper(AC_PROVIDER_ID, "provider", "provider", "AC")
-  );
+  static List<IdentityProviderMapperModel> getAcProviderMappers() {
+    return List.of(
+        createUserAttributeMapper(AC_PROVIDER_ID, "lastName", "family_name", "lastName"),
+        createUserAttributeMapper(AC_PROVIDER_ID, "firstName", "given_name", "firstName"),
+        createUserAttributeMapper(AC_PROVIDER_ID, "email", "email", "email"),
+        createHardcodedAttributeMapper(AC_PROVIDER_ID, "provider", "provider", "AC")
+    );
+  }
 
   @Override
   public String getName() {

@@ -2,7 +2,7 @@ package fr.insee.keycloak.providers.franceconnect;
 
 import static fr.insee.keycloak.providers.franceconnect.FCFixture.givenConfigForIntegrationV2AndEidasLevel2;
 import static fr.insee.keycloak.providers.franceconnect.FCFixture.givenConfigWithSelectedEnvAndSelectedEidasLevel;
-import static fr.insee.keycloak.providers.franceconnect.FranceConnectIdentityProviderFactory.FC_PROVIDER_MAPPERS;
+import static fr.insee.keycloak.providers.franceconnect.FranceConnectIdentityProviderFactory.getFcProviderMappers;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -77,7 +77,7 @@ class FranceConnectIdentityProviderConfigTest {
 
     unsavedConfig.validate(realm);
 
-    verify(realm, times(FC_PROVIDER_MAPPERS.size())).addIdentityProviderMapper(any());
+    verify(realm, times(getFcProviderMappers().size())).addIdentityProviderMapper(any());
 
     var alreadySavedConfig = givenConfigForIntegrationV2AndEidasLevel2();
     var unusedRealm = mock(RealmModel.class);
