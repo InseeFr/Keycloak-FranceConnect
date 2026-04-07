@@ -24,7 +24,7 @@ public final class FranceConnectIdentityProviderFactory
   public static final String FC_PROVIDER_ID = "franceconnect-particulier";
   public static final String FC_PROVIDER_NAME = "France Connect Particulier";
 
-  static final FCEnvironment DEFAULT_FC_ENVIRONMENT = FCEnvironment.INTEGRATION_V1;
+  static final FCEnvironment DEFAULT_FC_ENVIRONMENT = FCEnvironment.INTEGRATION_STANDARD_V2;
 
   static final List<IdentityProviderMapperModel> FC_PROVIDER_MAPPERS = List.of(
       // https://docs.partenaires.franceconnect.gouv.fr/fi/general/donnees-utilisateur/#l-identite-pivot
