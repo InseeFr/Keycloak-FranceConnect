@@ -13,10 +13,14 @@ import org.keycloak.connections.httpclient.HttpClientProvider;
 import org.keycloak.models.KeycloakSession;
 import org.mockito.Mockito;
 
+import com.nimbusds.jwt.JWTClaimsSet;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.net.URISyntaxException;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import static fr.insee.keycloak.providers.agentconnect.ACFixture.*;
@@ -233,6 +237,115 @@ class AgentConnectIdentityProviderTest {
       assertThatThrownBy(() -> provider.getFederatedIdentity(tokenEndpointResponse))
           .isInstanceOf(IdentityBrokerException.class)
           .hasMessage("The returned eIDAS level cannot be retrieved");
+    }
+  }
+
+  @Nested
+  class MfaMode {
+
+    private AgentConnectIdentityProviderConfig mfaConfig;
+    private AgentConnectIdentityProvider mfaProvider;
+
+    @BeforeEach
+    void setupMfa() throws IOException {
+      mfaConfig = givenConfigWithMfaEnabled();
+
+      when(httpClientProvider.getString(mfaConfig.getJwksUrl()))
+          .thenReturn(publicKeysStore.toJsonFormat());
+
+      mfaProvider = new AgentConnectIdentityProvider(session, mfaConfig);
+    }
+
+    @Nested
+    class AuthorizationUrlCreation {
+
+      @Test
+      void should_create_authorization_url_with_claims_param_instead_of_acr_values_when_mfa_enabled() {
+        var request = givenAuthenticationRequest(session);
+
+        var authorizationUrl = mfaProvider.createAuthorizationUrl(request).build();
+        var rawQuery = authorizationUrl.getRawQuery();
+
+        assertThat(rawQuery).contains("claims=");
+        assertThat(rawQuery).doesNotContain("acr_values=");
+      }
+
+      @Test
+      void should_include_all_proconnect_2fa_acr_values_in_claims_param_when_mfa_enabled() throws URISyntaxException {
+        var request = givenAuthenticationRequest(session);
+
+        var authorizationUrl = mfaProvider.createAuthorizationUrl(request).build();
+        var rawQuery = authorizationUrl.getRawQuery();
+
+        assertThat(rawQuery).contains("claims=");
+        var decodedQuery = URLDecoder.decode(rawQuery, StandardCharsets.UTF_8);
+        assertThat(decodedQuery).contains("eidas2");
+        assertThat(decodedQuery).contains("eidas3");
+        assertThat(decodedQuery).contains("self-asserted-2fa");
+        assertThat(decodedQuery).contains("consistency-checked-2fa");
+      }
+    }
+
+    @Nested
+    class AcrValidation {
+
+      @BeforeEach
+      void setupHttpResponse() throws IOException {
+        var httpResponse = ClosableHttpResponse.from(
+            Map.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON),
+            USERINFO_JWT.toString()
+        );
+        when(httpClient.execute(any())).thenAnswer(answer -> httpResponse);
+      }
+
+      @Test
+      void should_accept_eidas2_acr_value_when_mfa_enabled() throws IOException {
+        assertMfaAcrIsAccepted(EIDAS2_JWT);
+      }
+
+      @Test
+      void should_accept_eidas3_acr_value_when_mfa_enabled() throws IOException {
+        assertMfaAcrIsAccepted(EIDAS3_JWT);
+      }
+
+      @Test
+      void should_accept_self_asserted_2fa_acr_value_when_mfa_enabled() throws IOException {
+        assertMfaAcrIsAccepted(SELF_ASSERTED_2FA_JWT);
+      }
+
+      @Test
+      void should_accept_consistency_checked_2fa_acr_value_when_mfa_enabled() throws IOException {
+        assertMfaAcrIsAccepted(CONSISTENCY_CHECKED_2FA_JWT);
+      }
+
+      private void assertMfaAcrIsAccepted(JWTClaimsSet jwtClaimsSet) throws IOException {
+        var kid = "RSA-KID";
+        var opaqueAccessToken = "2b3ea2e8-2d11-49a4-a369-5fb98d9d5315";
+        var signedIdToken = givenAnRSASignedJWTWithRegisteredKidInJWKS(kid, jwtClaimsSet, publicKeysStore);
+        when(httpClientProvider.getString(mfaConfig.getJwksUrl()))
+            .thenReturn(publicKeysStore.toJsonFormat());
+
+        var tokenEndpointResponse = generateTokenEndpointResponse(opaqueAccessToken, signedIdToken);
+
+        var brokeredIdentityContext = mfaProvider.getFederatedIdentity(tokenEndpointResponse);
+        assertThat(brokeredIdentityContext).isNotNull();
+      }
+
+      @Test
+      void should_throw_exception_when_acr_claim_is_not_a_2fa_value_and_mfa_is_enabled() throws IOException {
+        var kid = "RSA-KID";
+        var opaqueAccessToken = "2b3ea2e8-2d11-49a4-a369-5fb98d9d5315";
+        var signedIdTokenWithEidas1 = givenAnRSASignedJWTWithRegisteredKidInJWKS(kid, EIDAS1_JWT, publicKeysStore);
+
+        when(httpClientProvider.getString(mfaConfig.getJwksUrl()))
+            .thenReturn(publicKeysStore.toJsonFormat());
+
+        var tokenEndpointResponse = generateTokenEndpointResponse(opaqueAccessToken, signedIdTokenWithEidas1);
+
+        assertThatThrownBy(() -> mfaProvider.getFederatedIdentity(tokenEndpointResponse))
+            .isInstanceOf(IdentityBrokerException.class)
+            .hasMessage(AgentConnectIdentityProvider.MFA_INSUFFICIENT_ACR_ERROR_MESSAGE);
+      }
     }
   }
 }
