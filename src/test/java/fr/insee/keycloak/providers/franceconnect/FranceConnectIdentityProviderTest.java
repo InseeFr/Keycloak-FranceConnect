@@ -50,6 +50,7 @@ class FranceConnectIdentityProviderTest {
   @BeforeEach
   void setup() throws IOException {
     config = givenConfigForIntegrationV2AndEidasLevel2();
+    config.setEnabled(true);
     publicKeysStore = new PublicKeysStore();
 
     httpClientProvider = mock(HttpClientProvider.class);

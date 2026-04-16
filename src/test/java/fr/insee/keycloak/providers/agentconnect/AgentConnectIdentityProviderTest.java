@@ -44,6 +44,7 @@ class AgentConnectIdentityProviderTest {
   @BeforeEach
   void setup() throws IOException {
     config = givenConfigForIntegrationAndEidasLevel2();
+    config.setEnabled(true);
     publicKeysStore = new PublicKeysStore();
 
     httpClientProvider = mock(HttpClientProvider.class);
