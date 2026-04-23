@@ -249,6 +249,7 @@ class AgentConnectIdentityProviderTest {
     @BeforeEach
     void setupMfa() throws IOException {
       mfaConfig = givenConfigWithMfaEnabled();
+      mfaConfig.setEnabled(true);
 
       when(httpClientProvider.getString(mfaConfig.getJwksUrl()))
           .thenReturn(publicKeysStore.toJsonFormat());
