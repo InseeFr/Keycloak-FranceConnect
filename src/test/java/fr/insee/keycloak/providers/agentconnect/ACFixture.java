@@ -32,6 +32,16 @@ final class ACFixture {
       .claim("amr", null)
       .build();
 
+  static final JWTClaimsSet EIDAS3_JWT = new JWTClaimsSet.Builder()
+      .subject("fakeSub")
+      .issuer("https://fca.integ02.agentconnect.rie.gouv.fr/api/v2")
+      .audience(CLIENT_ID)
+      .claim("nonce", "randomNonce")
+      .claim("idp", "AC")
+      .claim("acr", "eidas3")
+      .claim("amr", null)
+      .build();
+
   static final JWTClaimsSet NO_EIDAS_LEVEL_JWT = new JWTClaimsSet.Builder()
       .subject("fakeSub")
       .issuer("https://fca.integ02.agentconnect.rie.gouv.fr/api/v2")
@@ -48,6 +58,26 @@ final class ACFixture {
       .claim("nonce", "randomNonce")
       .claim("idp", "AC")
       .claim("acr", "eidas99")
+      .claim("amr", null)
+      .build();
+
+  static final JWTClaimsSet SELF_ASSERTED_2FA_JWT = new JWTClaimsSet.Builder()
+      .subject("fakeSub")
+      .issuer("https://fca.integ02.agentconnect.rie.gouv.fr/api/v2")
+      .audience(CLIENT_ID)
+      .claim("nonce", "randomNonce")
+      .claim("idp", "AC")
+      .claim("acr", "https://proconnect.gouv.fr/assurance/self-asserted-2fa")
+      .claim("amr", null)
+      .build();
+
+  static final JWTClaimsSet CONSISTENCY_CHECKED_2FA_JWT = new JWTClaimsSet.Builder()
+      .subject("fakeSub")
+      .issuer("https://fca.integ02.agentconnect.rie.gouv.fr/api/v2")
+      .audience(CLIENT_ID)
+      .claim("nonce", "randomNonce")
+      .claim("idp", "AC")
+      .claim("acr", "https://proconnect.gouv.fr/assurance/consistency-checked-2fa")
       .claim("amr", null)
       .build();
 
@@ -69,6 +99,17 @@ final class ACFixture {
     var model = new IdentityProviderModel();
     model.getConfig().put(ACEnvironment.ENVIRONMENT_PROPERTY_NAME, environmentName);
     model.getConfig().put(EidasLevel.EIDAS_LEVEL_PROPERTY_NAME, eidasLevelName);
+    model.getConfig().put("ignoreAbsentStateParameterLogout", "false");
+    model.getConfig().put("clientId", CLIENT_ID);
+    model.getConfig().put("clientSecret", CLIENT_SECRET);
+
+    return new AgentConnectIdentityProviderConfig(model);
+  }
+
+  static AgentConnectIdentityProviderConfig givenConfigWithMfaEnabled() {
+    var model = new IdentityProviderModel();
+    model.getConfig().put(ACEnvironment.ENVIRONMENT_PROPERTY_NAME, "integration_rie");
+    model.getConfig().put(AgentConnectIdentityProviderConfig.MFA_ENABLED_PROPERTY_NAME, "true");
     model.getConfig().put("ignoreAbsentStateParameterLogout", "false");
     model.getConfig().put("clientId", CLIENT_ID);
     model.getConfig().put("clientSecret", CLIENT_SECRET);

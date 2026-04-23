@@ -163,25 +163,29 @@ public abstract class AbstractBaseIdentityProvider<T extends AbstractBaseProvide
       var idToken = (JsonWebToken) federatedIdentity.getContextData().get(VALIDATED_ID_TOKEN);
       var acrClaim = (String) idToken.getOtherClaims().get(ACR_CLAIM_NAME);
 
-      var fcReturnedEidasLevel = EidasLevel.getOrDefault(acrClaim, null);
-      var expectedEidasLevel = getConfig().getEidasLevel();
-
-      if (fcReturnedEidasLevel == null) {
-        throw new IdentityBrokerException("The returned eIDAS level cannot be retrieved");
-      }
-
-      logger.debugv(
-          "Expecting eIDAS level: {0}, actual: {1}", expectedEidasLevel, fcReturnedEidasLevel);
-
-      if (fcReturnedEidasLevel.compareTo(expectedEidasLevel) < 0) {
-        throw new IdentityBrokerException("The returned eIDAS level is insufficient");
-      }
+      validateAcrClaim(acrClaim);
 
       return federatedIdentity;
 
     } catch (IdentityBrokerException ex) {
       logger.error("Got response " + response);
       throw ex;
+    }
+  }
+
+  protected void validateAcrClaim(String acrClaim) {
+    var returnedEidasLevel = EidasLevel.getOrDefault(acrClaim, null);
+    var expectedEidasLevel = getConfig().getEidasLevel();
+
+    if (returnedEidasLevel == null) {
+      throw new IdentityBrokerException("The returned eIDAS level cannot be retrieved");
+    }
+
+    logger.debugv(
+        "Expecting eIDAS level: {0}, actual: {1}", expectedEidasLevel, returnedEidasLevel);
+
+    if (returnedEidasLevel.compareTo(expectedEidasLevel) < 0) {
+      throw new IdentityBrokerException("The returned eIDAS level is insufficient");
     }
   }
 
