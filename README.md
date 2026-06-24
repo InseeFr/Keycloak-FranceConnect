@@ -194,7 +194,7 @@ Pour forcer la 2FA avec ProConnect, activez l'option **Double authentification (
 Cette implémentation suit le guide officiel ProConnect pour les fournisseurs de service :
 https://partenaires.proconnect.gouv.fr/docs/fournisseur-service/double_authentification
 
-Lorsque cette option est activée, la requête d'autorisation utilise un paramètre OIDC `claims` pour demander une des valeurs ACR supportées (`eidas2`, `eidas3`, `self-asserted-2fa`, `consistency-checked-2fa`), et la valeur `acr` retournée est validée au callback.
+Lorsque cette option est activée, la requête d'autorisation utilise un paramètre OIDC `claims` pour exiger une authentification multi-facteur. Le **niveau eIDAS** fixe le plancher d'assurance parmi les valeurs ACR MFA supportées (`eidas0-mfa`, `eidas1-mfa`, `eidas2`, `eidas3`) : eIDAS1 accepte les quatre valeurs, eIDAS2 limite à `eidas2` et `eidas3`, eIDAS3 à `eidas3` uniquement. La valeur `acr` retournée est validée au callback.
 
 La 2FA n'est pas compatible avec tous les fournisseurs d'identité ProConnect. La liste de compatibilité est maintenue par ProConnect à l'adresse suivante :
 https://grist.numerique.gouv.fr/o/docs/3kQ829mp7bTy/ProConnect-Configuration-des-FI-et-FS/p/5
