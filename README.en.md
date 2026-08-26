@@ -6,10 +6,15 @@
   - [Migration](#migration)
   - [Installation](#installation)
   - [How to use it](#how-to-use-it)
-    - [Requirements](#requirements)
-    - [Configuration](#configuration)
-      - [Mappers](#mappers)
-      - [Theme](#theme)
+    - [France Connect](#france-connect)
+      - [Requirements](#requirements)
+      - [Configuration](#configuration)
+        - [Mappers](#mappers)
+    - [ProConnect (AgentConnect)](#proconnect-agentconnect)
+      - [Requirements](#requirements-1)
+      - [Configuration](#configuration-1)
+        - [2FA activation and known limitations](#2fa-activation-and-known-limitations)
+    - [Theme](#theme)
   - [Q&A](#qa)
   - [How to contribute](#how-to-contribute)
 
@@ -51,6 +56,8 @@ The plugin installation is simple and can be done without a Keycloak server rest
 * Restart Keycloak (optional, hot deployment should work)
 
 ## How to use it
+
+### France Connect
 
 ### Environments
 
@@ -95,6 +102,37 @@ Mappers examples:
 * Name : `lastName`, Mapper Type : `Attribute Importer`, Claim : `family_name`, User Attribute Name : `lastName`
 * Name : `firstName`, Mapper Type : `Attribute Importer`, Claim : `given_name`, User Attribute Name : `firstName`
 * Name : `email`, Mapper Type : `Attribute Importer`, Claim : `email`, User Attribute Name : `email`
+
+### ProConnect (AgentConnect)
+
+Version 3.0 of this extension adds support for ProConnect (formerly AgentConnect) to authenticate French public-sector and professional accounts.
+
+#### Requirements
+
+As with France Connect, you need to request an account on the ProConnect partner portal:
+https://partenaires.proconnect.gouv.fr/
+
+There are two connection environments, `Integration` and `Production`, each available for Internet and RIE exposure.
+
+#### Configuration
+
+After installation, the `Agent Connect` identity provider appears in Keycloak.
+Select your environment, enter clientId/clientSecret, choose requested scopes, and set the eIDAS level.
+
+Redirect URLs to register on the partner portal:
+* endpoint: `https://<keycloak-url>/auth/realms/<realm>/broker/agentconnect/endpoint`
+* logout: `https://<keycloak-url>/auth/realms/<realm>/broker/agentconnect/endpoint/logout_response`
+
+##### 2FA activation and known limitations
+
+To force 2FA with ProConnect, enable the **Double authentification (2FA)** option in the AgentConnect identity provider configuration.
+This implementation follows the official ProConnect guide for service providers:
+https://partenaires.proconnect.gouv.fr/docs/fournisseur-service/double_authentification
+
+When this option is enabled, the authorization request uses an OIDC `claims` parameter to request one of the supported ACR values (`eidas2`, `eidas3`, `self-asserted-2fa`, `consistency-checked-2fa`) and the returned `acr` claim is validated on callback.
+
+2FA is not compatible with all ProConnect identity providers. The compatibility list is maintained by ProConnect at:
+https://grist.numerique.gouv.fr/o/docs/3kQ829mp7bTy/ProConnect-Configuration-des-FI-et-FS/p/5
 
 #### Theme
 
