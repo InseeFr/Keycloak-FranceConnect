@@ -174,8 +174,7 @@ public abstract class AbstractBaseIdentityProvider<T extends AbstractBaseProvide
   }
 
   protected void validateAcrClaim(String acrClaim) {
-    // We use default value EIDAS1 if acr claim is not present or a value not matching expected ones
-    var returnedEidasLevel = EidasLevel.getOrDefault(acrClaim, EidasLevel.EIDAS1);
+    var returnedEidasLevel = EidasLevel.getOrDefault(acrClaim, null);
     var expectedEidasLevel = getConfig().getEidasLevel();
 
     if (returnedEidasLevel == null) {
