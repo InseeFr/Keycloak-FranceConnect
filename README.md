@@ -188,6 +188,17 @@ Vous trouverez également l'url de redirection qu'il faudra enregistrer sur le p
 * endpoint : `https://<keycloak-url>/auth/realms/<realm>/broker/agentconnect/endpoint` 
 * logout : `https://<keycloak-url>/auth/realms/<realm>/broker/agentconnect/endpoint/logout_response`
 
+##### Activation de la 2FA et limites connues
+
+Pour forcer la 2FA avec ProConnect, activez l'option **Double authentification (2FA)** dans la configuration du fournisseur d'identité AgentConnect.
+Cette implémentation suit le guide officiel ProConnect pour les fournisseurs de service :
+https://partenaires.proconnect.gouv.fr/docs/fournisseur-service/double_authentification
+
+Lorsque cette option est activée, la requête d'autorisation utilise un paramètre OIDC `claims` pour demander une des valeurs ACR supportées (`eidas2`, `eidas3`, `self-asserted-2fa`, `consistency-checked-2fa`), et la valeur `acr` retournée est validée au callback.
+
+La 2FA n'est pas compatible avec tous les fournisseurs d'identité ProConnect. La liste de compatibilité est maintenue par ProConnect à l'adresse suivante :
+https://grist.numerique.gouv.fr/o/docs/3kQ829mp7bTy/ProConnect-Configuration-des-FI-et-FS/p/5
+
 ##### Mappers
 
 Une fois la configuration validée, vous pouvez ajouter des mappers afin de récupérer les attributs à partir [des claims fournis par ProConnect](https://partenaires.proconnect.gouv.fr/docs/fournisseur-service/scope-claims).
