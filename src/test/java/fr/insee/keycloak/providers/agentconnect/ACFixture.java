@@ -61,23 +61,23 @@ final class ACFixture {
       .claim("amr", null)
       .build();
 
-  static final JWTClaimsSet SELF_ASSERTED_2FA_JWT = new JWTClaimsSet.Builder()
+  static final JWTClaimsSet EIDAS0_MFA_JWT = new JWTClaimsSet.Builder()
       .subject("fakeSub")
       .issuer("https://fca.integ02.agentconnect.rie.gouv.fr/api/v2")
       .audience(CLIENT_ID)
       .claim("nonce", "randomNonce")
       .claim("idp", "AC")
-      .claim("acr", "https://proconnect.gouv.fr/assurance/self-asserted-2fa")
+      .claim("acr", "eidas0-mfa")
       .claim("amr", null)
       .build();
 
-  static final JWTClaimsSet CONSISTENCY_CHECKED_2FA_JWT = new JWTClaimsSet.Builder()
+  static final JWTClaimsSet EIDAS1_MFA_JWT = new JWTClaimsSet.Builder()
       .subject("fakeSub")
       .issuer("https://fca.integ02.agentconnect.rie.gouv.fr/api/v2")
       .audience(CLIENT_ID)
       .claim("nonce", "randomNonce")
       .claim("idp", "AC")
-      .claim("acr", "https://proconnect.gouv.fr/assurance/consistency-checked-2fa")
+      .claim("acr", "eidas1-mfa")
       .claim("amr", null)
       .build();
 
@@ -107,9 +107,14 @@ final class ACFixture {
   }
 
   static AgentConnectIdentityProviderConfig givenConfigWithMfaEnabled() {
+    return givenConfigWithMfaEnabledAndEidasLevel(EidasLevel.EIDAS1.toString());
+  }
+
+  static AgentConnectIdentityProviderConfig givenConfigWithMfaEnabledAndEidasLevel(String eidasLevelName) {
     var model = new IdentityProviderModel();
     model.getConfig().put(ACEnvironment.ENVIRONMENT_PROPERTY_NAME, "integration_rie");
     model.getConfig().put(AgentConnectIdentityProviderConfig.MFA_ENABLED_PROPERTY_NAME, "true");
+    model.getConfig().put(EidasLevel.EIDAS_LEVEL_PROPERTY_NAME, eidasLevelName);
     model.getConfig().put("ignoreAbsentStateParameterLogout", "false");
     model.getConfig().put("clientId", CLIENT_ID);
     model.getConfig().put("clientSecret", CLIENT_SECRET);

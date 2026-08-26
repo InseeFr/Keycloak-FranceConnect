@@ -16,7 +16,6 @@ import org.mockito.Mockito;
 import com.nimbusds.jwt.JWTClaimsSet;
 import jakarta.ws.rs.core.HttpHeaders;
 import jakarta.ws.rs.core.MediaType;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
@@ -272,18 +271,52 @@ class AgentConnectIdentityProviderTest {
       }
 
       @Test
-      void should_include_all_proconnect_2fa_acr_values_in_claims_param_when_mfa_enabled() throws URISyntaxException {
+      void should_include_all_mfa_acr_values_in_claims_param_when_mfa_enabled_with_eidas1() throws URISyntaxException {
         var request = givenAuthenticationRequest(session);
 
         var authorizationUrl = mfaProvider.createAuthorizationUrl(request).build();
-        var rawQuery = authorizationUrl.getRawQuery();
+        var decodedQuery = URLDecoder.decode(authorizationUrl.getRawQuery(), StandardCharsets.UTF_8);
 
-        assertThat(rawQuery).contains("claims=");
-        var decodedQuery = URLDecoder.decode(rawQuery, StandardCharsets.UTF_8);
+        assertThat(decodedQuery).contains("eidas0-mfa");
+        assertThat(decodedQuery).contains("eidas1-mfa");
         assertThat(decodedQuery).contains("eidas2");
         assertThat(decodedQuery).contains("eidas3");
-        assertThat(decodedQuery).contains("self-asserted-2fa");
-        assertThat(decodedQuery).contains("consistency-checked-2fa");
+      }
+
+      @Test
+      void should_include_only_eidas2_and_eidas3_in_claims_param_when_mfa_enabled_with_eidas2() throws URISyntaxException {
+        mfaConfig = givenConfigWithMfaEnabledAndEidasLevel(EidasLevel.EIDAS2.toString());
+        mfaConfig.setEnabled(true);
+        mfaProvider = new AgentConnectIdentityProvider(session, mfaConfig);
+        var request = givenAuthenticationRequest(session);
+
+        var decodedQuery = URLDecoder.decode(
+            mfaProvider.createAuthorizationUrl(request).build().getRawQuery(),
+            StandardCharsets.UTF_8
+        );
+
+        assertThat(decodedQuery).contains("eidas2");
+        assertThat(decodedQuery).contains("eidas3");
+        assertThat(decodedQuery).doesNotContain("eidas0-mfa");
+        assertThat(decodedQuery).doesNotContain("eidas1-mfa");
+      }
+
+      @Test
+      void should_include_only_eidas3_in_claims_param_when_mfa_enabled_with_eidas3() throws URISyntaxException {
+        mfaConfig = givenConfigWithMfaEnabledAndEidasLevel(EidasLevel.EIDAS3.toString());
+        mfaConfig.setEnabled(true);
+        mfaProvider = new AgentConnectIdentityProvider(session, mfaConfig);
+        var request = givenAuthenticationRequest(session);
+
+        var decodedQuery = URLDecoder.decode(
+            mfaProvider.createAuthorizationUrl(request).build().getRawQuery(),
+            StandardCharsets.UTF_8
+        );
+
+        assertThat(decodedQuery).contains("eidas3");
+        assertThat(decodedQuery).doesNotContain("eidas0-mfa");
+        assertThat(decodedQuery).doesNotContain("eidas1-mfa");
+        assertThat(decodedQuery).doesNotContain("eidas2");
       }
     }
 
@@ -300,6 +333,16 @@ class AgentConnectIdentityProviderTest {
       }
 
       @Test
+      void should_accept_eidas0_mfa_acr_value_when_mfa_enabled_with_eidas1() throws IOException {
+        assertMfaAcrIsAccepted(EIDAS0_MFA_JWT);
+      }
+
+      @Test
+      void should_accept_eidas1_mfa_acr_value_when_mfa_enabled_with_eidas1() throws IOException {
+        assertMfaAcrIsAccepted(EIDAS1_MFA_JWT);
+      }
+
+      @Test
       void should_accept_eidas2_acr_value_when_mfa_enabled() throws IOException {
         assertMfaAcrIsAccepted(EIDAS2_JWT);
       }
@@ -310,13 +353,12 @@ class AgentConnectIdentityProviderTest {
       }
 
       @Test
-      void should_accept_self_asserted_2fa_acr_value_when_mfa_enabled() throws IOException {
-        assertMfaAcrIsAccepted(SELF_ASSERTED_2FA_JWT);
-      }
+      void should_reject_eidas1_mfa_acr_value_when_mfa_enabled_with_eidas2() throws IOException {
+        mfaConfig = givenConfigWithMfaEnabledAndEidasLevel(EidasLevel.EIDAS2.toString());
+        mfaConfig.setEnabled(true);
+        mfaProvider = new AgentConnectIdentityProvider(session, mfaConfig);
 
-      @Test
-      void should_accept_consistency_checked_2fa_acr_value_when_mfa_enabled() throws IOException {
-        assertMfaAcrIsAccepted(CONSISTENCY_CHECKED_2FA_JWT);
+        assertMfaAcrIsRejected(EIDAS1_MFA_JWT);
       }
 
       private void assertMfaAcrIsAccepted(JWTClaimsSet jwtClaimsSet) throws IOException {
@@ -332,20 +374,23 @@ class AgentConnectIdentityProviderTest {
         assertThat(brokeredIdentityContext).isNotNull();
       }
 
-      @Test
-      void should_throw_exception_when_acr_claim_is_not_a_2fa_value_and_mfa_is_enabled() throws IOException {
+      private void assertMfaAcrIsRejected(JWTClaimsSet jwtClaimsSet) throws IOException {
         var kid = "RSA-KID";
         var opaqueAccessToken = "2b3ea2e8-2d11-49a4-a369-5fb98d9d5315";
-        var signedIdTokenWithEidas1 = givenAnRSASignedJWTWithRegisteredKidInJWKS(kid, EIDAS1_JWT, publicKeysStore);
-
+        var signedIdToken = givenAnRSASignedJWTWithRegisteredKidInJWKS(kid, jwtClaimsSet, publicKeysStore);
         when(httpClientProvider.getString(mfaConfig.getJwksUrl()))
             .thenReturn(publicKeysStore.toJsonFormat());
 
-        var tokenEndpointResponse = generateTokenEndpointResponse(opaqueAccessToken, signedIdTokenWithEidas1);
+        var tokenEndpointResponse = generateTokenEndpointResponse(opaqueAccessToken, signedIdToken);
 
         assertThatThrownBy(() -> mfaProvider.getFederatedIdentity(tokenEndpointResponse))
             .isInstanceOf(IdentityBrokerException.class)
             .hasMessage(AgentConnectIdentityProvider.MFA_INSUFFICIENT_ACR_ERROR_MESSAGE);
+      }
+
+      @Test
+      void should_throw_exception_when_acr_claim_is_not_a_2fa_value_and_mfa_is_enabled() throws IOException {
+        assertMfaAcrIsRejected(EIDAS1_JWT);
       }
     }
   }
