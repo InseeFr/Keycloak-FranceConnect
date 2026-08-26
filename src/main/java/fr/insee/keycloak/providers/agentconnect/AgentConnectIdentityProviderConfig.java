@@ -11,6 +11,12 @@ import static fr.insee.keycloak.providers.agentconnect.AgentConnectIdentityProvi
 
 final class AgentConnectIdentityProviderConfig extends AbstractBaseProviderConfig {
 
+  static final String MFA_ENABLED_PROPERTY_NAME = "mfa_enabled";
+
+  public boolean isMfaEnabled() {
+    return Boolean.parseBoolean(getConfig().get(MFA_ENABLED_PROPERTY_NAME));
+  }
+
   AgentConnectIdentityProviderConfig(IdentityProviderModel identityProviderModel) {
     super(identityProviderModel);
   }
