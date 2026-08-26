@@ -1,6 +1,7 @@
 package fr.insee.keycloak.providers.agentconnect;
 
 import fr.insee.keycloak.providers.common.AbstractBaseIdentityProvider;
+import fr.insee.keycloak.providers.common.EidasLevel;
 import fr.insee.keycloak.providers.common.Utils;
 import jakarta.ws.rs.core.UriBuilder;
 import org.keycloak.OAuth2Constants;
@@ -18,14 +19,12 @@ final class AgentConnectIdentityProvider
   static final String MFA_INSUFFICIENT_ACR_MESSAGE_KEY = "agentconnectMfaRequired";
   static final String MFA_INSUFFICIENT_ACR_ERROR_MESSAGE = "The returned ACR value is insufficient for MFA authentication";
 
-  private static final List<String> ACCEPTED_MFA_ACR_VALUES = List.of(
+  private static final List<String> ALL_MFA_ACR_VALUES = List.of(
+      "eidas0-mfa",
+      "eidas1-mfa",
       "eidas2",
-      "eidas3",
-      "https://proconnect.gouv.fr/assurance/self-asserted-2fa",
-      "https://proconnect.gouv.fr/assurance/consistency-checked-2fa"
+      "eidas3"
   );
-
-  private static final Set<String> ACCEPTED_MFA_ACR_VALUES_SET = Set.copyOf(ACCEPTED_MFA_ACR_VALUES);
 
   AgentConnectIdentityProvider(KeycloakSession session, AgentConnectIdentityProviderConfig config) {
     super(session, config, Utils.getJsonWebKeySetFrom(config.getJwksUrl(), session));
@@ -42,7 +41,7 @@ final class AgentConnectIdentityProvider
       uriBuilder = UriBuilder.fromUri(
           super.createAuthorizationUrl(request)
               .queryParam("claims", "{claimsParam}")
-              .build(buildMfaClaimsParam())
+              .build(buildMfaClaimsParam(getMfaAcrValuesFor(config.getEidasLevel())))
       );
     } else {
       request
@@ -59,7 +58,8 @@ final class AgentConnectIdentityProvider
   @Override
   protected void validateAcrClaim(String acrClaim) {
     if (getConfig().isMfaEnabled()) {
-      if (!ACCEPTED_MFA_ACR_VALUES_SET.contains(acrClaim)) {
+      var acceptedValues = Set.copyOf(getMfaAcrValuesFor(getConfig().getEidasLevel()));
+      if (!acceptedValues.contains(acrClaim)) {
         throw new IdentityBrokerException(MFA_INSUFFICIENT_ACR_ERROR_MESSAGE);
       }
     } else {
@@ -67,8 +67,16 @@ final class AgentConnectIdentityProvider
     }
   }
 
-  private static String buildMfaClaimsParam() {
-    var values = ACCEPTED_MFA_ACR_VALUES.stream()
+  static List<String> getMfaAcrValuesFor(EidasLevel minLevel) {
+    return switch (minLevel) {
+      case EIDAS1 -> ALL_MFA_ACR_VALUES;
+      case EIDAS2 -> List.of("eidas2", "eidas3");
+      case EIDAS3 -> List.of("eidas3");
+    };
+  }
+
+  private static String buildMfaClaimsParam(List<String> acrValues) {
+    var values = acrValues.stream()
         .map(v -> "\"" + v + "\"")
         .collect(Collectors.joining(",", "[", "]"));
     return "{\"id_token\":{\"acr\":{\"essential\":true,\"values\":" + values + "}}}";
