@@ -64,6 +64,10 @@ public final class AgentConnectIdentityProviderFactory
         .map(Enum::name)
         .collect(Collectors.toList());
 
+    List<String> mfaRequirements = Stream.of(MfaRequirement.values())
+        .map(Enum::name)
+        .collect(Collectors.toList());
+
     return ProviderConfigurationBuilder.create()
         .property().name(ACEnvironment.ENVIRONMENT_PROPERTY_NAME)
         .label("Environnement AgentConnect")
@@ -72,11 +76,12 @@ public final class AgentConnectIdentityProviderFactory
         .options(environments)
         .defaultValue(DEFAULT_AC_ENVIRONMENT)
         .add()
-        .property().name(AgentConnectIdentityProviderConfig.MFA_ENABLED_PROPERTY_NAME)
+        .property().name(MfaRequirement.MFA_MODE_PROPERTY_NAME)
         .label("Double authentification (2FA)")
-        .helpText("Active la double authentification ProConnect via le paramètre OIDC claims. Le niveau eIDAS ci-dessous filtre les valeurs ACR MFA demandées (eidas0-mfa, eidas1-mfa, eidas2, eidas3).")
-        .type(ProviderConfigProperty.BOOLEAN_TYPE)
-        .defaultValue(false)
+        .helpText("Contrôle la double authentification ProConnect via le paramètre OIDC claims. Désactivé : aucune 2FA n'est demandée (un utilisateur qui en a une malgré tout reste accepté). Optionnel : la 2FA est demandée mais un utilisateur qui ne peut pas la fournir se connecte quand même. Obligatoire : la 2FA est exigée, toute connexion sans ACR MFA (eidas0-mfa, eidas1-mfa, eidas2, eidas3) est refusée.")
+        .type(ProviderConfigProperty.LIST_TYPE)
+        .options(mfaRequirements)
+        .defaultValue(MfaRequirement.DISABLED)
         .add()
         .property().name(EidasLevel.EIDAS_LEVEL_PROPERTY_NAME)
         .label("Niveau de garantie eIDAS")

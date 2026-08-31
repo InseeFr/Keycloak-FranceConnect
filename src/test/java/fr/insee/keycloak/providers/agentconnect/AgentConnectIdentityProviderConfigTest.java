@@ -7,6 +7,8 @@ import org.junit.jupiter.api.Test;
 import org.keycloak.models.RealmModel;
 
 import static fr.insee.keycloak.providers.agentconnect.ACFixture.givenConfigForIntegrationAndEidasLevel2;
+import static fr.insee.keycloak.providers.agentconnect.ACFixture.givenConfigWithLegacyMfaEnabled;
+import static fr.insee.keycloak.providers.agentconnect.ACFixture.givenConfigWithMfaRequirementAndEidasLevel;
 import static fr.insee.keycloak.providers.agentconnect.ACFixture.givenConfigWithSelectedEnvAndSelectedEidasLevel;
 import static fr.insee.keycloak.providers.agentconnect.AgentConnectIdentityProviderFactory.getAcProviderMappers;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -87,5 +89,34 @@ class AgentConnectIdentityProviderConfigTest {
     alreadySavedConfig.validate(unusedRealm);
 
     verify(unusedRealm, never()).addIdentityProviderMapper(any());
+  }
+
+  @Test
+  void should_default_mfa_requirement_to_disabled_when_nothing_configured() {
+    var config = givenConfigForIntegrationAndEidasLevel2();
+
+    assertThat(config.getMfaRequirement()).isEqualTo(MfaRequirement.DISABLED);
+  }
+
+  @Test
+  void should_read_legacy_mfa_enabled_true_as_required() {
+    var config = givenConfigWithLegacyMfaEnabled("true");
+
+    assertThat(config.getMfaRequirement()).isEqualTo(MfaRequirement.REQUIRED);
+  }
+
+  @Test
+  void should_read_legacy_mfa_enabled_false_as_disabled() {
+    var config = givenConfigWithLegacyMfaEnabled("false");
+
+    assertThat(config.getMfaRequirement()).isEqualTo(MfaRequirement.DISABLED);
+  }
+
+  @Test
+  void should_prefer_mfa_mode_property_over_legacy_mfa_enabled_when_both_are_present() {
+    var config = givenConfigWithMfaRequirementAndEidasLevel(MfaRequirement.OPTIONAL, EidasLevel.EIDAS1.toString());
+    config.getConfig().put(AgentConnectIdentityProviderConfig.LEGACY_MFA_ENABLED_PROPERTY_NAME, "true");
+
+    assertThat(config.getMfaRequirement()).isEqualTo(MfaRequirement.OPTIONAL);
   }
 }

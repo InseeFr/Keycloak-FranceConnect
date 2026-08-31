@@ -107,14 +107,31 @@ final class ACFixture {
   }
 
   static AgentConnectIdentityProviderConfig givenConfigWithMfaEnabled() {
-    return givenConfigWithMfaEnabledAndEidasLevel(EidasLevel.EIDAS1.toString());
+    return givenConfigWithMfaRequirementAndEidasLevel(MfaRequirement.REQUIRED, EidasLevel.EIDAS1.toString());
   }
 
   static AgentConnectIdentityProviderConfig givenConfigWithMfaEnabledAndEidasLevel(String eidasLevelName) {
+    return givenConfigWithMfaRequirementAndEidasLevel(MfaRequirement.REQUIRED, eidasLevelName);
+  }
+
+  static AgentConnectIdentityProviderConfig givenConfigWithMfaRequirementAndEidasLevel(
+      MfaRequirement mfaRequirement, String eidasLevelName) {
     var model = new IdentityProviderModel();
     model.getConfig().put(ACEnvironment.ENVIRONMENT_PROPERTY_NAME, "integration_rie");
-    model.getConfig().put(AgentConnectIdentityProviderConfig.MFA_ENABLED_PROPERTY_NAME, "true");
+    model.getConfig().put(MfaRequirement.MFA_MODE_PROPERTY_NAME, mfaRequirement.name());
     model.getConfig().put(EidasLevel.EIDAS_LEVEL_PROPERTY_NAME, eidasLevelName);
+    model.getConfig().put("ignoreAbsentStateParameterLogout", "false");
+    model.getConfig().put("clientId", CLIENT_ID);
+    model.getConfig().put("clientSecret", CLIENT_SECRET);
+
+    return new AgentConnectIdentityProviderConfig(model);
+  }
+
+  static AgentConnectIdentityProviderConfig givenConfigWithLegacyMfaEnabled(String legacyMfaEnabledValue) {
+    var model = new IdentityProviderModel();
+    model.getConfig().put(ACEnvironment.ENVIRONMENT_PROPERTY_NAME, "integration_rie");
+    model.getConfig().put(AgentConnectIdentityProviderConfig.LEGACY_MFA_ENABLED_PROPERTY_NAME, legacyMfaEnabledValue);
+    model.getConfig().put(EidasLevel.EIDAS_LEVEL_PROPERTY_NAME, EidasLevel.EIDAS1.toString());
     model.getConfig().put("ignoreAbsentStateParameterLogout", "false");
     model.getConfig().put("clientId", CLIENT_ID);
     model.getConfig().put("clientSecret", CLIENT_SECRET);
