@@ -284,6 +284,34 @@ class AgentConnectIdentityProviderTest {
       }
 
       @Test
+      void should_mark_acr_claim_as_essential_when_mfa_requirement_is_required() throws URISyntaxException {
+        var request = givenAuthenticationRequest(session);
+
+        var decodedQuery = URLDecoder.decode(
+            mfaProvider.createAuthorizationUrl(request).build().getRawQuery(),
+            StandardCharsets.UTF_8
+        );
+
+        assertThat(decodedQuery).contains("\"essential\":true");
+      }
+
+      @Test
+      void should_mark_acr_claim_as_non_essential_when_mfa_requirement_is_optional() throws URISyntaxException {
+        mfaConfig = givenConfigWithMfaRequirementAndEidasLevel(MfaRequirement.OPTIONAL, EidasLevel.EIDAS1.toString());
+        mfaConfig.setEnabled(true);
+        mfaProvider = new AgentConnectIdentityProvider(session, mfaConfig);
+        var request = givenAuthenticationRequest(session);
+
+        var decodedQuery = URLDecoder.decode(
+            mfaProvider.createAuthorizationUrl(request).build().getRawQuery(),
+            StandardCharsets.UTF_8
+        );
+
+        assertThat(decodedQuery).contains("claims=");
+        assertThat(decodedQuery).contains("\"essential\":false");
+      }
+
+      @Test
       void should_include_only_eidas2_and_eidas3_in_claims_param_when_mfa_enabled_with_eidas2() throws URISyntaxException {
         mfaConfig = givenConfigWithMfaEnabledAndEidasLevel(EidasLevel.EIDAS2.toString());
         mfaConfig.setEnabled(true);
@@ -389,8 +417,54 @@ class AgentConnectIdentityProviderTest {
       }
 
       @Test
-      void should_throw_exception_when_acr_claim_is_not_a_2fa_value_and_mfa_is_enabled() throws IOException {
+      void should_throw_exception_when_acr_claim_is_not_a_2fa_value_and_mfa_is_required() throws IOException {
         assertMfaAcrIsRejected(EIDAS1_JWT);
+      }
+
+      @Test
+      void should_accept_non_mfa_acr_value_when_mfa_requirement_is_optional() throws IOException {
+        mfaConfig = givenConfigWithMfaRequirementAndEidasLevel(MfaRequirement.OPTIONAL, EidasLevel.EIDAS1.toString());
+        mfaConfig.setEnabled(true);
+        mfaProvider = new AgentConnectIdentityProvider(session, mfaConfig);
+
+        assertMfaAcrIsAccepted(EIDAS1_JWT);
+      }
+
+      @Test
+      void should_accept_mfa_acr_value_when_mfa_requirement_is_optional() throws IOException {
+        mfaConfig = givenConfigWithMfaRequirementAndEidasLevel(MfaRequirement.OPTIONAL, EidasLevel.EIDAS1.toString());
+        mfaConfig.setEnabled(true);
+        mfaProvider = new AgentConnectIdentityProvider(session, mfaConfig);
+
+        assertMfaAcrIsAccepted(EIDAS1_MFA_JWT);
+      }
+
+      @Test
+      void should_reject_insufficient_eidas_level_when_mfa_requirement_is_optional() throws IOException {
+        mfaConfig = givenConfigWithMfaRequirementAndEidasLevel(MfaRequirement.OPTIONAL, EidasLevel.EIDAS2.toString());
+        mfaConfig.setEnabled(true);
+        mfaProvider = new AgentConnectIdentityProvider(session, mfaConfig);
+
+        var kid = "RSA-KID";
+        var opaqueAccessToken = "2b3ea2e8-2d11-49a4-a369-5fb98d9d5315";
+        var signedIdToken = givenAnRSASignedJWTWithRegisteredKidInJWKS(kid, EIDAS1_JWT, publicKeysStore);
+        when(httpClientProvider.getString(mfaConfig.getJwksUrl()))
+            .thenReturn(publicKeysStore.toJsonFormat());
+
+        var tokenEndpointResponse = generateTokenEndpointResponse(opaqueAccessToken, signedIdToken);
+
+        assertThatThrownBy(() -> mfaProvider.getFederatedIdentity(tokenEndpointResponse))
+            .isInstanceOf(IdentityBrokerException.class)
+            .hasMessage("The returned eIDAS level is insufficient");
+      }
+
+      @Test
+      void should_accept_mfa_acr_value_when_mfa_is_disabled() throws IOException {
+        mfaConfig = givenConfigWithMfaRequirementAndEidasLevel(MfaRequirement.DISABLED, EidasLevel.EIDAS1.toString());
+        mfaConfig.setEnabled(true);
+        mfaProvider = new AgentConnectIdentityProvider(session, mfaConfig);
+
+        assertMfaAcrIsAccepted(EIDAS1_MFA_JWT);
       }
     }
   }

@@ -10,7 +10,7 @@ import org.keycloak.broker.provider.IdentityBrokerException;
 import org.keycloak.models.KeycloakSession;
 
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 final class AgentConnectIdentityProvider
@@ -26,6 +26,15 @@ final class AgentConnectIdentityProvider
       "eidas3"
   );
 
+  // eidas0-mfa/eidas1-mfa only differ from eidas2/eidas3 by carrying their own eIDAS floor
+  // (eidas2 and eidas3 already imply step-up per the eIDAS spec, hence no "-mfa" variant).
+  private static final Map<String, EidasLevel> MFA_ACR_EIDAS_LEVELS = Map.of(
+      "eidas0-mfa", EidasLevel.EIDAS1,
+      "eidas1-mfa", EidasLevel.EIDAS1,
+      "eidas2", EidasLevel.EIDAS2,
+      "eidas3", EidasLevel.EIDAS3
+  );
+
   AgentConnectIdentityProvider(KeycloakSession session, AgentConnectIdentityProviderConfig config) {
     super(session, config, Utils.getJsonWebKeySetFrom(config.getJwksUrl(), session));
   }
@@ -33,21 +42,23 @@ final class AgentConnectIdentityProvider
   @Override
   protected UriBuilder createAuthorizationUrl(AuthenticationRequest request) {
     var config = getConfig();
+    var mfaRequirement = config.getMfaRequirement();
     UriBuilder uriBuilder;
 
-    if (config.isMfaEnabled()) {
-      // No acr_values — use claims parameter exclusively for MFA ACR negotiation.
-      // Template expansion in build() percent-encodes the JSON value correctly.
-      uriBuilder = UriBuilder.fromUri(
-          super.createAuthorizationUrl(request)
-              .queryParam("claims", "{claimsParam}")
-              .build(buildMfaClaimsParam(getMfaAcrValuesFor(config.getEidasLevel())))
-      );
-    } else {
+    if (mfaRequirement == MfaRequirement.DISABLED) {
       request
           .getAuthenticationSession()
           .setClientNote(OAuth2Constants.ACR_VALUES, config.getEidasLevel().toString());
       uriBuilder = super.createAuthorizationUrl(request);
+    } else {
+      // No acr_values — use claims parameter exclusively for MFA ACR negotiation.
+      // Template expansion in build() percent-encodes the JSON value correctly.
+      var essential = mfaRequirement == MfaRequirement.REQUIRED;
+      uriBuilder = UriBuilder.fromUri(
+          super.createAuthorizationUrl(request)
+              .queryParam("claims", "{claimsParam}")
+              .build(buildMfaClaimsParam(getMfaAcrValuesFor(config.getEidasLevel()), essential))
+      );
     }
 
     logger.debugv("AgentConnect Authorization Url: {0}", uriBuilder.build().toString());
@@ -57,14 +68,21 @@ final class AgentConnectIdentityProvider
 
   @Override
   protected void validateAcrClaim(String acrClaim) {
-    if (getConfig().isMfaEnabled()) {
-      var acceptedValues = Set.copyOf(getMfaAcrValuesFor(getConfig().getEidasLevel()));
-      if (!acceptedValues.contains(acrClaim)) {
-        throw new IdentityBrokerException(MFA_INSUFFICIENT_ACR_ERROR_MESSAGE);
-      }
-    } else {
-      super.validateAcrClaim(acrClaim);
+    var mfaLevel = acrClaim == null ? null : MFA_ACR_EIDAS_LEVELS.get(acrClaim);
+
+    // An MFA-backed ACR is always accepted once it meets the configured eIDAS floor, regardless
+    // of the MFA requirement mode: a user who did complete MFA should never be turned away.
+    if (mfaLevel != null && mfaLevel.compareTo(getConfig().getEidasLevel()) >= 0) {
+      return;
     }
+
+    if (getConfig().getMfaRequirement() == MfaRequirement.REQUIRED) {
+      throw new IdentityBrokerException(MFA_INSUFFICIENT_ACR_ERROR_MESSAGE);
+    }
+
+    // DISABLED and OPTIONAL never hard-block a login solely for lacking MFA: fall back to the
+    // regular (non-MFA) eIDAS level check so users who don't need 2FA still succeed.
+    super.validateAcrClaim(acrClaim);
   }
 
   static List<String> getMfaAcrValuesFor(EidasLevel minLevel) {
@@ -75,10 +93,10 @@ final class AgentConnectIdentityProvider
     };
   }
 
-  private static String buildMfaClaimsParam(List<String> acrValues) {
+  private static String buildMfaClaimsParam(List<String> acrValues, boolean essential) {
     var values = acrValues.stream()
         .map(v -> "\"" + v + "\"")
         .collect(Collectors.joining(",", "[", "]"));
-    return "{\"id_token\":{\"acr\":{\"essential\":true,\"values\":" + values + "}}}";
+    return "{\"id_token\":{\"acr\":{\"essential\":" + essential + ",\"values\":" + values + "}}}";
   }
 }

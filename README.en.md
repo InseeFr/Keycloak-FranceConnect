@@ -125,11 +125,15 @@ Redirect URLs to register on the partner portal:
 
 ##### 2FA activation and known limitations
 
-To force 2FA with ProConnect, enable the **Double authentification (2FA)** option in the AgentConnect identity provider configuration.
+The AgentConnect identity provider configuration exposes a **Double authentification (2FA)** option with three modes:
 This implementation follows the official ProConnect guide for service providers:
 https://partenaires.proconnect.gouv.fr/docs/fournisseur-service/double_authentification
 
-When this option is enabled, the authorization request uses an OIDC `claims` parameter to require multi-factor authentication. The **eIDAS level** sets the minimum assurance among supported MFA ACR values (`eidas0-mfa`, `eidas1-mfa`, `eidas2`, `eidas3`): EIDAS1 accepts all four, EIDAS2 limits to `eidas2` and `eidas3`, EIDAS3 to `eidas3` only. The returned `acr` claim is validated on callback.
+* **Disabled** (default): no MFA is requested; `acr_values` is set from the configured eIDAS level, same as before this option existed. If a user still comes back with an MFA ACR (`eidas0-mfa`, `eidas1-mfa`, `eidas2`, `eidas3`), it is accepted as long as it satisfies the configured eIDAS level.
+* **Optional**: the authorization request uses an OIDC `claims` parameter requesting MFA as a preference (`essential: false`). A user who completes MFA comes back with an MFA ACR and is accepted; a user who can't or doesn't need MFA still logs in as long as their ACR satisfies the configured eIDAS level — login is never blocked for lacking 2FA.
+* **Required**: the authorization request uses the `claims` parameter to require MFA (`essential: true`). Any login whose returned ACR isn't a sufficient MFA ACR is rejected.
+
+In every mode, the **eIDAS level** sets the minimum assurance among supported MFA ACR values: EIDAS1 accepts `eidas0-mfa`, `eidas1-mfa`, `eidas2` and `eidas3`, EIDAS2 limits to `eidas2` and `eidas3`, EIDAS3 to `eidas3` only. The returned `acr` claim is validated on callback.
 
 2FA is not compatible with all ProConnect identity providers. The compatibility list is maintained by ProConnect at:
 https://grist.numerique.gouv.fr/o/docs/3kQ829mp7bTy/ProConnect-Configuration-des-FI-et-FS/p/5

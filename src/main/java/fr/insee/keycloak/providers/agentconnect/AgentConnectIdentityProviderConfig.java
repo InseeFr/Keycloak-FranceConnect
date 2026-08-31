@@ -11,10 +11,19 @@ import static fr.insee.keycloak.providers.agentconnect.AgentConnectIdentityProvi
 
 final class AgentConnectIdentityProviderConfig extends AbstractBaseProviderConfig {
 
-  static final String MFA_ENABLED_PROPERTY_NAME = "mfa_enabled";
+  // Superseded by MfaRequirement.MFA_MODE_PROPERTY_NAME; kept only to migrate realms configured
+  // before the 2FA toggle became a 3-way DISABLED/OPTIONAL/REQUIRED choice.
+  static final String LEGACY_MFA_ENABLED_PROPERTY_NAME = "mfa_enabled";
 
-  public boolean isMfaEnabled() {
-    return Boolean.parseBoolean(getConfig().get(MFA_ENABLED_PROPERTY_NAME));
+  public MfaRequirement getMfaRequirement() {
+    var configuredMode = getConfig().get(MfaRequirement.MFA_MODE_PROPERTY_NAME);
+    if (configuredMode != null) {
+      return MfaRequirement.getOrDefault(configuredMode, MfaRequirement.DISABLED);
+    }
+
+    return Boolean.parseBoolean(getConfig().get(LEGACY_MFA_ENABLED_PROPERTY_NAME))
+        ? MfaRequirement.REQUIRED
+        : MfaRequirement.DISABLED;
   }
 
   AgentConnectIdentityProviderConfig(IdentityProviderModel identityProviderModel) {
