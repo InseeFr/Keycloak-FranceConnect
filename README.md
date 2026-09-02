@@ -190,11 +190,15 @@ Vous trouverez également l'url de redirection qu'il faudra enregistrer sur le p
 
 ##### Activation de la 2FA et limites connues
 
-Pour forcer la 2FA avec ProConnect, activez l'option **Double authentification (2FA)** dans la configuration du fournisseur d'identité AgentConnect.
+La configuration du fournisseur d'identité AgentConnect propose l'option **Double authentification (2FA)** avec trois modes :
 Cette implémentation suit le guide officiel ProConnect pour les fournisseurs de service :
 https://partenaires.proconnect.gouv.fr/docs/fournisseur-service/double_authentification
 
-Lorsque cette option est activée, la requête d'autorisation utilise un paramètre OIDC `claims` pour exiger une authentification multi-facteur. Le **niveau eIDAS** fixe le plancher d'assurance parmi les valeurs ACR MFA supportées (`eidas0-mfa`, `eidas1-mfa`, `eidas2`, `eidas3`) : eIDAS1 accepte les quatre valeurs, eIDAS2 limite à `eidas2` et `eidas3`, eIDAS3 à `eidas3` uniquement. La valeur `acr` retournée est validée au callback.
+* **Désactivé** (par défaut) : aucune 2FA n'est demandée, `acr_values` est calculé à partir du niveau eIDAS configuré, comme avant l'introduction de cette option. Si un utilisateur revient malgré tout avec un ACR MFA (`eidas0-mfa`, `eidas1-mfa`, `eidas2`, `eidas3`), il est accepté dès lors que ce niveau satisfait le niveau eIDAS configuré.
+* **Optionnel** : la requête d'autorisation utilise un paramètre OIDC `claims` demandant la 2FA à titre préférentiel (`essential: false`). Un utilisateur qui complète la 2FA revient avec un ACR MFA et est accepté ; un utilisateur qui ne peut pas ou n'a pas besoin de 2FA se connecte quand même dès lors que son ACR satisfait le niveau eIDAS configuré — la connexion n'est jamais bloquée pour absence de 2FA.
+* **Obligatoire** : la requête d'autorisation utilise le paramètre `claims` en l'exigeant (`essential: true`). Toute connexion dont l'ACR retourné n'est pas un ACR MFA suffisant est refusée.
+
+Dans tous les modes, le **niveau eIDAS** fixe le plancher d'assurance parmi les valeurs ACR MFA supportées : eIDAS1 accepte `eidas0-mfa`, `eidas1-mfa`, `eidas2` et `eidas3`, eIDAS2 limite à `eidas2` et `eidas3`, eIDAS3 à `eidas3` uniquement. La valeur `acr` retournée est validée au callback.
 
 La 2FA n'est pas compatible avec tous les fournisseurs d'identité ProConnect. La liste de compatibilité est maintenue par ProConnect à l'adresse suivante :
 https://grist.numerique.gouv.fr/o/docs/3kQ829mp7bTy/ProConnect-Configuration-des-FI-et-FS/p/5
