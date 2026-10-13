@@ -156,13 +156,7 @@ Les informations à fournir à France Connect+ seront les suivantes :
 URL de redirection de connexion | https://*<KEYCLOAK_SERVER>*/auth/realms/*<KEYCLOAK_REALM>*/broker/franceconnect-particulier/endpoint
 URL de redirection de déconnexion | https://*<KEYCLOAK_SERVER>*/auth/realms/*<KEYCLOAK_REALM>*/broker/franceconnect-particulier/endpoint?logout_response
 Client keys url (jwks) | https://*<KEYCLOAK_SERVER>*/auth/realms/*<KEYCLOAK_REALM>*/protocol/openid-connect/certs
-Chiffrement de l'userinfo (A256GCM / -) |  A256GCM
-Algo de chiffrement de l'userinfo (ECDH-ES / RSA-OAEP) | RSA-OAEP
-Algo de signature de l'userinfo (ES256 obligatoire) | ES256
-Algo de signature de l'id_token (ES256 obligatoire) | ES256
-Algo de chiffrement de l'id_token (ECDH-ES / RSA-OAEP) | RSA-OAEP
-Chiffrement de  l'id_token  (A256GCM / -) |  A256GCM
-Adresse de la clé de chiffrement (pour ouverture des flux) |  https://*<KEYCLOAK_SERVER>*/auth/realms/*<KEYCLOAK_REALM>*/protocol/openid-connect/certs
+Algo de chiffrement (ECDH-ES + A256GCM  / RSA-OAEP-256 + A256GCM) | RSA-OAEP-256 + A256GCM 
 
 L'implémentation permettant de déchiffrer les jetons échangés s'appuie sur le travail de l'équipe keycloak autour de FAPI, cela implique que cette extension supporte uniquement Keycloak en verison supérieure à 15.
 
