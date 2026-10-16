@@ -99,7 +99,9 @@ public abstract class AbstractBaseIdentityProvider<T extends AbstractBaseProvide
   }
 
   protected String getIdTokenForLogout(UserSessionModel userSession) {
-    return userSession.getNote(FEDERATED_ID_TOKEN);
+    // Since Keycloak 26.8 the note is suffixed with the provider alias
+    var idToken = userSession.getNote(FEDERATED_ID_TOKEN + ":" + getConfig().getAlias());
+    return idToken != null ? idToken : userSession.getNote(FEDERATED_ID_TOKEN);
   }
 
   @Override
