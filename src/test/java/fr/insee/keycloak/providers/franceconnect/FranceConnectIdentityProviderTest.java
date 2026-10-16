@@ -16,6 +16,7 @@ import org.keycloak.crypto.KeyWrapper;
 import org.keycloak.models.KeyManager;
 import org.keycloak.models.KeycloakContext;
 import org.keycloak.models.KeycloakSession;
+import org.keycloak.models.UserSessionModel;
 import org.keycloak.representations.JsonWebToken;
 import org.mockito.Mockito;
 
@@ -445,6 +446,36 @@ class FranceConnectIdentityProviderTest {
       assertThatThrownBy(() -> provider.getFederatedIdentity(tokenEndpointResponse))
           .isInstanceOf(IdentityBrokerException.class)
           .hasMessage("The returned eIDAS level cannot be retrieved");
+    }
+  }
+
+  @Nested
+  class IdTokenForLogout {
+
+    private FranceConnectIdentityProvider logoutProvider;
+    private UserSessionModel userSession;
+
+    @BeforeEach
+    void setup() {
+      var logoutConfig = givenConfigForIntegrationV1AndEidasLevel2();
+      logoutConfig.setAlias("franceconnect");
+      logoutProvider = new FranceConnectIdentityProvider(session, logoutConfig);
+      userSession = mock(UserSessionModel.class);
+    }
+
+    @Test
+    void should_read_the_id_token_note_suffixed_with_the_provider_alias() {
+      when(userSession.getNote("FEDERATED_ID_TOKEN:franceconnect")).thenReturn("suffixedIdToken");
+      when(userSession.getNote("FEDERATED_ID_TOKEN")).thenReturn("legacyIdToken");
+
+      assertThat(logoutProvider.getIdTokenForLogout(userSession)).isEqualTo("suffixedIdToken");
+    }
+
+    @Test
+    void should_fall_back_to_the_id_token_note_without_alias() {
+      when(userSession.getNote("FEDERATED_ID_TOKEN")).thenReturn("legacyIdToken");
+
+      assertThat(logoutProvider.getIdTokenForLogout(userSession)).isEqualTo("legacyIdToken");
     }
   }
 }
