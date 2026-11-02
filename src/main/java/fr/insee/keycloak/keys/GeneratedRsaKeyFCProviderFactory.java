@@ -16,7 +16,7 @@ public final class GeneratedRsaKeyFCProviderFactory extends GeneratedRsaKeyProvi
   public static final String ID = "rsa-generated-fc+";
 
   private static final ProviderConfigProperty RS_ALGORITHM_PROPERTY = new ProviderConfigProperty("algorithm", "Algorithm",
-      "Intended algorithm for the key", ProviderConfigProperty.LIST_TYPE, "RSA-OAEP", "RSA-OAEP");
+      "Intended algorithm for the key", ProviderConfigProperty.LIST_TYPE, "RSA-OAEP-256", "RSA-OAEP","RSA-OAEP-256");
 
   private static List<ProviderConfigProperty> configProperties;
 
