@@ -71,6 +71,7 @@ public final class FranceConnectIdentityProviderFactory
         .collect(Collectors.toList());
 
     List<String> eidasLevels = Stream.of(EidasLevel.values())
+        .filter(eidasLevel -> !eidasLevel.equals(EidasLevel.EIDAS0))
         .map(Enum::name)
         .collect(Collectors.toList());
 

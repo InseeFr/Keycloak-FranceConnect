@@ -247,7 +247,7 @@ class AgentConnectIdentityProviderTest {
 
     @BeforeEach
     void setupMfa() throws IOException {
-      mfaConfig = givenConfigWithMfaEnabled();
+      mfaConfig = givenConfigWithEidas1MfaEnabled();
       mfaConfig.setEnabled(true);
 
       when(httpClientProvider.getString(mfaConfig.getJwksUrl()))
@@ -271,7 +271,23 @@ class AgentConnectIdentityProviderTest {
       }
 
       @Test
-      void should_include_all_mfa_acr_values_in_claims_param_when_mfa_enabled_with_eidas1() throws URISyntaxException {
+      void should_include_only_acr_values_eidas1mfa_eidas2_eidas3_in_claims_param_when_mfa_enabled_with_eidas1() throws URISyntaxException {
+        var request = givenAuthenticationRequest(session);
+
+        var authorizationUrl = mfaProvider.createAuthorizationUrl(request).build();
+        var decodedQuery = URLDecoder.decode(authorizationUrl.getRawQuery(), StandardCharsets.UTF_8);
+
+        assertThat(decodedQuery).contains("eidas1-mfa");
+        assertThat(decodedQuery).contains("eidas2");
+        assertThat(decodedQuery).contains("eidas3");
+      }
+
+      @Test
+      void should_include_all_mfa_acr_values_in_claims_param_when_mfa_enabled_with_eidas0() throws URISyntaxException {
+        mfaConfig = givenConfigWithEidas0MfaEnabled();
+        mfaConfig.setEnabled(true);
+
+        mfaProvider = new AgentConnectIdentityProvider(session, mfaConfig);
         var request = givenAuthenticationRequest(session);
 
         var authorizationUrl = mfaProvider.createAuthorizationUrl(request).build();
