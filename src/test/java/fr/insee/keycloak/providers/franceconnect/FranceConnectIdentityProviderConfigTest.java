@@ -1,6 +1,6 @@
 package fr.insee.keycloak.providers.franceconnect;
 
-import static fr.insee.keycloak.providers.franceconnect.FCFixture.givenConfigForIntegrationV2AndEidasLevel2;
+import static fr.insee.keycloak.providers.franceconnect.FCFixture.givenConfigForIntegrationPlusAndEidasLevel2;
 import static fr.insee.keycloak.providers.franceconnect.FCFixture.givenConfigWithSelectedEnvAndSelectedEidasLevel;
 import static fr.insee.keycloak.providers.franceconnect.FranceConnectIdentityProviderFactory.getFcProviderMappers;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -37,7 +37,7 @@ class FranceConnectIdentityProviderConfigTest {
   @Test
   void
       should_initialize_config_with_url_properties_corresponding_to_selected_environment_from_admin_interface() {
-    var config = givenConfigForIntegrationV2AndEidasLevel2();
+    var config = givenConfigForIntegrationPlusAndEidasLevel2();
 
     assertThat(config.getAuthorizationUrl()).isNotNull().endsWith("/authorize");
     assertThat(config.getTokenUrl()).isNotNull().endsWith("/token");
@@ -51,35 +51,35 @@ class FranceConnectIdentityProviderConfigTest {
   @Test
   void
       should_initialize_config_with_selected_ignoreAbsentStateParameterLogout_from_admin_interface() {
-    var config = givenConfigForIntegrationV2AndEidasLevel2();
+    var config = givenConfigForIntegrationPlusAndEidasLevel2();
 
     assertThat(config.isIgnoreAbsentStateParameterLogout()).isFalse();
   }
 
   @Test
   void should_initialize_config_with_signature_validation() {
-    var config = givenConfigForIntegrationV2AndEidasLevel2();
+    var config = givenConfigForIntegrationPlusAndEidasLevel2();
 
     assertThat(config.isValidateSignature()).isTrue();
   }
 
   @Test
   void should_initialize_config_without_backchannel_support() {
-    var config = givenConfigForIntegrationV2AndEidasLevel2();
+    var config = givenConfigForIntegrationPlusAndEidasLevel2();
 
     assertThat(config.isBackchannelSupported()).isFalse();
   }
 
   @Test
   void should_create_identity_mappers_when_saving_configuration_for_the_first_time() {
-    var unsavedConfig = givenConfigForIntegrationV2AndEidasLevel2();
+    var unsavedConfig = givenConfigForIntegrationPlusAndEidasLevel2();
     var realm = mock(RealmModel.class);
 
     unsavedConfig.validate(realm);
 
     verify(realm, times(getFcProviderMappers().size())).addIdentityProviderMapper(any());
 
-    var alreadySavedConfig = givenConfigForIntegrationV2AndEidasLevel2();
+    var alreadySavedConfig = givenConfigForIntegrationPlusAndEidasLevel2();
     var unusedRealm = mock(RealmModel.class);
     alreadySavedConfig.getConfig().put("isCreated", "true");
 

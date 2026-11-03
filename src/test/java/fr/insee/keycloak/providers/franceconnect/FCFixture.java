@@ -1,9 +1,9 @@
 package fr.insee.keycloak.providers.franceconnect;
 
+import com.nimbusds.jose.jwk.ECKey;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jwt.JWTClaimsSet;
 import fr.insee.keycloak.providers.common.EidasLevel;
-import fr.insee.keycloak.utils.PublicKeysStore;
 import fr.insee.keycloak.utils.SignatureUtils;
 import org.keycloak.models.IdentityProviderModel;
 
@@ -18,7 +18,7 @@ final class FCFixture {
 
   static final JWTClaimsSet EIDAS1_JWT = new JWTClaimsSet.Builder()
       .subject("fakeSub")
-      .issuer("https://auth.integ01.dev-franceconnect.fr/api/v2")
+      .issuer("https://fcp-low.sbx.dev-franceconnect.fr/api/v2")
       .audience(CLIENT_ID)
       .claim("nonce", "randomNonce")
       .claim("idp", "FC")
@@ -62,12 +62,12 @@ final class FCFixture {
       .claim("email", "john.doe@gmail.com")
       .build();
 
-  static FranceConnectIdentityProviderConfig givenConfigForIntegrationV1AndEidasLevel2() {
-    return givenConfigWithSelectedEnvAndSelectedEidasLevel("integration_v1", "eidas2");
+  static FranceConnectIdentityProviderConfig givenConfigForIntegrationAndEidasLevel1() {
+    return givenConfigWithSelectedEnvAndSelectedEidasLevel("integration_standard_v2", "eidas1");
   }
 
-  static FranceConnectIdentityProviderConfig givenConfigForIntegrationV2AndEidasLevel2() {
-    return givenConfigWithSelectedEnvAndSelectedEidasLevel("integration_v2", "eidas2");
+  static FranceConnectIdentityProviderConfig givenConfigForIntegrationPlusAndEidasLevel2() {
+    return givenConfigWithSelectedEnvAndSelectedEidasLevel("integration_plus_v2", "eidas2");
   }
 
   static FranceConnectIdentityProviderConfig givenConfigWithSelectedEnvAndSelectedEidasLevel(String environmentName, String eidasLevelName) {
@@ -78,17 +78,20 @@ final class FCFixture {
     model.getConfig().put("clientId", CLIENT_ID);
     model.getConfig().put("clientSecret", CLIENT_SECRET);
 
-    return new FranceConnectIdentityProviderConfig(model);
+    var config = new FranceConnectIdentityProviderConfig(model);
+    config.setEnabled(true);
+
+    return config;
   }
 
-  static String givenAnHMACSignedEidas1JWT() {
-    return signJwtWithHS256SharedSecret(EIDAS1_JWT, CLIENT_SECRET);
+  static String givenAnRSASignedEidas1JWT(RSAKey rsaKey) {
+    return givenAnRSASignedJWTWithRegisteredKidInJWKS(rsaKey, EIDAS1_JWT);
   }
 
-  static String givenAnRSAOAEPJWEForAnECDSASignedEidas2JWTWithRegisteredKidInJWKS(String kid, PublicKeysStore publicKeysStore, RSAKey rsaKey) {
+  static String givenAnRSAOAEPJWEForAnECDSASignedEidas2JWTWithRegisteredKidInJWKS(ECKey ecKey, RSAKey rsaKey) {
     return SignatureUtils.givenAnRSAOAEPJWE(
         rsaKey,
-        SignatureUtils.givenAnECDSASignedJWTWithRegisteredKidInJWKS(kid, EIDAS2_JWT, publicKeysStore)
+        SignatureUtils.givenAnECDSASignedJWTWithRegisteredKidInJWKS(ecKey, EIDAS2_JWT)
     );
   }
 

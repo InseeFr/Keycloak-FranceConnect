@@ -2,7 +2,6 @@ package fr.insee.keycloak.providers.agentconnect;
 
 import fr.insee.keycloak.providers.common.AbstractBaseIdentityProvider;
 import fr.insee.keycloak.providers.common.EidasLevel;
-import fr.insee.keycloak.providers.common.Utils;
 import jakarta.ws.rs.core.UriBuilder;
 import org.keycloak.OAuth2Constants;
 import org.keycloak.broker.provider.AuthenticationRequest;
@@ -36,7 +35,7 @@ final class AgentConnectIdentityProvider
   );
 
   AgentConnectIdentityProvider(KeycloakSession session, AgentConnectIdentityProviderConfig config) {
-    super(session, config, Utils.getJsonWebKeySetFrom(config.getJwksUrl(), session));
+    super(session, config);
   }
 
   @Override

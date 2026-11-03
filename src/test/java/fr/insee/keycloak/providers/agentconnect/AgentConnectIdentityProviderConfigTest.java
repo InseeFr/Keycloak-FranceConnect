@@ -6,10 +6,7 @@ import org.junit.jupiter.api.DisplayNameGenerator.ReplaceUnderscores;
 import org.junit.jupiter.api.Test;
 import org.keycloak.models.RealmModel;
 
-import static fr.insee.keycloak.providers.agentconnect.ACFixture.givenConfigForIntegrationAndEidasLevel2;
-import static fr.insee.keycloak.providers.agentconnect.ACFixture.givenConfigWithLegacyMfaEnabled;
-import static fr.insee.keycloak.providers.agentconnect.ACFixture.givenConfigWithMfaRequirementAndEidasLevel;
-import static fr.insee.keycloak.providers.agentconnect.ACFixture.givenConfigWithSelectedEnvAndSelectedEidasLevel;
+import static fr.insee.keycloak.providers.agentconnect.ACFixture.*;
 import static fr.insee.keycloak.providers.agentconnect.AgentConnectIdentityProviderFactory.getAcProviderMappers;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
