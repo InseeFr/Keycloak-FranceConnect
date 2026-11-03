@@ -1,7 +1,15 @@
 package fr.insee.keycloak.providers.agentconnect;
 
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.jwk.ECKey;
+import com.nimbusds.jose.jwk.RSAKey;
+import com.nimbusds.jwt.JWTClaimsSet;
 import fr.insee.keycloak.providers.common.EidasLevel;
-import fr.insee.keycloak.utils.*;
+import fr.insee.keycloak.utils.ClosableHttpResponse;
+import fr.insee.keycloak.utils.KeycloakFixture;
+import fr.insee.keycloak.utils.TestUtils;
+import jakarta.ws.rs.core.HttpHeaders;
+import jakarta.ws.rs.core.MediaType;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayNameGeneration;
@@ -9,13 +17,14 @@ import org.junit.jupiter.api.DisplayNameGenerator.ReplaceUnderscores;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.keycloak.broker.provider.IdentityBrokerException;
+import org.keycloak.common.crypto.CryptoIntegration;
 import org.keycloak.connections.httpclient.HttpClientProvider;
+import org.keycloak.crypto.*;
+import org.keycloak.keys.PublicKeyStorageProvider;
+import org.keycloak.models.KeycloakContext;
 import org.keycloak.models.KeycloakSession;
-import org.mockito.Mockito;
+import org.keycloak.models.RealmModel;
 
-import com.nimbusds.jwt.JWTClaimsSet;
-import jakarta.ws.rs.core.HttpHeaders;
-import jakarta.ws.rs.core.MediaType;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URLDecoder;
@@ -24,41 +33,19 @@ import java.util.Map;
 
 import static fr.insee.keycloak.providers.agentconnect.ACFixture.*;
 import static fr.insee.keycloak.utils.KeycloakFixture.givenAuthenticationRequest;
-import static fr.insee.keycloak.utils.KeycloakFixture.givenKeycloakSession;
-import static fr.insee.keycloak.utils.SignatureUtils.generateTokenEndpointResponse;
-import static fr.insee.keycloak.utils.SignatureUtils.givenAnRSASignedJWTWithRegisteredKidInJWKS;
+import static fr.insee.keycloak.utils.SignatureUtils.*;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 
 @DisplayNameGeneration(ReplaceUnderscores.class)
 class AgentConnectIdentityProviderTest {
 
-  // Used by KeycloakSession
-  private HttpClientProvider httpClientProvider;
-  private CloseableHttpClient httpClient;
   private KeycloakSession session;
-
-  private AgentConnectIdentityProviderConfig config;
-  private AgentConnectIdentityProvider provider;
-  private PublicKeysStore publicKeysStore;
 
   @BeforeEach
   void setup() throws IOException {
-    config = givenConfigForIntegrationAndEidasLevel2();
-    config.setEnabled(true);
-    publicKeysStore = new PublicKeysStore();
-
-    httpClientProvider = mock(HttpClientProvider.class);
-    httpClient = mock(CloseableHttpClient.class);
-
-    when(httpClientProvider.getString(config.getJwksUrl())).
-        thenReturn(publicKeysStore.toJsonFormat());
-    when(httpClientProvider.getMaxConsumedResponseSize()).thenCallRealMethod();
-    session = givenKeycloakSession(httpClientProvider, httpClient);
-
-    provider = new AgentConnectIdentityProvider(session, config);
+      session = mock(KeycloakSession.class);
   }
 
   @Nested
@@ -66,6 +53,9 @@ class AgentConnectIdentityProviderTest {
 
     @Test
     void should_create_authorization_url_with_eidas_level_as_acr_values_query_param() {
+      var config = givenConfigForIntegrationAndEidasLevel2();
+      var provider = new AgentConnectIdentityProvider(session, config);
+
       var request = givenAuthenticationRequest(session);
 
       var authorizationUrl = provider.createAuthorizationUrl(request).build();
@@ -86,26 +76,51 @@ class AgentConnectIdentityProviderTest {
   @Nested
   class IdTokenValidation {
 
-    @Test
-    void should_validate_hs256_signed_token() {
-      var token = provider.validateToken(givenAnHMACSignedEidas2JWT());
+    private RSAKey rsaKeySign;
+    private ECKey ecKeySign;
 
-      assertThat(token).isNotNull();
-      assertThat(token.getSubject()).isEqualTo("fakeSub");
-      assertThat(token.getIssuer()).isNotEmpty();
-      assertThat(token.getOtherClaims())
-          .containsEntry("acr", "eidas2");
-    }
+    @BeforeEach
+    void setup() throws JOSEException {
 
-    @Test
-    void should_search_in_vault_for_secret_key_on_hs256_token_validation() {
-      provider.validateToken(givenAnHMACSignedEidas2JWT());
+      var asymmetricSignatureProvider = new AsymmetricSignatureProvider(session,"RS256");
+      when(session.getProvider(SignatureProvider.class,"RS256")).thenReturn(asymmetricSignatureProvider);
 
-      verify(session.vault(), Mockito.atLeastOnce()).getStringSecret(anyString());
+      var eCDSASignatureProvider = new ECDSASignatureProvider(session,"ES256");
+      when(session.getProvider(SignatureProvider.class,"ES256")).thenReturn(eCDSASignatureProvider);
+
+      // Prepare RSA and EC signature
+
+      rsaKeySign = generateRSA256Key("RSA_KID");
+      var keyWrapperRSASignature = new KeyWrapper();
+      keyWrapperRSASignature.setKid(rsaKeySign.getKeyID());
+      keyWrapperRSASignature.setPublicKey(rsaKeySign.toPublicKey());
+      keyWrapperRSASignature.setType(KeyType.RSA);
+
+      ecKeySign = generateES256Key("ECDSA-KID");
+      var keyWrapperECSignature = new KeyWrapper();
+      keyWrapperECSignature.setKid(ecKeySign.getKeyID());
+      keyWrapperECSignature.setPublicKey(ecKeySign.toPublicKey());
+      keyWrapperECSignature.setType(KeyType.EC);;
+
+
+      var publicKeyStorageProvider = mock((PublicKeyStorageProvider.class));
+      when(session.getProvider(PublicKeyStorageProvider.class)).thenReturn(publicKeyStorageProvider);
+      when(publicKeyStorageProvider.getPublicKey(any(),eq("RSA_KID"),eq("RS256"),any())).thenReturn(keyWrapperRSASignature);
+      when(publicKeyStorageProvider.getPublicKey(any(),eq("ECDSA-KID"),eq("ES256"),any())).thenReturn(keyWrapperECSignature);
+
+      // Launch Crypto engine
+      CryptoIntegration.init(KeycloakFixture.class.getClassLoader());
+
+      // Context and Realm object are called during signature verify
+      when(session.getContext()).thenReturn(mock(KeycloakContext.class));
+      when(session.getContext().getRealm()).thenReturn(mock(RealmModel.class));
     }
 
     @Test
     void should_throw_exception_when_no_public_key_found_in_json_web_key_set_for_asymmetric_signed_jwt() {
+      var config = givenConfigForIntegrationAndEidasLevel2();
+      var provider = new AgentConnectIdentityProvider(session, config);
+
       assertThatThrownBy(() -> provider.validateToken(givenAnRSASignedJWTWithUnknownKidInJWKS()))
           .isInstanceOf(IdentityBrokerException.class)
           .hasMessage("token signature validation failed");
@@ -113,13 +128,10 @@ class AgentConnectIdentityProviderTest {
 
     @Test
     void should_validate_rs256_signed_token() throws IOException {
-      var kid = "RSA-KID";
-      var encodedToken = givenAnRSASignedEidas2JWTWithRegisteredKidInJWKS(kid, publicKeysStore);
+      var config = givenConfigForIntegrationAndEidasLevel2();
+      var provider = new AgentConnectIdentityProvider(session, config);
 
-      // JWKS Reload should find the publicKey added by the givenAnRSA method
-      // set request with uptated keystore
-      when(httpClientProvider.getString(config.getJwksUrl())).
-          thenReturn(publicKeysStore.toJsonFormat());
+      var encodedToken = givenAnRSASignedEidas2JWTWithRegisteredKidInJWKS(rsaKeySign);
 
       var token = provider.validateToken(encodedToken);
 
@@ -132,14 +144,10 @@ class AgentConnectIdentityProviderTest {
 
     @Test
     void should_validate_es256_signed_token() throws IOException {
-      var kid = "ECDSA-KID";
+      var config = givenConfigForIntegrationAndEidasLevel2();
+      var provider = new AgentConnectIdentityProvider(session, config);
 
-      var encodedToken = givenAnECDSASignedEidas2JWTWithRegisteredKidInJWKS(kid, publicKeysStore);
-
-      // JWKS Reload should find the publicKey added by the givenAnRSA method
-      // set request with uptated keystore
-      when(httpClientProvider.getString(config.getJwksUrl())).
-          thenReturn(publicKeysStore.toJsonFormat());
+      var encodedToken = givenAnECDSASignedEidas2JWTWithRegisteredKidInJWKS(ecKeySign);
 
       var token = provider.validateToken(encodedToken);
 
@@ -154,8 +162,19 @@ class AgentConnectIdentityProviderTest {
   @Nested
   class IdTokenInformationExtraction {
 
+    private HttpClientProvider httpClientProvider;
+    private CloseableHttpClient httpClient;
+    private RSAKey rsaKeySign;
+
     @BeforeEach
-    void setup() throws IOException {
+    void setup() throws IOException, JOSEException {
+
+      httpClientProvider = mock(HttpClientProvider.class);
+      httpClient = mock(CloseableHttpClient.class);
+      when(session.getProvider(HttpClientProvider.class)).thenReturn(httpClientProvider);
+      when(httpClientProvider.getHttpClient()).thenReturn(httpClient);
+      when(httpClientProvider.getMaxConsumedResponseSize()).thenReturn(840L);
+
       var httpResponse = ClosableHttpResponse.from(
           Map.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON),
           USERINFO_JWT.toString()
@@ -163,17 +182,33 @@ class AgentConnectIdentityProviderTest {
 
       when(httpClient.execute(any()))
           .thenAnswer(answer -> httpResponse);
+
+      var asymmetricSignatureProvider = new AsymmetricSignatureProvider(session,"RS256");
+      when(session.getProvider(SignatureProvider.class,"RS256")).thenReturn(asymmetricSignatureProvider);
+
+      rsaKeySign = generateRSA256Key("RSA_KID");
+      var keyWrapperRSASignature = new KeyWrapper();
+      keyWrapperRSASignature.setKid(rsaKeySign.getKeyID());
+      keyWrapperRSASignature.setPublicKey(rsaKeySign.toPublicKey());
+      keyWrapperRSASignature.setType(KeyType.RSA);
+
+      var publicKeyStorageProvider = mock((PublicKeyStorageProvider.class));
+      when(session.getProvider(PublicKeyStorageProvider.class)).thenReturn(publicKeyStorageProvider);
+      when(publicKeyStorageProvider.getPublicKey(any(),eq("RSA_KID"),eq("RS256"),any())).thenReturn(keyWrapperRSASignature);
+
+      // Context and Realm object are called during signature verify
+      when(session.getContext()).thenReturn(mock(KeycloakContext.class));
+      when(session.getContext().getRealm()).thenReturn(mock(RealmModel.class));
+
     }
 
     @Test
     void id_token_acr_claim_should_match_with_selected_eidas_level_from_admin_interface() throws IOException {
-      var kid = "RSA-KID";
-      var opaqueAccessToken = "2b3ea2e8-2d11-49a4-a369-5fb98d9d5315";
-      var signedIdToken = givenAnRSASignedEidas2JWTWithRegisteredKidInJWKS(kid, publicKeysStore);
+      var config = givenConfigForIntegrationAndEidasLevel2();
+      var provider = new AgentConnectIdentityProvider(session, config);
 
-      // set request with uptated keystore
-      when(httpClientProvider.getString(config.getJwksUrl())).
-          thenReturn(publicKeysStore.toJsonFormat());
+      var opaqueAccessToken = "2b3ea2e8-2d11-49a4-a369-5fb98d9d5315";
+      var signedIdToken = givenAnRSASignedEidas2JWTWithRegisteredKidInJWKS(rsaKeySign);
 
       var tokenEndpointResponse = generateTokenEndpointResponse(opaqueAccessToken, signedIdToken);
 
@@ -189,13 +224,11 @@ class AgentConnectIdentityProviderTest {
 
     @Test
     void should_throw_exception_when_id_token_acr_claim_does_not_match_with_the_selected_eidas_level_from_admin_interface() throws IOException {
-      var kid = "RSA-KID";
-      var opaqueAccessToken = "2b3ea2e8-2d11-49a4-a369-5fb98d9d5315";
-      var signedIdTokenWithEidas1 = givenAnRSASignedJWTWithRegisteredKidInJWKS(kid, EIDAS1_JWT, publicKeysStore);
+      var config = givenConfigForIntegrationAndEidasLevel2();
+      var provider = new AgentConnectIdentityProvider(session, config);
 
-      // set request with uptated keystore
-      when(httpClientProvider.getString(config.getJwksUrl())).
-          thenReturn(publicKeysStore.toJsonFormat());
+      var opaqueAccessToken = "2b3ea2e8-2d11-49a4-a369-5fb98d9d5315";
+      var signedIdTokenWithEidas1 = givenAnRSASignedJWTWithRegisteredKidInJWKS(rsaKeySign, EIDAS1_JWT);
 
       var tokenEndpointResponse = generateTokenEndpointResponse(opaqueAccessToken, signedIdTokenWithEidas1);
 
@@ -206,13 +239,11 @@ class AgentConnectIdentityProviderTest {
 
     @Test
     void should_throw_exception_when_id_token_does_not_contains_acr_claim() throws IOException {
-      var kid = "RSA-KID";
-      var opaqueAccessToken = "2b3ea2e8-2d11-49a4-a369-5fb98d9d5315";
-      var signedIdTokenWithoutEidasLevel = givenAnRSASignedJWTWithRegisteredKidInJWKS(kid, NO_EIDAS_LEVEL_JWT, publicKeysStore);
+      var config = givenConfigForIntegrationAndEidasLevel2();
+      var provider = new AgentConnectIdentityProvider(session, config);
 
-      // set request with uptated keystore
-      when(httpClientProvider.getString(config.getJwksUrl())).
-          thenReturn(publicKeysStore.toJsonFormat());
+      var opaqueAccessToken = "2b3ea2e8-2d11-49a4-a369-5fb98d9d5315";
+      var signedIdTokenWithoutEidasLevel = givenAnRSASignedJWTWithRegisteredKidInJWKS(rsaKeySign, NO_EIDAS_LEVEL_JWT);
 
       var tokenEndpointResponse = generateTokenEndpointResponse(opaqueAccessToken, signedIdTokenWithoutEidasLevel);
 
@@ -223,13 +254,11 @@ class AgentConnectIdentityProviderTest {
 
     @Test
     void should_throw_exception_when_id_token_contains_acr_claim_who_does_not_match_with_a_supported_eidas_level() throws IOException {
-      var kid = "RSA-KID";
-      var opaqueAccessToken = "2b3ea2e8-2d11-49a4-a369-5fb98d9d5315";
-      var signedIdTokenWithoutEidasLevel = givenAnRSASignedJWTWithRegisteredKidInJWKS(kid, UNSUPPORTED_EIDAS_LEVEL_JWT, publicKeysStore);
+      var config = givenConfigForIntegrationAndEidasLevel2();
+      var provider = new AgentConnectIdentityProvider(session, config);
 
-      // set request with uptated keystore
-      when(httpClientProvider.getString(config.getJwksUrl())).
-          thenReturn(publicKeysStore.toJsonFormat());
+      var opaqueAccessToken = "2b3ea2e8-2d11-49a4-a369-5fb98d9d5315";
+      var signedIdTokenWithoutEidasLevel = givenAnRSASignedJWTWithRegisteredKidInJWKS(rsaKeySign, UNSUPPORTED_EIDAS_LEVEL_JWT);
 
       var tokenEndpointResponse = generateTokenEndpointResponse(opaqueAccessToken, signedIdTokenWithoutEidasLevel);
 
@@ -249,9 +278,6 @@ class AgentConnectIdentityProviderTest {
     void setupMfa() throws IOException {
       mfaConfig = givenConfigWithMfaEnabled();
       mfaConfig.setEnabled(true);
-
-      when(httpClientProvider.getString(mfaConfig.getJwksUrl()))
-          .thenReturn(publicKeysStore.toJsonFormat());
 
       mfaProvider = new AgentConnectIdentityProvider(session, mfaConfig);
     }
@@ -351,13 +377,42 @@ class AgentConnectIdentityProviderTest {
     @Nested
     class AcrValidation {
 
+      private HttpClientProvider httpClientProvider;
+      private CloseableHttpClient httpClient;
+      private RSAKey rsaKeySign;
+
       @BeforeEach
-      void setupHttpResponse() throws IOException {
+      void setupHttpResponse() throws IOException, JOSEException {
+
+        httpClientProvider = mock(HttpClientProvider.class);
+        httpClient = mock(CloseableHttpClient.class);
+        when(session.getProvider(HttpClientProvider.class)).thenReturn(httpClientProvider);
+        when(httpClientProvider.getHttpClient()).thenReturn(httpClient);
+        when(httpClientProvider.getMaxConsumedResponseSize()).thenReturn(840L);
+
         var httpResponse = ClosableHttpResponse.from(
             Map.of(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON),
             USERINFO_JWT.toString()
         );
         when(httpClient.execute(any())).thenAnswer(answer -> httpResponse);
+
+        var asymmetricSignatureProvider = new AsymmetricSignatureProvider(session,"RS256");
+        when(session.getProvider(SignatureProvider.class,"RS256")).thenReturn(asymmetricSignatureProvider);
+
+        rsaKeySign = generateRSA256Key("RSA_KID");
+        var keyWrapperRSASignature = new KeyWrapper();
+        keyWrapperRSASignature.setKid(rsaKeySign.getKeyID());
+        keyWrapperRSASignature.setPublicKey(rsaKeySign.toPublicKey());
+        keyWrapperRSASignature.setType(KeyType.RSA);
+
+        var publicKeyStorageProvider = mock((PublicKeyStorageProvider.class));
+        when(session.getProvider(PublicKeyStorageProvider.class)).thenReturn(publicKeyStorageProvider);
+        when(publicKeyStorageProvider.getPublicKey(any(),eq("RSA_KID"),eq("RS256"),any())).thenReturn(keyWrapperRSASignature);
+
+        // Context and Realm object are called during signature verify
+        when(session.getContext()).thenReturn(mock(KeycloakContext.class));
+        when(session.getContext().getRealm()).thenReturn(mock(RealmModel.class));
+
       }
 
       @Test
@@ -390,11 +445,9 @@ class AgentConnectIdentityProviderTest {
       }
 
       private void assertMfaAcrIsAccepted(JWTClaimsSet jwtClaimsSet) throws IOException {
-        var kid = "RSA-KID";
+
         var opaqueAccessToken = "2b3ea2e8-2d11-49a4-a369-5fb98d9d5315";
-        var signedIdToken = givenAnRSASignedJWTWithRegisteredKidInJWKS(kid, jwtClaimsSet, publicKeysStore);
-        when(httpClientProvider.getString(mfaConfig.getJwksUrl()))
-            .thenReturn(publicKeysStore.toJsonFormat());
+        var signedIdToken = givenAnRSASignedJWTWithRegisteredKidInJWKS(rsaKeySign, jwtClaimsSet);
 
         var tokenEndpointResponse = generateTokenEndpointResponse(opaqueAccessToken, signedIdToken);
 
@@ -403,11 +456,9 @@ class AgentConnectIdentityProviderTest {
       }
 
       private void assertMfaAcrIsRejected(JWTClaimsSet jwtClaimsSet) throws IOException {
-        var kid = "RSA-KID";
+
         var opaqueAccessToken = "2b3ea2e8-2d11-49a4-a369-5fb98d9d5315";
-        var signedIdToken = givenAnRSASignedJWTWithRegisteredKidInJWKS(kid, jwtClaimsSet, publicKeysStore);
-        when(httpClientProvider.getString(mfaConfig.getJwksUrl()))
-            .thenReturn(publicKeysStore.toJsonFormat());
+        var signedIdToken = givenAnRSASignedJWTWithRegisteredKidInJWKS(rsaKeySign, jwtClaimsSet);
 
         var tokenEndpointResponse = generateTokenEndpointResponse(opaqueAccessToken, signedIdToken);
 
@@ -445,11 +496,8 @@ class AgentConnectIdentityProviderTest {
         mfaConfig.setEnabled(true);
         mfaProvider = new AgentConnectIdentityProvider(session, mfaConfig);
 
-        var kid = "RSA-KID";
         var opaqueAccessToken = "2b3ea2e8-2d11-49a4-a369-5fb98d9d5315";
-        var signedIdToken = givenAnRSASignedJWTWithRegisteredKidInJWKS(kid, EIDAS1_JWT, publicKeysStore);
-        when(httpClientProvider.getString(mfaConfig.getJwksUrl()))
-            .thenReturn(publicKeysStore.toJsonFormat());
+        var signedIdToken = givenAnRSASignedJWTWithRegisteredKidInJWKS(rsaKeySign, EIDAS1_JWT);
 
         var tokenEndpointResponse = generateTokenEndpointResponse(opaqueAccessToken, signedIdToken);
 
