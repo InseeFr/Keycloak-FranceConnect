@@ -36,7 +36,7 @@ final class AgentConnectIdentityProvider
   );
 
   AgentConnectIdentityProvider(KeycloakSession session, AgentConnectIdentityProviderConfig config) {
-    super(session, config, Utils.getJsonWebKeySetFrom(config.getJwksUrl(), session));
+    super(session, config);
   }
 
   @Override

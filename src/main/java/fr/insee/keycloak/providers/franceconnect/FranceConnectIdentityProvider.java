@@ -39,29 +39,16 @@ final class FranceConnectIdentityProvider
 
   FranceConnectIdentityProvider(
       KeycloakSession session, FranceConnectIdentityProviderConfig config) {
-    super(
-        session,
-        config,
-        useJwks(config) ? Utils.getJsonWebKeySetFrom(config.getJwksUrl(), session) : null);
+    super(session, config);
   }
 
-  private static boolean useJwks(FranceConnectIdentityProviderConfig config) {
-    return config.isUseJwksUrl() && config.getJwksUrl() != null;
-  }
-
-  /** France connect requires nonce to be exactly 64 char long, so...yes */
   @Override
   protected UriBuilder createAuthorizationUrl(AuthenticationRequest request) {
-    var config = getConfig();
     var authenticationSession = request.getAuthenticationSession();
 
     authenticationSession.setClientNote(
-        OAuth2Constants.ACR_VALUES, config.getEidasLevel().toString());
+        OAuth2Constants.ACR_VALUES, getConfig().getEidasLevel().toString());
     var uriBuilder = super.createAuthorizationUrl(request);
-
-    var nonce = DatatypeConverter.printHexBinary(Utils.generateRandomBytes(32));
-    authenticationSession.setClientNote(BROKER_NONCE_PARAM, nonce);
-    uriBuilder.replaceQueryParam(OIDCLoginProtocol.NONCE_PARAM, nonce);
 
     logger.debugv("FC Authorization Url: {0}", uriBuilder.build().toString());
 
@@ -72,14 +59,6 @@ final class FranceConnectIdentityProvider
   public String getIdTokenForLogout(UserSessionModel userSession) {
     var idToken = super.getIdTokenForLogout(userSession);
     return isJWETokenFormatRequired(getConfig()) ? decryptJWE(idToken) : idToken;
-  }
-
-  @Override
-  public JsonWebToken validateToken(String encodedToken) {
-    var ignoreAudience = false;
-    var token = isJWETokenFormatRequired(getConfig()) ? decryptJWE(encodedToken) : encodedToken;
-
-    return validateToken(token, ignoreAudience);
   }
 
   @Override
@@ -131,12 +110,7 @@ final class FranceConnectIdentityProvider
             userInfo = response.asJson();
           } else if (APPLICATION_JWT_TYPE.isCompatible(contentMediaType)) {
             try {
-              var jwt =
-                  isJWETokenFormatRequired(getConfig())
-                      ? decryptJWE(response.asString())
-                      : response.asString();
-
-              userInfo = getJsonFromJWT(jwt);
+              userInfo = JsonSerialization.readValue(parseTokenInput(response.asString(),true), JsonNode.class);
             } catch (IdentityBrokerException ex) {
               throw new RuntimeException(
                   "Failed to verify signature of userinfo response from [" + userInfoUrl + "].",
@@ -194,7 +168,7 @@ final class FranceConnectIdentityProvider
 
   private boolean isJWETokenFormatRequired(FranceConnectIdentityProviderConfig config) {
     var eidasLevel = config.getEidasLevel();
-    return !EIDAS1.equals(eidasLevel) && useJwks(config);
+    return !EIDAS1.equals(eidasLevel);
   }
 
   private String decryptJWE(String encryptedJWE) {
@@ -231,23 +205,4 @@ final class FranceConnectIdentityProvider
     return response;
   }
 
-  private JsonNode getJsonFromJWT(String jwt) throws IdentityBrokerException {
-    JWSInput jwsInput;
-
-    try {
-      jwsInput = new JWSInput(jwt);
-    } catch (JWSInputException cause) {
-      throw new IdentityBrokerException("Failed to parse JWT userinfo response", cause);
-    }
-
-    if (!verify(jwsInput)) {
-      throw new IdentityBrokerException("Failed to verify signature of of jwt");
-    }
-
-    try {
-      return JsonSerialization.readValue(jwsInput.getContent(), JsonNode.class);
-    } catch (IOException e) {
-      throw new IdentityBrokerException("Failed to parse jwt", e);
-    }
-  }
 }
