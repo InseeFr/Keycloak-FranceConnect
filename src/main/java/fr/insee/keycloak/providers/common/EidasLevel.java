@@ -1,6 +1,7 @@
 package fr.insee.keycloak.providers.common;
 
 public enum EidasLevel {
+  EIDAS0,
   EIDAS1,
   EIDAS2,
   EIDAS3;

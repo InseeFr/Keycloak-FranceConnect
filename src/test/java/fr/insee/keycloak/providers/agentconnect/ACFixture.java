@@ -106,7 +106,11 @@ final class ACFixture {
     return new AgentConnectIdentityProviderConfig(model);
   }
 
-  static AgentConnectIdentityProviderConfig givenConfigWithMfaEnabled() {
+  static AgentConnectIdentityProviderConfig givenConfigWithEidas0MfaEnabled() {
+    return givenConfigWithMfaRequirementAndEidasLevel(MfaRequirement.REQUIRED, EidasLevel.EIDAS0.toString());
+  }
+
+  static AgentConnectIdentityProviderConfig givenConfigWithEidas1MfaEnabled() {
     return givenConfigWithMfaRequirementAndEidasLevel(MfaRequirement.REQUIRED, EidasLevel.EIDAS1.toString());
   }
 
