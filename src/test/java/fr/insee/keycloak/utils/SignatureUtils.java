@@ -28,34 +28,11 @@ public final class SignatureUtils {
   private SignatureUtils() {
   }
 
-  public static String signJwtWithHS256SharedSecret(JWTClaimsSet claimsSet, String sharedSecret) {
-    try {
-      var signer = new MACSigner(sharedSecret);
-      var signedJWT = new SignedJWT(new JWSHeader(JWSAlgorithm.HS256), claimsSet);
-
-      signedJWT.sign(signer);
-
-      return signedJWT.serialize();
-    } catch (JOSEException ex) {
-      throw new IllegalStateException(ex);
-    }
-  }
-
-  public static String givenAnRSASignedJWTWithRegisteredKidInJWKS(String kid, JWTClaimsSet claimsSet, PublicKeysStore publicKeysStore) {
-    var rsaKey = generateRSA256Key(kid);
-    var publicKey = generateRSA256PublicKeyInJsonFormat(rsaKey);
-
-    publicKeysStore.add(publicKey);
-
+  public static String givenAnRSASignedJWTWithRegisteredKidInJWKS(RSAKey rsaKey, JWTClaimsSet claimsSet) {
     return signJwtWithRSA256PrivateKey(claimsSet, rsaKey);
   }
 
-  public static String givenAnECDSASignedJWTWithRegisteredKidInJWKS(String kid, JWTClaimsSet claimsSet, PublicKeysStore publicKeysStore) {
-    var ecKey = generateES256Key(kid);
-    var publicKey = generateES256PublicKeyInJsonFormat(ecKey);
-
-    publicKeysStore.add(publicKey);
-
+  public static String givenAnECDSASignedJWTWithRegisteredKidInJWKS(ECKey ecKey, JWTClaimsSet claimsSet) {
     return signJwtWithES256PrivateKey(claimsSet, ecKey);
   }
 
@@ -93,16 +70,6 @@ public final class SignatureUtils {
     }
   }
 
-  public static String generateRSA256PublicKeyInJsonFormat(RSAKey rsaKey) {
-
-    try {
-      var jsonObject = rsaKey.toPublicJWK().toJSONObject();
-      return new ObjectMapper().writeValueAsString(jsonObject);
-    } catch (JsonProcessingException ex) {
-      throw new IllegalStateException(ex);
-    }
-  }
-
   public static ECKey generateES256Key(String kid) {
     try {
       return new ECKeyGenerator(Curve.P_256)
@@ -127,15 +94,6 @@ public final class SignatureUtils {
 
       return signedJWT.serialize();
     } catch (JOSEException ex) {
-      throw new IllegalStateException(ex);
-    }
-  }
-
-  public static String generateES256PublicKeyInJsonFormat(ECKey ecKey) {
-    try {
-      var jsonObject = ecKey.toPublicJWK().toJSONObject();
-      return new ObjectMapper().writeValueAsString(jsonObject);
-    } catch (JsonProcessingException ex) {
       throw new IllegalStateException(ex);
     }
   }

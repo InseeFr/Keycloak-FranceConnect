@@ -5,9 +5,6 @@ import fr.insee.keycloak.providers.common.Utils;
 import java.util.Properties;
 
 enum FCEnvironment {
-  // Legacy V1 , should stop in 2025
-  INTEGRATION_V1("france-connect.integration.v1"),
-  PRODUCTION_V1("france-connect.production.v1"),
   // Names left for retro compatibility, prefer now "Plus"
   INTEGRATION_V2("france-connect.plus.integration.v2"),
   PRODUCTION_V2("france-connect.plus.production.v2"),
