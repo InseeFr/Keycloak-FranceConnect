@@ -1,27 +1,17 @@
 package fr.insee.keycloak.providers.common;
 
-import jakarta.ws.rs.GET;
-import jakarta.ws.rs.Path;
-import jakarta.ws.rs.QueryParam;
 import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.core.UriBuilder;
 import jakarta.ws.rs.core.UriInfo;
-import org.keycloak.broker.oidc.AbstractOAuth2IdentityProvider;
 import org.keycloak.broker.oidc.OIDCIdentityProvider;
 import org.keycloak.broker.oidc.OIDCIdentityProviderConfig;
 import org.keycloak.broker.provider.BrokeredIdentityContext;
 import org.keycloak.broker.provider.IdentityBrokerException;
 import org.keycloak.broker.social.SocialIdentityProvider;
-import org.keycloak.events.Errors;
-import org.keycloak.events.EventBuilder;
-import org.keycloak.events.EventType;
 import org.keycloak.models.KeycloakSession;
 import org.keycloak.models.RealmModel;
 import org.keycloak.models.UserSessionModel;
 import org.keycloak.representations.JsonWebToken;
-import org.keycloak.services.ErrorPage;
-import org.keycloak.services.managers.AuthenticationManager;
-import org.keycloak.services.messages.Messages;
 import org.keycloak.services.resources.IdentityBrokerService;
 import org.keycloak.services.resources.RealmsResource;
 
@@ -39,10 +29,6 @@ public abstract class AbstractBaseIdentityProvider<T extends AbstractBaseProvide
     return (T) super.getConfig();
   }
 
-  @Override
-  public Object callback(RealmModel realm, AuthenticationCallback callback, EventBuilder event) {
-    return new OIDCEndpoint<>(callback, realm, event, this ,getConfig());
-  }
 
   @Override
   public Response keycloakInitiatedBrowserLogout(
@@ -121,67 +107,4 @@ public abstract class AbstractBaseIdentityProvider<T extends AbstractBaseProvide
     }
   }
 
-  protected static class OIDCEndpoint<T extends AbstractBaseProviderConfig> extends Endpoint {
-
-    private final T config;
-
-    public OIDCEndpoint(
-        AuthenticationCallback callback, RealmModel realm, EventBuilder event, AbstractOAuth2IdentityProvider provider, T config) {
-      super(callback, realm, event, provider);
-      this.config = config;
-    }
-
-    @GET
-    @Path("logout_response")
-    public Response logoutResponse(@QueryParam("state") String state) {
-
-      if (state == null && config.isIgnoreAbsentStateParameterLogout()) {
-        logger.warn("using usersession from cookie");
-        var authResult = AuthenticationManager.authenticateIdentityCookie(session, realm, false);
-        if (authResult == null) {
-          return noValidUserSession();
-        }
-
-        var userSession = authResult.getSession();
-        return AuthenticationManager.finishBrowserLogout(
-            session, realm, userSession, session.getContext().getUri(), clientConnection, headers);
-      } else if (state == null) {
-        logger.error("no state parameter returned");
-        sendUserSessionNotFoundEvent();
-
-        return ErrorPage.error(
-            session,
-            null,
-            Response.Status.BAD_REQUEST,
-            Messages.IDENTITY_PROVIDER_UNEXPECTED_ERROR);
-      }
-
-      var userSession = session.sessions().getUserSession(realm, state);
-      if (userSession == null) {
-        return noValidUserSession();
-      } else if (userSession.getState() != UserSessionModel.State.LOGGING_OUT) {
-        logger.error("usersession in different state");
-        sendUserSessionNotFoundEvent();
-        return ErrorPage.error(
-            session, null, Response.Status.BAD_REQUEST, Messages.SESSION_NOT_ACTIVE);
-      }
-
-      return AuthenticationManager.finishBrowserLogout(
-          session, realm, userSession, session.getContext().getUri(), clientConnection, headers);
-    }
-
-    private Response noValidUserSession() {
-      logger.error("no valid user session");
-      sendUserSessionNotFoundEvent();
-
-      return ErrorPage.error(
-          session, null, Response.Status.BAD_REQUEST, Messages.IDENTITY_PROVIDER_UNEXPECTED_ERROR);
-    }
-
-    private void sendUserSessionNotFoundEvent() {
-      var event = new EventBuilder(realm, session, clientConnection);
-      event.event(EventType.LOGOUT);
-      event.error(Errors.USER_SESSION_NOT_FOUND);
-    }
-  }
 }
